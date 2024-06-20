@@ -1,0 +1,32 @@
+.pyc
+.DS_STORE
+*.vscode
+
+# Development tools
+.coverage
+license_appender.py
+append_license.sh
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+
+.covergae
+coverage/
+htmlcov/
+.venv/
+ENV*
