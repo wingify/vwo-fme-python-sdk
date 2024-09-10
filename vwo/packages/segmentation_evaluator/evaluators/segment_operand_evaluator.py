@@ -23,6 +23,7 @@ from ....utils.gateway_service_util import get_from_gateway_service
 from ....enums.url_enum import UrlEnum
 from ....utils.data_type_util import is_boolean
 from ....models.user.context_model import ContextModel
+from ....services.settings_manager import SettingsManager
 
 
 class SegmentOperandEvaluator:
@@ -44,7 +45,7 @@ class SegmentOperandEvaluator:
             return False
 
         if "inlist" in operand:
-            list_id_regex = r"inlist\((\w+:\d+)\)"
+            list_id_regex = r"inlist\([^)]*\)"
             match = re.search(list_id_regex, operand)
             if not match or len(match.groups()) < 1:
                 print("Invalid 'inList' operand format")
@@ -56,6 +57,8 @@ class SegmentOperandEvaluator:
             query_params_obj = {
                 "attribute": attribute_value,
                 "listId": list_id,
+                "accountId": SettingsManager.get_instance().account_id,
+                "sdkKey": SettingsManager.get_instance().sdk_key,
             }
 
             try:

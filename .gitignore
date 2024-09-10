@@ -29,4 +29,5 @@ dist/
 coverage/
 htmlcov/
 .venv/
+venv/
 ENV*

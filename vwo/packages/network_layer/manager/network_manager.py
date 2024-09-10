@@ -75,8 +75,9 @@ class NetworkManager:
                 ) as response:
                     return response.status
         except Exception as err:
-            # LogManager.get_instance().error(error_messages.get('NETWORK_CALL_FAILED').format(
-            #     method = 'POST',
-            #     err = err.with_traceback()
-            # ))
-            return
+            LogManager.get_instance().error(
+                error_messages.get('NETWORK_CALL_FAILED').format(
+                    method='POST',
+                    err=err,
+                )
+            )

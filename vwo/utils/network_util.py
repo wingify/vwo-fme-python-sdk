@@ -193,18 +193,43 @@ def get_attribute_payload_data(
     
     return properties
 
-# Function to send a POST API request
+
+# Global variables for event loop management
+# `event_loop_initialized` tracks whether the event loop has been initialized.
+# `main_event_loop` stores the reference to the main event loop that handles async tasks.
+# `loop_lock` ensures that only one thread can initialize or use the event loop at a time.
+event_loop_initialized = False
+main_event_loop = None
+loop_lock = threading.Lock()
+
+# Function to send a POST API request without waiting for the response
 def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
-    url = f"{Constants.HTTPS_PROTOCOL}://{UrlService.get_base_url()}{UrlEnum.EVENTS.value}"
+    global event_loop_initialized, main_event_loop
+    
+    # Importing the SettingsManager here to avoid circular import issues or unnecessary imports
     from ..services.settings_manager import SettingsManager
 
-    headers = {
-        HeadersEnum.USER_AGENT.value: payload['d'].get('visitor_ua', ''),
-        HeadersEnum.IP.value: payload['d'].get('visitor_ip', '')
-    }
+    # Initialize the headers dictionary for the request
+    headers = {}
+
+    # Retrieve 'visitor_ua' and 'visitor_ip' from the payload if they exist
+    # Strip any whitespace and ensure they are valid strings before adding to headers
+    visitor_ua = payload['d'].get('visitor_ua')
+    visitor_ip = payload['d'].get('visitor_ip')
+
+    # Add 'visitor_ua' to headers if it's a valid, non-empty string after stripping whitespace
+    if visitor_ua and isinstance(visitor_ua, str) and visitor_ua.strip():
+        headers[HeadersEnum.USER_AGENT.value] = visitor_ua.strip()
+
+    # Add 'visitor_ip' to headers if it's a valid, non-empty string after stripping whitespace
+    if visitor_ip and isinstance(visitor_ip, str) and visitor_ip.strip():
+        headers[HeadersEnum.IP.value] = visitor_ip.strip()
 
     try:
+        # Get the instance of NetworkManager that handles making network requests
         network_instance = NetworkManager.get_instance()
+        
+        # Create a RequestModel object that holds all the necessary data for the POST request
         request = RequestModel(
             UrlService.get_base_url(),
             'POST',
@@ -216,40 +241,37 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
             SettingsManager.get_instance().port
         )
 
-        # Attempt to get the running loop
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = None
+        # Lock the event loop initialization to prevent race conditions in multi-threaded environments
+        with loop_lock:
+            # Check if the event loop is already initialized and running
+            if event_loop_initialized and main_event_loop.is_running():
+                # If the loop is running, submit the asynchronous POST request to the loop
+                # This will not block the main thread
+                asyncio.run_coroutine_threadsafe(network_instance.post_async(request), main_event_loop)
+            else:
+                # If the event loop has not been initialized or is not running:
+                # 1. Mark the event loop as initialized
+                # 2. Create a new event loop
+                # 3. Start the event loop in a separate thread so it doesn't block the main thread
+                event_loop_initialized = True
+                main_event_loop = asyncio.new_event_loop()
+                threading.Thread(target=start_event_loop, args=(main_event_loop,), daemon=True).start()
+                
+                # Submit the asynchronous POST request to the newly started event loop
+                asyncio.run_coroutine_threadsafe(network_instance.post_async(request), main_event_loop)
 
-        if loop and loop.is_running():
-            # If an event loop is running, schedule the task safely
-            asyncio.run_coroutine_threadsafe(network_instance.post_async(request), loop)
-        else:
-            # If no event loop is running, run it in a new detached thread
-            run_in_thread(network_instance.post_async(request))
-        
-        return
-    
     except Exception as err:
         LogManager.get_instance().error(
             error_messages.get('NETWORK_CALL_FAILED').format(
-                method = 'POST',
-                err = err,
+                method='POST',
+                err=err,
             ),
         )
 
-# Function to run an asyncio event loop in a separate thread
-def run_in_thread(coro):
-    def run():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(coro)
-        finally:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
-
-    thread = threading.Thread(target=run)
-    thread.daemon = True  # Ensure the thread does not block program exit
-    thread.start()
+# Function to start the event loop in a new thread
+def start_event_loop(loop):
+    # Set the provided loop as the current event loop for the new thread
+    asyncio.set_event_loop(loop)
+    
+    # Run the event loop indefinitely to handle any submitted asynchronous tasks
+    loop.run_forever()
