@@ -21,11 +21,11 @@ GROUP_SCHEMA = {
                 "name": {"type": "string"},
                 "campaigns": {
                     "type": "array",
-                    "items": {"type": "number"},
+                    "items": {"type": "string"},
                     "uniqueItems": True,
                 },
                 "et": {"type": "number"},
-                "p": {"type": "array", "items": {"type": "number"}},
+                "p": {"type": "array", "items": {"type": "string"}},
                 "wt": {
                     "type": "object",
                     "patternProperties": {"^[0-9]+$": {"type": "number"}},

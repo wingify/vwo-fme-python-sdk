@@ -63,7 +63,6 @@ def evaluate_groups(
 
     for feature_key in feature_keys:
         featureToEvaluate = get_feature_from_key(settings, feature_key)
-        feature_campaign_ids = get_campaign_ids_from_feature_key(settings, feature_key)
 
         # Skip if the feature is already evaluated
         if feature_key in feature_to_skip:
@@ -80,19 +79,21 @@ def evaluate_groups(
         )
 
         if is_rollout_rule_passed:
-            for campaign in settings.get_campaigns():
-                # Check if the campaign belongs to the group and is part of the evaluated feature
-                if (
-                    campaign.get_id() in group_campaign_ids
-                    and campaign.get_id() in feature_campaign_ids
-                ):
-                    if feature_key not in campaign_map:
-                        campaign_map[feature_key] = []
-                    if not any(
-                        item.get_key() == campaign.get_key()
-                        for item in campaign_map[feature_key]
-                    ):
-                        campaign_map[feature_key].append(campaign)
+            for temp_feature in settings.get_features():
+                if temp_feature.get_key() == feature_key:
+                    for rule in temp_feature.get_rules_linked_campaign():
+                        if (
+                            str(rule.get_id()) in group_campaign_ids
+                            or f"{rule.get_id()}_{rule.get_variations()[0].get_id()}"
+                            in group_campaign_ids
+                        ):
+                            if feature_key not in campaign_map:
+                                campaign_map[feature_key] = []
+                            if not any(
+                                item.get_rule_key() == rule.get_rule_key()
+                                for item in campaign_map[feature_key]
+                            ):
+                                campaign_map[feature_key].append(rule)
 
     eligible_campaigns, eligible_campaigns_with_storage = _get_eligible_campaigns(
         settings, campaign_map, context, storage_service
@@ -105,6 +106,7 @@ def evaluate_groups(
         eligible_campaigns_with_storage,
         group_id,
         context,
+        storage_service,
     )
 
 
@@ -201,7 +203,14 @@ def _get_eligible_campaigns(
                     if variation:
                         LogManager.get_instance().info(
                             info_messages.get("MEG_CAMPAIGN_FOUND_IN_STORAGE").format(
-                                campaignKey=campaign.get_key(), userId=context.get_id()
+                                campaignKey=(
+                                    campaign.get_rule_key()
+                                    if campaign.get_type() == CampaignTypeEnum.AB.value
+                                    else campaign.get_name()
+                                    + "_"
+                                    + campaign.get_rule_key()
+                                ),
+                                userId=context.get_id(),
                             )
                         )
                         if not any(
@@ -220,7 +229,7 @@ def _get_eligible_campaigns(
             ):
                 LogManager.get_instance().info(
                     info_messages.get("MEG_CAMPAIGN_ELIGIBLE").format(
-                        campaignKey=campaign.get_key(), userId=context.get_id()
+                        campaignKey=campaign.get_rule_key(), userId=context.get_id()
                     )
                 )
                 eligible_campaigns.append(clone_object(campaign))
@@ -236,6 +245,7 @@ def _find_winner_campaign_among_eligible_campaigns(
     eligible_campaigns_with_storage: List[CampaignModel],
     group_id: int,
     context: ContextModel,
+    storage_service: StorageService,
 ) -> Optional[VariationModel]:
     winner_campaign = None
     campaign_ids = get_campaign_ids_from_feature_key(settings, feature_key)
@@ -247,7 +257,13 @@ def _find_winner_campaign_among_eligible_campaigns(
         winner_campaign_found = eligible_campaigns_with_storage[0]
         LogManager.get_instance().info(
             info_messages.get("MEG_WINNER_CAMPAIGN").format(
-                campaignKey=winner_campaign.get_key(),
+                campaignKey=(
+                    winner_campaign_found.get_key()
+                    if winner_campaign_found.get_type() == CampaignTypeEnum.AB.value
+                    else winner_campaign_found.get_name()
+                    + "_"
+                    + winner_campaign_found.get_rule_key()
+                ),
                 groupId=group_id,
                 userId=context.get_id(),
                 algo="",
@@ -259,11 +275,20 @@ def _find_winner_campaign_among_eligible_campaigns(
         and meg_algo_number == Constants.RANDOM_ALGO
     ):
         winner_campaign = _normalize_weights_and_find_winning_campaign(
-            eligible_campaigns_with_storage, context, campaign_ids, group_id
+            eligible_campaigns_with_storage,
+            context,
+            campaign_ids,
+            group_id,
+            storage_service,
         )
     elif len(eligible_campaigns_with_storage) > 1:
         winner_campaign = _get_campaign_using_advanced_algo(
-            settings, eligible_campaigns_with_storage, context, campaign_ids, group_id
+            settings,
+            eligible_campaigns_with_storage,
+            context,
+            campaign_ids,
+            group_id,
+            storage_service,
         )
 
     if not eligible_campaigns_with_storage:
@@ -271,7 +296,13 @@ def _find_winner_campaign_among_eligible_campaigns(
             winner_campaign_found = eligible_campaigns[0]
             LogManager.get_instance().info(
                 info_messages.get("MEG_WINNER_CAMPAIGN").format(
-                    campaignKey=winner_campaign.get_key(),
+                    campaignKey=(
+                        winner_campaign_found.get_key()
+                        if winner_campaign_found.get_type() == CampaignTypeEnum.AB.value
+                        else winner_campaign_found.get_name()
+                        + "_"
+                        + winner_campaign_found.get_rule_key()
+                    ),
                     groupId=group_id,
                     userId=context.get_id(),
                     algo="",
@@ -280,11 +311,16 @@ def _find_winner_campaign_among_eligible_campaigns(
             winner_campaign = convert_campaign_to_variation_model(winner_campaign_found)
         elif len(eligible_campaigns) > 1 and meg_algo_number == Constants.RANDOM_ALGO:
             winner_campaign = _normalize_weights_and_find_winning_campaign(
-                eligible_campaigns, context, campaign_ids, group_id
+                eligible_campaigns, context, campaign_ids, group_id, storage_service
             )
         elif len(eligible_campaigns) > 1:
             winner_campaign = _get_campaign_using_advanced_algo(
-                settings, eligible_campaigns, context, campaign_ids, group_id
+                settings,
+                eligible_campaigns,
+                context,
+                campaign_ids,
+                group_id,
+                storage_service,
             )
 
     return winner_campaign
@@ -295,15 +331,15 @@ def _normalize_weights_and_find_winning_campaign(
     context: ContextModel,
     called_campaign_ids: List[int],
     group_id: int,
+    storage_service: StorageService,
 ) -> Optional[VariationModel]:
 
     # Normalize weights and convert to VariationModel
     variation_models: List[VariationModel] = []
-
     for campaign in shortlisted_campaigns:
-        campaign.set_weight(
-            100 // len(shortlisted_campaigns)
-        )  # Example of weight normalization
+        # Example of weight normalization, to keep the result with four decimal places
+        weight = round(100 / len(shortlisted_campaigns) * 10000) / 10000
+        campaign.set_weight(weight)
 
         # Convert CampaignModel to VariationModel
         variation = convert_campaign_to_variation_model(campaign)
@@ -320,17 +356,43 @@ def _normalize_weights_and_find_winning_campaign(
         ),
     )
 
-    LogManager.get_instance().info(
-        info_messages.get("MEG_WINNER_CAMPAIGN").format(
-            campaignKey=winner_campaign.get_name(),
-            groupId=group_id,
-            userId=context.get_id(),
-            algo="using random algorithm",
+    if winner_campaign:
+        LogManager.get_instance().info(
+            info_messages.get("MEG_WINNER_CAMPAIGN").format(
+                campaignKey=(
+                    winner_campaign.get_key()
+                    if winner_campaign.get_type() == CampaignTypeEnum.AB.value
+                    else winner_campaign.get_name()
+                    + "_"
+                    + winner_campaign.get_rule_key()
+                ),
+                groupId=group_id,
+                userId=context.get_id(),
+                algo="using random algorithm",
+            )
         )
-    )
 
-    if winner_campaign and winner_campaign.get_id() in called_campaign_ids:
-        return winner_campaign
+        StorageDecorator().set_data_in_storage(
+            {
+                "featureKey": Constants.VWO_META_MEG_KEY + str(group_id),
+                "context": context,
+                "experimentId": winner_campaign.get_id(),
+                "experimentKey": winner_campaign.get_key(),
+                "experimentVariationId": (
+                    winner_campaign.get_variations()[0].get_id()
+                    if winner_campaign.get_type() == CampaignTypeEnum.PERSONALIZE.value
+                    else -1
+                ),
+            },
+            storage_service,
+        )
+
+        if winner_campaign.get_id() in called_campaign_ids:
+            return winner_campaign
+    else:
+        LogManager.get_instance().info(
+            f"No winner campaign found for group_id: {group_id} and user_id: {context.get_id()}"
+        )
     return None
 
 
@@ -340,6 +402,7 @@ def _get_campaign_using_advanced_algo(
     context: ContextModel,
     called_campaign_ids: List[int],
     group_id: int,
+    storage_service: StorageService,
 ) -> Optional[VariationModel]:
     winner_campaign = None
     found = False
@@ -349,7 +412,16 @@ def _get_campaign_using_advanced_algo(
 
     for priority_id in priority_order:
         for campaign in shortlisted_campaigns:
-            if campaign.get_id() == priority_id:
+            if str(campaign.get_id()) == priority_id:
+                winner_campaign = convert_campaign_to_variation_model(campaign)
+                found = True
+                break
+            elif (
+                str(campaign.get_id())
+                + "_"
+                + str(campaign.get_variations()[0].get_id())
+                == priority_id
+            ):
                 winner_campaign = convert_campaign_to_variation_model(campaign)
                 found = True
                 break
@@ -363,6 +435,21 @@ def _get_campaign_using_advanced_algo(
                 cloned_campaign = convert_campaign_to_variation_model(campaign)
                 cloned_campaign.set_weight(wt[str(campaign.get_id())])
                 participating_campaign_list.append(cloned_campaign)
+            elif (
+                str(campaign.get_id())
+                + "_"
+                + str(campaign.get_variations()[0].get_id())
+                in wt
+            ):
+                cloned_campaign = convert_campaign_to_variation_model(campaign)
+                cloned_campaign.set_weight(
+                    wt[
+                        str(campaign.get_id())
+                        + "_"
+                        + str(campaign.get_variations()[0].get_id())
+                    ]
+                )
+                participating_campaign_list.append(cloned_campaign)
 
         set_campaign_allocation(participating_campaign_list)
 
@@ -373,15 +460,41 @@ def _get_campaign_using_advanced_algo(
             ),
         )
 
-    LogManager.get_instance().info(
-        info_messages.get("MEG_WINNER_CAMPAIGN").format(
-            campaignKey=winner_campaign.get_name(),
-            groupId=group_id,
-            userId=context.get_id(),
-            algo="using advanced algorithm",
+    if winner_campaign:
+        LogManager.get_instance().info(
+            info_messages.get("MEG_WINNER_CAMPAIGN").format(
+                campaignKey=(
+                    winner_campaign.get_key()
+                    if winner_campaign.get_type() == CampaignTypeEnum.AB.value
+                    else winner_campaign.get_name()
+                    + "_"
+                    + winner_campaign.get_rule_key()
+                ),
+                groupId=group_id,
+                userId=context.get_id(),
+                algo="using advanced algorithm",
+            )
         )
-    )
 
-    if winner_campaign and winner_campaign.get_id() in called_campaign_ids:
-        return winner_campaign
+        StorageDecorator().set_data_in_storage(
+            {
+                "featureKey": Constants.VWO_META_MEG_KEY + str(group_id),
+                "context": context,
+                "experimentId": winner_campaign.get_id(),
+                "experimentKey": winner_campaign.get_key(),
+                "experimentVariationId": (
+                    winner_campaign.get_variations()[0].get_id()
+                    if winner_campaign.get_type() == CampaignTypeEnum.PERSONALIZE.value
+                    else -1
+                ),
+            },
+            storage_service,
+        )
+
+        if winner_campaign.get_id() in called_campaign_ids:
+            return winner_campaign
+    else:
+        LogManager.get_instance().info(
+            f"No winner campaign found for group_id: {group_id} and user_id: {context.get_id()}"
+        )
     return None

@@ -63,13 +63,7 @@ class CampaignDecisionService:
                 userId=user_id,
                 notPart="" if is_user_part else "not",
                 campaignKey=(
-                    campaign.get_name()
-                    if campaign.get_type()
-                    in [
-                        CampaignTypeEnum.ROLLOUT.value,
-                        CampaignTypeEnum.PERSONALIZE.value,
-                    ]
-                    else campaign.get_key()
+                    campaign.get_rule_key() if campaign.get_type() == CampaignTypeEnum.AB.value else campaign.get_name() + "_" + campaign.get_rule_key()
                 ),
             )
         )
@@ -140,7 +134,9 @@ class CampaignDecisionService:
         LogManager.get_instance().debug(
             debug_messages.get("USER_BUCKET_TO_VARIATION").format(
                 userId=user_id,
-                campaignKey=campaign.get_key(),
+                campaignKey=(
+                    campaign.get_rule_key() if campaign.get_type() == CampaignTypeEnum.AB.value else campaign.get_name() + "_" + campaign.get_rule_key()
+                ),
                 percentTraffic=percent_traffic,
                 bucketValue=bucket_value,
                 hashValue=hash_value,
@@ -175,9 +171,7 @@ class CampaignDecisionService:
                 info_messages.get("SEGMENTATION_SKIP").format(
                     userId=context.get_id(),
                     campaignKey=(
-                        campaign.get_rule_key()
-                        if not campaign.get_rule_key() == None
-                        else campaign.get_key()
+                        campaign.get_rule_key() if campaign.get_type() == CampaignTypeEnum.AB.value else campaign.get_name() + "_" + campaign.get_rule_key()
                     ),
                 )
             )
@@ -194,9 +188,7 @@ class CampaignDecisionService:
                     info_messages.get("SEGMENTATION_STATUS").format(
                         userId=context.get_id(),
                         campaignKey=(
-                            campaign.get_rule_key()
-                            if not campaign.get_rule_key() == None
-                            else campaign.get_key()
+                            campaign.get_rule_key() if campaign.get_type() == CampaignTypeEnum.AB.value else campaign.get_name() + "_" + campaign.get_rule_key()
                         ),
                         status="failed",
                     )
@@ -207,9 +199,7 @@ class CampaignDecisionService:
                 info_messages.get("SEGMENTATION_STATUS").format(
                     userId=context.get_id(),
                     campaignKey=(
-                        campaign.get_rule_key()
-                        if not campaign.get_rule_key() == None
-                        else campaign.get_key()
+                            campaign.get_rule_key() if campaign.get_type() == CampaignTypeEnum.AB.value else campaign.get_name() + "_" + campaign.get_rule_key()
                     ),
                     status="passed",
                 )

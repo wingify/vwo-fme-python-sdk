@@ -19,6 +19,7 @@ from ..models.campaign.campaign_model import CampaignModel
 from ..models.campaign.feature_model import FeatureModel
 from ..models.campaign.variation_model import VariationModel
 from ..models.settings.settings_model import SettingsModel
+from ..models.campaign.rule_model import RuleModel
 from ..packages.logger.core.log_manager import LogManager
 from .log_message_util import info_messages
 from typing import Optional, Dict, List
@@ -48,7 +49,7 @@ def set_variation_allocation(campaign: CampaignModel) -> None:
             LogManager.get_instance().info(
                 info_messages.get('VARIATION_RANGE_ALLOCATION').format(
                     variationKey=variation.get_name(),
-                    campaignKey=campaign.get_key(),
+                    campaignKey=campaign.get_rule_key(),
                     variationWeight=variation.get_weight(),
                     startRange=variation.get_start_range_variation(),
                     endRange=variation.get_end_range_variation(),
@@ -165,7 +166,7 @@ def set_campaign_allocation(campaigns: List[VariationModel]) -> None:
         step_factor = assign_range_values_meg(campaign, current_allocation)
         current_allocation += step_factor
 
-def get_group_details_if_campaign_part_of_it(settings: SettingsModel, campaign_id: str) -> Dict:
+def get_group_details_if_campaign_part_of_it(settings: SettingsModel, campaign_id: str, variationId: Optional[int] = None) -> Dict:
     """
     Retrieves group details if a campaign is part of a group.
 
@@ -175,12 +176,16 @@ def get_group_details_if_campaign_part_of_it(settings: SettingsModel, campaign_i
     Args:
         settings (SettingsModel): The settings object containing group information.
         campaign_id (int): The unique identifier for the campaign.
+        variationId (Optional[int]): The unique identifier for the variation.
 
     Returns:
         Dict: A dictionary containing group ID and group name if the campaign is part of a group, otherwise an empty dictionary.
     """
-    if settings.get_campaign_groups() and campaign_id in settings.get_campaign_groups():
-        group_id = str(settings.get_campaign_groups()[campaign_id])
+    campaign_to_check = campaign_id
+    if variationId:
+        campaign_to_check = campaign_id + "_" + str(variationId)
+    if settings.get_campaign_groups() and campaign_to_check in settings.get_campaign_groups():
+        group_id = str(settings.get_campaign_groups()[campaign_to_check])
         group_name = settings.get_groups()[group_id]['name']
         return {"groupId": group_id, "groupName": group_name}
     
@@ -200,17 +205,21 @@ def find_groups_feature_part_of(settings: SettingsModel, feature_key: str) -> Li
     Returns:
         List: A List of dictionaries containing group details for each group the feature is part of.
     """
-    campaign_ids = []
+    ruleArrayList: List[RuleModel] = []
     
     for feature in settings.get_features():
         if feature.get_key() == feature_key:
             for rule in feature.get_rules():
-                if rule.get_campaign_id() not in campaign_ids:
-                    campaign_ids.append(rule.get_campaign_id())
+                # Add rule to the array if it's not already present
+                if rule not in ruleArrayList:
+                    ruleArrayList.append(rule)
     
     groups = []
-    for campaign_id in campaign_ids:
-        group = get_group_details_if_campaign_part_of_it(settings, str(campaign_id))
+
+    # Iterate over each rule to find the group details
+    for rule in ruleArrayList:
+        group = get_group_details_if_campaign_part_of_it(settings, str(rule.get_campaign_id()), rule.get_variation_id() if rule.get_type() == CampaignTypeEnum.PERSONALIZE.value else None)
+        # Add group to the array if it's not already present
         if group.get("groupId") and group not in groups:
             groups.append(group)
     
@@ -235,7 +244,7 @@ def get_campaigns_by_group_id(settings: SettingsModel, group_id: int) -> List:
         return group['campaigns']
     return []
 
-def get_feature_keys_from_campaign_ids(settings: SettingsModel, campaign_ids: List) -> List:
+def get_feature_keys_from_campaign_ids(settings: SettingsModel, campaign_id_with_variation: List) -> List:
     """
     Retrieves the feature keys associated with a List of campaign IDs.
 
@@ -251,11 +260,26 @@ def get_feature_keys_from_campaign_ids(settings: SettingsModel, campaign_ids: Li
     """
     feature_keys = []
     
-    for campaign_id in campaign_ids:
+    for campaign in campaign_id_with_variation:
+        # split key with _ to separate campaignId and variationId
+        campaign_id_variation_id = campaign.split("_")
+        campaign_id = int(campaign_id_variation_id[0])
+        variation_id = int(campaign_id_variation_id[1]) if len(campaign_id_variation_id) > 1 else None
+        # Iterate over each feature to find the feature key
         for feature in settings.get_features():
+            # check if feature is already present in the list
+            if feature.get_key() in feature_keys:
+                continue
             for rule in feature.get_rules():
                 if rule.get_campaign_id() == campaign_id:
-                    feature_keys.append(feature.get_key())
+                    # Check if variationId is provided and matches the rule's variationId
+                    if variation_id is not None:
+                        # Add feature key if variationId matches
+                        if rule.get_variation_id() == variation_id:
+                            feature_keys.append(feature.get_key())
+                    else:
+                        # Add feature key if no variationId is provided
+                        feature_keys.append(feature.get_key())
     
     return feature_keys
 
@@ -364,7 +388,7 @@ def _handle_rollout_campaign(campaign: CampaignModel) -> None:
         LogManager.get_instance().info(
             info_messages.get('VARIATION_RANGE_ALLOCATION').format(
                 variationKey=variation.get_name(),
-                campaignKey=campaign.get_key(),
+                campaignKey=campaign.get_rule_key(),
                 variationWeight=variation.get_weight(),
                 startRange=1,
                 endRange=end_range,

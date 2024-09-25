@@ -16,39 +16,41 @@
 class Constants:
     # Mock package_file equivalent
     package_file = {
-        'name': 'vwo-fme-python-sdk',  # Replace with actual package name
-        'version': '1.1.0'           # Replace with actual package version
+        "name": "vwo-fme-python-sdk",  # Replace with actual package name
+        "version": "1.1.0",  # Replace with actual package version
     }
 
     # Constants
-    SDK_NAME = package_file['name']
-    SDK_VERSION = package_file['version']
+    SDK_NAME = package_file["name"]
+    SDK_VERSION = package_file["version"]
 
-    PLATFORM = 'server'
+    PLATFORM = "server"
 
     MAX_TRAFFIC_PERCENT = 100
     MAX_TRAFFIC_VALUE = 10000
-    STATUS_RUNNING = 'RUNNING'
+    STATUS_RUNNING = "RUNNING"
 
     SEED_VALUE = 1
     MAX_EVENTS_PER_REQUEST = 5000
     DEFAULT_REQUEST_TIME_INTERVAL = 600  # 10 * 60(secs) = 600 secs i.e. 10 minutes
     DEFAULT_EVENTS_PER_REQUEST = 100
 
-    AP = 'server'
+    AP = "server"
 
-    SEED_URL = 'https://example.com/seed'  # Replace with actual URL or value
-    HTTP_PROTOCOL = 'http'
-    HTTPS_PROTOCOL = 'https'
+    SEED_URL = "https://example.com/seed"  # Replace with actual URL or value
+    HTTP_PROTOCOL = "http"
+    HTTPS_PROTOCOL = "https"
 
-    SETTINGS = 'settings'
+    SETTINGS = "settings"
     SETTINGS_EXPIRY = 10000000
     SETTINGS_TIMEOUT = 50000
 
-    HOST_NAME = 'dev.visualwebsiteoptimizer.com'  # TODO: change as needed
-    SETTINGS_ENDPOINT = '/server-side/v2-settings'
-    LOCATION_ENDPOINT = '/getLocation'
+    HOST_NAME = "dev.visualwebsiteoptimizer.com"  # TODO: change as needed
+    SETTINGS_ENDPOINT = "/server-side/v2-settings"
+    LOCATION_ENDPOINT = "/getLocation"
 
-    VWO_FS_ENVIRONMENT = 'vwo_fs_environment'
+    VWO_FS_ENVIRONMENT = "vwo_fs_environment"
 
     RANDOM_ALGO = 1
+
+    VWO_META_MEG_KEY = "_vwo_meta_meg_"

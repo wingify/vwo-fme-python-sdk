@@ -14,6 +14,6 @@
 
 CAMPAIGN_GROUP_SCHEMA = {
     "type": "object",
-    "patternProperties": {"^[0-9]+$": {"type": "number"}},
+    "patternProperties": {"^[0-9_]+$": {"type": "number"}},
     "additionalProperties": False,
 }

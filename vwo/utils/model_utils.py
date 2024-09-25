@@ -72,6 +72,9 @@ def _parse_variation(variation_data: Dict[str, Any]) -> VariationModel:
             variables=variables,
             start_range_variation=variation_data.get('startRangeVariation', None),
             end_range_variation=variation_data.get('endRangeVariation', None),
+            key=variation_data.get('key', None),
+            rule_key=variation_data.get('ruleKey', None),
+            type=variation_data.get('type', None),
             variations=[_parse_variation(var) for var in variation_data.get('variations', [])]
         )
 
@@ -108,5 +111,8 @@ def convert_campaign_to_variation_model(campaign: CampaignModel):
             campaign.get_variables(),
             campaign.get_start_range_variation(),
             campaign.get_end_range_variation(),
+            campaign.get_key(),
+            campaign.get_rule_key(),
+            campaign.get_type(),
             campaign.get_variations()
         )

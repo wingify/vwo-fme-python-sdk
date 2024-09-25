@@ -17,25 +17,26 @@ import sys
 import os
 
 # Add the parent directory to the sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 # Now you can import the module
 from vwo.packages.storage.connector import StorageConnector
 
 client_db: Dict[str, Dict] = {}
 
+
 class user_storage(StorageConnector):
     def get(self, key: str, user_id: str):
-        return client_db.get(key + '_' + user_id)
-        
+        return client_db.get(key + "_" + user_id)
+
     def set(self, value: Dict[str, Any]):
-        key = value.get('featureKey') + '_' + value.get('user')
+        key = value.get("featureKey") + "_" + value.get("userId")
         client_db[key] = {
-            'rolloutKey' : value.get('rolloutKey'),
-            'rolloutVariationId' : value.get('rolloutVariationId'),
-            'rolloutId' : value.get('rolloutId'),
-            'experimentKey' : value.get('experimentKey'),
-            'experimentVariationId' : value.get('experimentVariationId'),
-            'experimentId' : value.get('experimentId'),
+            "rolloutKey": value.get("rolloutKey"),
+            "rolloutVariationId": value.get("rolloutVariationId"),
+            "rolloutId": value.get("rolloutId"),
+            "experimentKey": value.get("experimentKey"),
+            "experimentVariationId": value.get("experimentVariationId"),
+            "experimentId": value.get("experimentId"),
         }
         return True

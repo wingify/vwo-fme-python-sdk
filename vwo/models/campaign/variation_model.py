@@ -20,7 +20,7 @@ from .variable_model import VariableModel
 
 class VariationModel:
     def __init__(self, id: int, segments: Dict[str, Any], weight: float, name: str, variables: List[VariableModel],
-                 start_range_variation: float, end_range_variation: float, variations: List['VariationModel'] = []):
+                 start_range_variation: float, end_range_variation: float, key: str, rule_key: str, type: str, variations: List['VariationModel'] = []):
         self._id = id
         self._segments = segments
         self._weight = weight
@@ -29,12 +29,25 @@ class VariationModel:
         self._start_range_variation = start_range_variation
         self._end_range_variation = end_range_variation
         self._variations = variations
+        self._rule_key = rule_key
+        self._type = type
+        self._key = key
+
 
     def get_id(self) -> int:
         return self._id
 
     def get_segments(self) -> Dict[str, Any]:
         return self._segments
+    
+    def get_rule_key(self) -> str:
+        return self._rule_key
+    
+    def get_type(self) -> str:
+        return self._type
+    
+    def get_key(self) -> str:
+        return self._key
 
     def get_weight(self) -> float:
         return self._weight
@@ -65,3 +78,12 @@ class VariationModel:
 
     def set_weight(self, weight: float) -> None:
         self._weight = weight
+
+    def set_rule_key(self, rule_key: str) -> None:
+        self._rule_key = rule_key
+    
+    def set_type(self, type: str) -> None:
+        self._type = type
+
+    def set_key(self, key: str) -> None:
+        self._key = key

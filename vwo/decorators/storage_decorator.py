@@ -21,6 +21,7 @@ from ..services.storage_service import StorageService
 from ..packages.logger.core.log_manager import LogManager
 from ..utils.log_message_util import error_messages
 
+
 class StorageDecorator:
     def get_feature_from_storage(
         self, feature_key: str, context: ContextModel, storage_service: StorageService
@@ -42,44 +43,66 @@ class StorageDecorator:
         else:
             return campaign_map  # Valid data found, return it
 
-    def set_data_in_storage(self, data: Dict[Any, Any], storage_service: StorageService) -> Optional[VariationModel]:
-        feature_key = data.get('featureKey')
-        context = data.get('context')
+    def set_data_in_storage(
+        self, data: Dict[Any, Any], storage_service: StorageService
+    ) -> Optional[VariationModel]:
+        feature_key = data.get("featureKey")
+        context = data.get("context")
 
         if not feature_key:
             LogManager.get_instance().error(
-                error_messages.get(error_messages.get('STORED_DATA_ERROR').format(key = 'featureKey'))
+                error_messages.get(
+                    error_messages.get("STORED_DATA_ERROR").format(key="featureKey")
+                )
             )
             return None  # Invalid feature key, return None
 
         if not context or not context.get_id():
             LogManager.get_instance().error(
-                error_messages.get(error_messages.get('STORED_DATA_ERROR').format(key = 'Context or Context.id'))
+                error_messages.get(
+                    error_messages.get("STORED_DATA_ERROR").format(
+                        key="Context or Context.id"
+                    )
+                )
             )
             return None  # Invalid user ID, return None
 
-        if data.get('rolloutKey') and not data.get('experimentKey') and not data.get('rolloutVariationId'):
+        if (
+            data.get("rolloutKey")
+            and not data.get("experimentKey")
+            and not data.get("rolloutVariationId")
+        ):
             LogManager.get_instance().error(
-                error_messages.get(error_messages.get('STORED_DATA_ERROR').format(key = 'Context or Context.id'))
+                error_messages.get(
+                    error_messages.get("STORED_DATA_ERROR").format(
+                        key="Context or Context.id"
+                    )
+                )
             )
             return None  # Invalid rollout variation, return None
 
-        if data.get('experimentKey') and not data.get('experimentVariationId'):
+        if data.get("experimentKey") and not data.get("experimentVariationId"):
             LogManager.get_instance().error(
-                error_messages.get(error_messages.get('STORED_DATA_ERROR').format(key = 'Variation:(rolloutKey, experimentKey or rolloutVariationId)'))
+                error_messages.get(
+                    error_messages.get("STORED_DATA_ERROR").format(
+                        key="Variation:(rolloutKey, experimentKey or rolloutVariationId)"
+                    )
+                )
             )
             return None  # Invalid experiment variation, return None
 
-        success = storage_service.set_data_in_storage({
-            'featureKey': feature_key,
-            'user': context.get_id(),
-            'rolloutId': data.get('rolloutId'),
-            'rolloutKey': data.get('rolloutKey'),
-            'rolloutVariationId': data.get('rolloutVariationId'),
-            'experimentId': data.get('experimentId'),
-            'experimentKey': data.get('experimentKey'),
-            'experimentVariationId': data.get('experimentVariationId')
-        })
+        success = storage_service.set_data_in_storage(
+            {
+                "featureKey": feature_key,
+                "userId": context.get_id(),
+                "rolloutId": data.get("rolloutId"),
+                "rolloutKey": data.get("rolloutKey"),
+                "rolloutVariationId": data.get("rolloutVariationId"),
+                "experimentId": data.get("experimentId"),
+                "experimentKey": data.get("experimentKey"),
+                "experimentVariationId": data.get("experimentVariationId"),
+            }
+        )
 
         if success:
             return True
