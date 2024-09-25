@@ -121,7 +121,7 @@ class PostDevelopCommand(develop):
 
 setup(
     name="vwo-fme-python-sdk",
-    version="1.1.0",
+    version="1.2.0",
     description="VWO Feature Management and Experimentation SDK for Python",
     long_description=long_description,
     long_description_content_type="text/markdown",
