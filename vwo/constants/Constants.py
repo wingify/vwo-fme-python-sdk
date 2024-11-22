@@ -17,7 +17,7 @@ class Constants:
     # Mock package_file equivalent
     package_file = {
         "name": "vwo-fme-python-sdk",  # Replace with actual package name
-        "version": "1.2.0",  # Replace with actual package version
+        "version": "1.3.0",  # Replace with actual package version
     }
 
     # Constants
@@ -47,6 +47,7 @@ class Constants:
 
     HOST_NAME = "dev.visualwebsiteoptimizer.com"  # TODO: change as needed
     SETTINGS_ENDPOINT = "/server-side/v2-settings"
+    WEBHOOK_SETTINTS_ENDPOINT = "/server-side/v2-pull"
     LOCATION_ENDPOINT = "/getLocation"
 
     VWO_FS_ENVIRONMENT = "vwo_fs_environment"

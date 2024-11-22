@@ -284,3 +284,49 @@ class VWOClient:
                 )
             )
             return
+
+    def update_settings(self, settings: Dict = None, is_via_webhook=True):
+        """
+        Updates the settings for the client.
+        :param settings: The settings to update.
+        :param is_via_webhook: Whether the settings are being updated via webhook.
+        """
+
+        api_name = "update_settings"
+
+        try:
+            LogManager.get_instance().debug(
+                debug_messages.get("API_CALLED").format(apiName=api_name)
+            )
+
+            # check if settings are None or empty
+            settings_to_update = settings
+            if settings_to_update is None or settings_to_update == {}:
+                # fetch the latest settings
+                settings_to_update = SettingsManager.get_instance().fetch_settings(
+                    is_via_webhook
+                )
+
+            # validate the settings
+            if not SettingsManager.is_settings_valid(settings_to_update):
+                LogManager.get_instance().error(
+                    error_messages.get("API_SETTING_INVALID")
+                )
+                raise ValueError("TypeError: Invalid Settings schema")
+
+            # update the settings
+            set_settings_and_add_campaigns_to_rules(settings_to_update, self)
+            LogManager.get_instance().info(
+                info_messages.get("SETTINGS_UPDATED").format(
+                    apiName=api_name, isViaWebhook=is_via_webhook
+                )
+            )
+            return
+
+        except Exception as err:
+            LogManager.get_instance().error(
+                error_messages.get("SETTINGS_FETCH_FAILED").format(
+                    apiName=api_name, isViaWebhook=is_via_webhook, err=str(err)
+                )
+            )
+            return

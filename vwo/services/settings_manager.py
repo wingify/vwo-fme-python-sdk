@@ -88,7 +88,7 @@ class SettingsManager:
             )
             return None
 
-    def fetch_settings(self):
+    def fetch_settings(self, is_via_webhook=False):
         if not self.sdk_key or not self.account_id:
             raise ValueError(
                 "sdk_key is required for fetching account settings. Aborting!"
@@ -101,11 +101,17 @@ class SettingsManager:
         if not network_instance.get_config().get_development_mode():
             options["s"] = "prod"
 
+        endpoint = (
+            Constants.SETTINGS_ENDPOINT
+            if not is_via_webhook
+            else Constants.WEBHOOK_SETTINTS_ENDPOINT
+        )
+
         try:
             request = RequestModel(
                 self.hostname,
                 "GET",
-                Constants.SETTINGS_ENDPOINT,
+                endpoint,
                 options,
                 None,
                 None,
