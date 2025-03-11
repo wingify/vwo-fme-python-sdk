@@ -25,6 +25,7 @@ from .log_message_util import info_messages
 from typing import Optional, Dict, List
 import math
 
+
 def set_variation_allocation(campaign: CampaignModel) -> None:
     """
     Allocates traffic ranges to variations within a campaign.
@@ -39,7 +40,10 @@ def set_variation_allocation(campaign: CampaignModel) -> None:
     Returns:
         None
     """
-    if campaign.get_type() in [CampaignTypeEnum.ROLLOUT.value, CampaignTypeEnum.PERSONALIZE.value]:
+    if campaign.get_type() in [
+        CampaignTypeEnum.ROLLOUT.value,
+        CampaignTypeEnum.PERSONALIZE.value,
+    ]:
         _handle_rollout_campaign(campaign)
     else:
         current_allocation = 0
@@ -47,7 +51,7 @@ def set_variation_allocation(campaign: CampaignModel) -> None:
             step_factor = assign_range_values(variation, current_allocation)
             current_allocation += step_factor
             LogManager.get_instance().info(
-                info_messages.get('VARIATION_RANGE_ALLOCATION').format(
+                info_messages.get("VARIATION_RANGE_ALLOCATION").format(
                     variationKey=variation.get_name(),
                     campaignKey=campaign.get_rule_key(),
                     variationWeight=variation.get_weight(),
@@ -55,6 +59,7 @@ def set_variation_allocation(campaign: CampaignModel) -> None:
                     endRange=variation.get_end_range_variation(),
                 )
             )
+
 
 def assign_range_values(data: VariationModel, current_allocation: int) -> int:
     """
@@ -78,8 +83,9 @@ def assign_range_values(data: VariationModel, current_allocation: int) -> int:
     else:
         data.set_start_range_variation(-1)
         data.set_end_range_variation(-1)
-    
+
     return step_factor
+
 
 def scale_variation_weights(variations: List[VariationModel]) -> None:
     """
@@ -95,7 +101,7 @@ def scale_variation_weights(variations: List[VariationModel]) -> None:
         None
     """
     total_weight = sum(variation.get_weight() for variation in variations)
-    
+
     if total_weight == 0:
         equal_weight = 100 / len(variations)
         for variation in variations:
@@ -104,7 +110,10 @@ def scale_variation_weights(variations: List[VariationModel]) -> None:
         for variation in variations:
             variation.set_weight((variation.get_weight() / total_weight) * 100)
 
-def get_bucketing_seed(user_id: str, campaign: CampaignModel, group_id: Optional[int] = None) -> str:
+
+def get_bucketing_seed(
+    user_id: str, campaign: CampaignModel, group_id: Optional[int] = None
+) -> str:
     """
     Generates a seed for bucketing based on user ID and campaign/group context.
 
@@ -122,9 +131,25 @@ def get_bucketing_seed(user_id: str, campaign: CampaignModel, group_id: Optional
     """
     if group_id is not None:
         return f"{group_id}_{user_id}"
-    return f"{campaign.get_id()}_{user_id}"
 
-def get_variation_from_campaign_key(settings: SettingsModel, campaign_key: str, variation_id: int) -> Optional[VariationModel]:
+    is_rollout_or_personalize = campaign.get_type() in [
+        CampaignTypeEnum.ROLLOUT.value,
+        CampaignTypeEnum.PERSONALIZE.value,
+    ]
+    if is_rollout_or_personalize:
+        salt = campaign.get_variations()[0].get_salt()
+    else:
+        salt = campaign.get_salt()
+
+    if salt:
+        return f"{salt}_{user_id}"
+    else:
+        return f"{campaign.get_id()}_{user_id}"
+
+
+def get_variation_from_campaign_key(
+    settings: SettingsModel, campaign_key: str, variation_id: int
+) -> Optional[VariationModel]:
     """
     Retrieves a variation from a campaign by its key and variation ID.
 
@@ -139,14 +164,19 @@ def get_variation_from_campaign_key(settings: SettingsModel, campaign_key: str, 
     Returns:
         Optional[VariationModel]: The variation object if found, otherwise None.
     """
-    campaign = next((c for c in settings.get_campaigns() if c.get_key() == campaign_key), None)
-    
+    campaign = next(
+        (c for c in settings.get_campaigns() if c.get_key() == campaign_key), None
+    )
+
     if campaign:
-        variation = next((v for v in campaign.get_variations() if v.get_id() == variation_id), None)
+        variation = next(
+            (v for v in campaign.get_variations() if v.get_id() == variation_id), None
+        )
         if variation:
             return variation
-    
+
     return None
+
 
 def set_campaign_allocation(campaigns: List[VariationModel]) -> None:
     """
@@ -166,7 +196,10 @@ def set_campaign_allocation(campaigns: List[VariationModel]) -> None:
         step_factor = assign_range_values_meg(campaign, current_allocation)
         current_allocation += step_factor
 
-def get_group_details_if_campaign_part_of_it(settings: SettingsModel, campaign_id: str, variationId: Optional[int] = None) -> Dict:
+
+def get_group_details_if_campaign_part_of_it(
+    settings: SettingsModel, campaign_id: str, variationId: Optional[int] = None
+) -> Dict:
     """
     Retrieves group details if a campaign is part of a group.
 
@@ -184,12 +217,16 @@ def get_group_details_if_campaign_part_of_it(settings: SettingsModel, campaign_i
     campaign_to_check = campaign_id
     if variationId:
         campaign_to_check = campaign_id + "_" + str(variationId)
-    if settings.get_campaign_groups() and campaign_to_check in settings.get_campaign_groups():
+    if (
+        settings.get_campaign_groups()
+        and campaign_to_check in settings.get_campaign_groups()
+    ):
         group_id = str(settings.get_campaign_groups()[campaign_to_check])
-        group_name = settings.get_groups()[group_id]['name']
+        group_name = settings.get_groups()[group_id]["name"]
         return {"groupId": group_id, "groupName": group_name}
-    
+
     return {}
+
 
 def find_groups_feature_part_of(settings: SettingsModel, feature_key: str) -> List:
     """
@@ -206,24 +243,33 @@ def find_groups_feature_part_of(settings: SettingsModel, feature_key: str) -> Li
         List: A List of dictionaries containing group details for each group the feature is part of.
     """
     ruleArrayList: List[RuleModel] = []
-    
+
     for feature in settings.get_features():
         if feature.get_key() == feature_key:
             for rule in feature.get_rules():
                 # Add rule to the array if it's not already present
                 if rule not in ruleArrayList:
                     ruleArrayList.append(rule)
-    
+
     groups = []
 
     # Iterate over each rule to find the group details
     for rule in ruleArrayList:
-        group = get_group_details_if_campaign_part_of_it(settings, str(rule.get_campaign_id()), rule.get_variation_id() if rule.get_type() == CampaignTypeEnum.PERSONALIZE.value else None)
+        group = get_group_details_if_campaign_part_of_it(
+            settings,
+            str(rule.get_campaign_id()),
+            (
+                rule.get_variation_id()
+                if rule.get_type() == CampaignTypeEnum.PERSONALIZE.value
+                else None
+            ),
+        )
         # Add group to the array if it's not already present
         if group.get("groupId") and group not in groups:
             groups.append(group)
-    
+
     return groups
+
 
 def get_campaigns_by_group_id(settings: SettingsModel, group_id: int) -> List:
     """
@@ -241,10 +287,13 @@ def get_campaigns_by_group_id(settings: SettingsModel, group_id: int) -> List:
     """
     group = settings.get_groups().get(group_id)
     if group:
-        return group['campaigns']
+        return group["campaigns"]
     return []
 
-def get_feature_keys_from_campaign_ids(settings: SettingsModel, campaign_id_with_variation: List) -> List:
+
+def get_feature_keys_from_campaign_ids(
+    settings: SettingsModel, campaign_id_with_variation: List
+) -> List:
     """
     Retrieves the feature keys associated with a List of campaign IDs.
 
@@ -259,12 +308,16 @@ def get_feature_keys_from_campaign_ids(settings: SettingsModel, campaign_id_with
         List: A List of feature keys associated with the given campaign IDs.
     """
     feature_keys = []
-    
+
     for campaign in campaign_id_with_variation:
         # split key with _ to separate campaignId and variationId
         campaign_id_variation_id = campaign.split("_")
         campaign_id = int(campaign_id_variation_id[0])
-        variation_id = int(campaign_id_variation_id[1]) if len(campaign_id_variation_id) > 1 else None
+        variation_id = (
+            int(campaign_id_variation_id[1])
+            if len(campaign_id_variation_id) > 1
+            else None
+        )
         # Iterate over each feature to find the feature key
         for feature in settings.get_features():
             # check if feature is already present in the list
@@ -280,10 +333,13 @@ def get_feature_keys_from_campaign_ids(settings: SettingsModel, campaign_id_with
                     else:
                         # Add feature key if no variationId is provided
                         feature_keys.append(feature.get_key())
-    
+
     return feature_keys
 
-def get_campaign_ids_from_feature_key(settings: SettingsModel, feature_key: str) -> List:
+
+def get_campaign_ids_from_feature_key(
+    settings: SettingsModel, feature_key: str
+) -> List:
     """
     Retrieves the campaign IDs associated with a given feature key.
 
@@ -298,13 +354,14 @@ def get_campaign_ids_from_feature_key(settings: SettingsModel, feature_key: str)
         List: A List of campaign IDs associated with the given feature key.
     """
     campaign_ids = []
-    
+
     for feature in settings.get_features():
         if feature.get_key() == feature_key:
             for rule in feature.get_rules():
                 campaign_ids.append(rule.get_campaign_id())
-    
+
     return campaign_ids
+
 
 def assign_range_values_meg(data: VariationModel, current_allocation: int) -> int:
     """
@@ -321,17 +378,20 @@ def assign_range_values_meg(data: VariationModel, current_allocation: int) -> in
         int: The step factor indicating the range size allocated to the variation.
     """
     step_factor = _get_variation_bucket_range(data.get_weight())
-    
+
     if step_factor:
         data.set_start_range_variation(current_allocation)
         data.set_end_range_variation(current_allocation + step_factor)
     else:
         data.set_start_range_variation(-1)
         data.set_end_range_variation(-1)
-    
+
     return step_factor
 
-def get_rule_type_using_campaign_id_from_feature(feature: FeatureModel, campaign_id: int) -> str:
+
+def get_rule_type_using_campaign_id_from_feature(
+    feature: FeatureModel, campaign_id: int
+) -> str:
     """
     Retrieves the rule type associated with a specific campaign ID from a feature.
 
@@ -345,8 +405,11 @@ def get_rule_type_using_campaign_id_from_feature(feature: FeatureModel, campaign
     Returns:
         str: The type of the rule associated with the campaign ID, or an empty string if not found.
     """
-    rule = next((r for r in feature.get_rules() if r.get_campaign_id() == campaign_id), None)
-    return rule.get_type() if rule else ''
+    rule = next(
+        (r for r in feature.get_rules() if r.get_campaign_id() == campaign_id), None
+    )
+    return rule.get_type() if rule else ""
+
 
 def _get_variation_bucket_range(variation_weight: int) -> int:
     """
@@ -363,9 +426,10 @@ def _get_variation_bucket_range(variation_weight: int) -> int:
     """
     if not variation_weight:
         return 0
-    
+
     start_range = min(math.ceil(variation_weight * 100), Constants.MAX_TRAFFIC_VALUE)
     return start_range
+
 
 def _handle_rollout_campaign(campaign: CampaignModel) -> None:
     """
@@ -384,9 +448,9 @@ def _handle_rollout_campaign(campaign: CampaignModel) -> None:
         end_range = variation.get_weight() * 100
         variation.set_start_range_variation(1)
         variation.set_end_range_variation(end_range)
-        
+
         LogManager.get_instance().info(
-            info_messages.get('VARIATION_RANGE_ALLOCATION').format(
+            info_messages.get("VARIATION_RANGE_ALLOCATION").format(
                 variationKey=variation.get_name(),
                 campaignKey=campaign.get_rule_key(),
                 variationWeight=variation.get_weight(),

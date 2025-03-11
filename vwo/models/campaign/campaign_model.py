@@ -18,11 +18,31 @@ from .variation_model import VariationModel
 from .variable_model import VariableModel
 from .metric_model import MetricModel
 
+
 class CampaignModel:
-    def __init__(self, id: int, isForcedVariationEnabled: bool, segments: Dict[str, Any], variations: List[VariationModel], 
-                status: str, type: str, key: str, isAlwaysCheckSegment: bool, name: str, percentTraffic: Optional[int] = None,
-                  is_user_list_enabled: bool = False, metrics: List[Dict[str, Any]] = [], variables: List[Dict[str, Any]] = [],
-                  variation_id: int = None, campaign_id: int = None, rule_key: str = None, weight: float = 0, start_range_variation: float = None, end_range_variation: float = None):
+    def __init__(
+        self,
+        id: int,
+        isForcedVariationEnabled: bool,
+        segments: Dict[str, Any],
+        variations: List[VariationModel],
+        status: str,
+        type: str,
+        key: str,
+        isAlwaysCheckSegment: bool,
+        name: str,
+        percentTraffic: Optional[int] = None,
+        is_user_list_enabled: bool = False,
+        metrics: List[Dict[str, Any]] = [],
+        variables: List[Dict[str, Any]] = [],
+        variation_id: int = None,
+        campaign_id: int = None,
+        rule_key: str = None,
+        weight: float = 0,
+        start_range_variation: float = None,
+        end_range_variation: float = None,
+        salt: str = None,
+    ):
         self._id = id
         self._segments = segments
         self._percent_traffic = percentTraffic
@@ -42,6 +62,7 @@ class CampaignModel:
         self._weight = weight
         self._start_range_variation = start_range_variation
         self._end_range_variation = end_range_variation
+        self._salt = salt
 
     def get_id(self) -> int:
         return self._id
@@ -72,28 +93,28 @@ class CampaignModel:
 
     def get_percent_traffic(self) -> Optional[int]:
         return self._percent_traffic
-    
+
     def get_is_user_list_enabled(self) -> bool:
         return self.is_user_list_enabled
-    
+
     def get_metrics(self) -> List[MetricModel]:
         return self._metrics
-    
+
     def get_variables(self) -> List[VariableModel]:
         return self._variables
-    
+
     def get_variation_id(self) -> int:
         return self._variation_id
-    
+
     def get_campaign_id(self) -> int:
         return self._campaign_id
-    
+
     def get_rule_key(self) -> str:
         return self._rule_key
-    
+
     def set_rule_key(self, rule_key: str) -> None:
         self._rule_key = rule_key
-    
+
     def set_variations(self, variations: List[VariationModel]) -> None:
         self._variations = variations
 
@@ -102,18 +123,18 @@ class CampaignModel:
 
     def get_weight(self) -> float:
         return self._weight
-    
+
     def get_start_range_variation(self) -> float:
         return self._start_range_variation
-    
+
     def get_end_range_variation(self) -> float:
         return self._end_range_variation
-    
+
     def set_start_range_variation(self, start_range_variation: float) -> None:
         self._start_range_variation = start_range_variation
-    
+
     def set_end_range_variation(self, end_range_variation: float) -> None:
         self._end_range_variation = end_range_variation
 
-    
-    
+    def get_salt(self) -> str:
+        return self._salt

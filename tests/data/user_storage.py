@@ -40,3 +40,7 @@ class user_storage(StorageConnector):
             "experimentId": value.get("experimentId"),
         }
         return True
+
+    def clear(self):
+        """Clear the storage."""
+        client_db.clear()

@@ -22,42 +22,59 @@ from ..models.campaign.feature_model import FeatureModel
 from ..models.campaign.campaign_model import CampaignModel
 from ..models.campaign.feature_model import FeatureModel
 from ..models.settings.settings_model import SettingsModel
-from ..enums.campaign_type_enum import CampaignTypeEnum 
+from ..enums.campaign_type_enum import CampaignTypeEnum
 import copy
+
 
 def clone_object(obj: Any) -> Any:
     if obj is None:
         return obj
     return copy.deepcopy(obj)
 
+
 def get_current_unix_timestamp() -> int:
     return int(time.time())
+
 
 def get_current_unix_timestamp_in_millis() -> int:
     return int(time.time() * 1000)
 
+
 def get_random_number() -> float:
     return random.random()
 
-def get_specific_rules_based_on_type(feature: FeatureModel, type: Optional[str] = None) -> List[CampaignModel]:
+
+def get_specific_rules_based_on_type(
+    feature: FeatureModel, type: Optional[str] = None
+) -> List[CampaignModel]:
     if not feature or not feature.get_rules_linked_campaign():
         return []
 
     if type:
-        return [rule for rule in feature.get_rules_linked_campaign() if rule.get_type() == type]
+        return [
+            rule
+            for rule in feature.get_rules_linked_campaign()
+            if rule.get_type() == type
+        ]
 
     return feature.get_rules_linked_campaign()
+
 
 def get_all_experiment_rules(feature: FeatureModel) -> List[CampaignModel]:
     if not feature:
         return []
 
     return [
-        rule for rule in feature.get_rules_linked_campaign()
-        if rule.get_type() in [CampaignTypeEnum.AB.value, CampaignTypeEnum.PERSONALIZE.value]
+        rule
+        for rule in feature.get_rules_linked_campaign()
+        if rule.get_type()
+        in [CampaignTypeEnum.AB.value, CampaignTypeEnum.PERSONALIZE.value]
     ]
 
-def get_feature_from_key(settings: SettingsModel, feature_key: str) -> Optional[FeatureModel]:
+
+def get_feature_from_key(
+    settings: SettingsModel, feature_key: str
+) -> Optional[FeatureModel]:
     if not settings or not settings.get_features():
         return None
 
@@ -66,6 +83,7 @@ def get_feature_from_key(settings: SettingsModel, feature_key: str) -> Optional[
             return feature
 
     return None
+
 
 def does_event_belong_to_any_feature(event_name: str, settings: SettingsModel) -> bool:
     if not settings or not settings.get_features():
@@ -76,6 +94,7 @@ def does_event_belong_to_any_feature(event_name: str, settings: SettingsModel) -
         for feature in settings.get_features()
     )
 
+
 def add_linked_campaigns_to_settings(settings: SettingsModel):
     """
     Add linked campaigns to the settings object.
@@ -83,7 +102,9 @@ def add_linked_campaigns_to_settings(settings: SettingsModel):
     :param settings: The settings object containing campaigns and features.
     """
     # Create a dictionary for quick access to campaigns by ID
-    campaign_map = {campaign.get_id(): campaign for campaign in settings.get_campaigns()}
+    campaign_map = {
+        campaign.get_id(): campaign for campaign in settings.get_campaigns()
+    }
 
     # Loop over all features
     for feature in settings.get_features():
@@ -111,7 +132,8 @@ def add_linked_campaigns_to_settings(settings: SettingsModel):
                 variables=original_campaign.get_variables(),
                 variation_id=original_campaign.get_variation_id(),
                 campaign_id=original_campaign.get_campaign_id(),
-                rule_key=original_campaign.get_rule_key()
+                rule_key=original_campaign.get_rule_key(),
+                salt=original_campaign.get_salt(),
             )
 
             # Set the rule key for the campaign
@@ -120,7 +142,12 @@ def add_linked_campaigns_to_settings(settings: SettingsModel):
             # If a variationId is specified, find and add the variation
             if rule.get_variation_id() is not None:
                 variation = next(
-                    (v for v in campaign.get_variations() if v.get_id() == rule.get_variation_id()), None
+                    (
+                        v
+                        for v in campaign.get_variations()
+                        if v.get_id() == rule.get_variation_id()
+                    ),
+                    None,
                 )
                 if variation is not None:
                     campaign.set_variations([variation])

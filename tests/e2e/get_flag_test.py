@@ -37,6 +37,8 @@ class VWOTest(unittest.TestCase):
             test_data.get("GETFLAG_WITHOUT_STORAGE"), False
         )
 
+    def test_05_get_flag_with_salt(self):
+        self._helper_function_to_run_salt_test(test_data.get("GETFLAG_WITH_SALT"))
     def test_02_get_flag_with_meg_random(self):
         self._helper_function_to_run_test(test_data.get("GETFLAG_MEG_RANDOM"), False)
 
@@ -124,6 +126,50 @@ class VWOTest(unittest.TestCase):
                             updated_storage_data["experimentVariationId"],
                         )
 
+    def _helper_function_to_run_salt_test(self, salt_test_data: List[Dict[str, Any]]):
+        storage = user_storage()
+        for test_data in salt_test_data:
+            # Debug print for the test data
+            storage.clear()
+            print("DEBUG: Test Data:")
+            print(test_data)
+            
+            with patch(
+                "vwo.vwo_builder.VWOBuilder.get_settings",
+                return_value=settings_files.get(test_data.get("settings")),
+            ) as mock_get_settings:
+                # Debug print for the settings file being used
+                settings_file = settings_files.get(test_data.get("settings"))
+                options = {"sdk_key": self.sdk_key, "account_id": self.account_id, "logger": {"level": "DEBUG"}}
+                vwo_instance = init(options)
+
+                # Extract user IDs directly from the "userIds" key in test data
+                user_ids = test_data["userIds"]
+                feature_key_1 = test_data["featureKey"]
+                feature_key_2 = test_data["featureKey2"]
+
+                for user_id in user_ids:
+                    # Pass user_id as part of the context
+                    feature_flag_1 = vwo_instance.get_flag(feature_key_1, {"id": user_id})
+                    feature_flag_2 = vwo_instance.get_flag(feature_key_2, {"id": user_id})
+
+                    # Get variables for comparison
+                    variables_1 = feature_flag_1.get_variables()
+                    variables_2 = feature_flag_2.get_variables()
+
+                    # Validate variations based on expectation
+                    if test_data["expectation"]["shouldReturnSameVariation"]:
+                        self.assertEqual(
+                            variables_1,
+                            variables_2,
+                            f"Variables for user {user_id} are not the same!",
+                        )
+                    else:
+                        self.assertNotEqual(
+                            variables_1,
+                            variables_2,
+                            f"Variables for user {user_id} should not be the same!",
+                        )
 
 if __name__ == "__main__":
     unittest.main()
