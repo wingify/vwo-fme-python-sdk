@@ -27,7 +27,6 @@ def create_and_send_impression_for_variation_shown(
 ):
     # Get base properties for the event
     properties = get_events_base_properties(
-        settings,
         EventEnum.VWO_VARIATION_SHOWN.value,
         visitor_user_agent=context.get_user_agent(),
         ip_address=context.get_ip_address()

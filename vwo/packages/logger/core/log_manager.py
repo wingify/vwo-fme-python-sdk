@@ -21,9 +21,12 @@ from typing import List
 from ..logger import Logger
 import datetime
 from typing import Dict, Any, Union
+from ....enums.event_enum import EventEnum
+from ....constants.Constants import Constants
 
 class LogManager(Logger):
     _instance = None
+    stored_messages = set()  # Set to store already logged messages for duplicate prevention
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -84,4 +87,7 @@ class LogManager(Logger):
         self.transport_manager.log(LogLevelEnum.WARN, message)
 
     def error(self, message: str) -> None:
+        from ....utils.log_message_util import send_log_to_vwo
+        # Log the error using the transport manager
         self.transport_manager.log(LogLevelEnum.ERROR, message)
+        send_log_to_vwo(message, LogLevelEnum.ERROR)

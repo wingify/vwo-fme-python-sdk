@@ -64,15 +64,21 @@ def get_event_batching_query_params(account_id: str) -> Dict[str, Any]:
 
 # Function to build generic properties for tracking events
 def get_events_base_properties(
-    setting: SettingsModel,
     event_name: str,
     visitor_user_agent: str = '',
     ip_address: str = ''
 ) -> Dict[str, Any]:
-    sdk_key = setting.get_sdk_key()
+    from ..services.settings_manager import SettingsManager
+    # Get the instance of SettingsManager
+    settings = SettingsManager.get_instance()
+
+    # Fetch SDK key and account ID from the SettingsManager instance
+    sdk_key = settings.get_sdk_key()
+    account_id = settings.get_account_id()
+
     return {
         'en': event_name,
-        'a': setting.get_account_id(),
+        'a': account_id,
         'env': sdk_key,
         'eTime': get_current_unix_timestamp_in_millis(),
         'random': get_random_number(),
@@ -90,8 +96,9 @@ def _get_event_base_payload(
     visitor_user_agent: str = '',
     ip_address: str = ''
 ) -> Dict[str, Any]:
-    uuid_value = get_uuid(user_id, settings.get_account_id())
-    sdk_key = settings.get_sdk_key()
+    from ..services.settings_manager import SettingsManager
+    uuid_value = get_uuid(user_id, SettingsManager.get_instance().get_account_id())
+    sdk_key = SettingsManager.get_instance().get_sdk_key()
     properties = {
         'd': {
             'msgId': f"{uuid_value}-{get_current_unix_timestamp_in_millis()}",
@@ -267,6 +274,76 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
                 err=err,
             ),
         )
+
+# Function to construct the messaging event payload
+def get_messaging_event_payload(message_type: str, message: str, event_name: str) -> Dict[str, Any]:
+    from ..services.settings_manager import SettingsManager
+    # Get user ID and properties
+    settings = SettingsManager.get_instance()
+    user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
+    properties = _get_event_base_payload(None, user_id, event_name, None, None)
+
+    # Set the environment key and product
+    properties['d']['event']['props']['vwo_envKey'] = settings.get_sdk_key()
+    properties['d']['event']['props']['product'] = "fme"  # Assuming 'product' is a required field
+
+    # Set the message data
+    data = {
+        'type': message_type,
+        'content': {
+            'title': message,
+            'dateTime': get_current_unix_timestamp_in_millis()
+        }
+    }
+
+    # Add data to the properties
+    properties['d']['event']['props']['data'] = data
+
+    return properties
+
+def send_messaging_event(properties: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+    network_instance = NetworkManager.get_instance()
+
+    try:
+        # Prepare the request model
+        request = RequestModel(
+            Constants.HOST_NAME,
+            'POST',
+            UrlEnum.EVENTS.value,
+            properties,
+            payload,
+            None,
+            Constants.HTTPS_PROTOCOL,
+            443
+        )
+
+        # Flag to check if the event loop is initialized
+        event_loop_initialized = False
+        main_event_loop = None
+
+        # Start a new event loop in a separate thread if it hasn't been initialized yet
+        if not event_loop_initialized:
+            main_event_loop = asyncio.new_event_loop()
+            threading.Thread(target=start_event_loop, args=(main_event_loop,), daemon=True).start()
+            event_loop_initialized = True
+
+        # Submit the asynchronous POST request to the newly started event loop
+        asyncio.run_coroutine_threadsafe(network_instance.post_async(request), main_event_loop)
+
+        # Return a success message
+        return {"success": True, "message": "Event sent successfully"}
+
+    except Exception as err:
+        # Log the error
+        LogManager.get_instance().error(
+            error_messages.get('NETWORK_CALL_FAILED').format(
+                method='POST',
+                err=err,
+            )
+        )
+
+        # Return a failure message
+        return {"success": False, "message": "Failed to send event"}
 
 # Function to start the event loop in a new thread
 def start_event_loop(loop):

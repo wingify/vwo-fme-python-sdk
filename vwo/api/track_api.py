@@ -63,7 +63,6 @@ class TrackApi:
         :param event_properties: The properties of the event.
         """
         properties = get_events_base_properties(
-            settings,
             event_name,
             visitor_user_agent=context.get_user_agent(),
             ip_address=context.get_ip_address()

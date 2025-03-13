@@ -34,7 +34,6 @@ class SetAttributeApi:
         context: ContextModel
     ):
         properties = get_events_base_properties(
-            settings,
             EventEnum.VWO_SYNC_VISITOR_PROP.value,
             visitor_user_agent=context.get_user_agent(),
             ip_address=context.get_ip_address()

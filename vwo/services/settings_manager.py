@@ -75,6 +75,12 @@ class SettingsManager:
     @classmethod
     def get_instance(cls):
         return cls._instance
+    
+    def get_account_id(self):
+        return self.account_id
+
+    def get_sdk_key(self):
+        return self.sdk_key
 
     def fetch_settings_and_cache_in_storage(self, update=False):
         try:
