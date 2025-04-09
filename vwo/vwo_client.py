@@ -200,51 +200,99 @@ class VWOClient:
             )
             return {event_name: False}
 
-    def set_attribute(self, attribute_key: str, attribute_value: Any, context: Dict):
+    def set_attribute(
+        self, key_or_map: Any, value_or_context: Any, context: Dict = None
+    ):
         """
         Sets an attribute for a user in the context provided.
-        This method validates the types of the inputs before proceeding with the API call.
+        This method can be called in two ways:
+        1. set_attribute(key, value, context) - Sets a single attribute
+        2. set_attribute(attribute_map, context) - Sets multiple attributes
 
-        :param attribute_key: The key of the attribute to set.
-        :param attribute_value: The value of the attribute to set.
-        :param context: The context in which the attribute is being set.
+        The attribute values must be either strings, integers, or booleans.
+
+        :param key_or_map: Either the attribute key (str) or a map of attributes (Dict)
+        :param value_or_context: Either the attribute value or the context (if key_or_map is a Dict)
+        :param context: The context in which the attribute is being set (only used when setting single attribute)
         """
         api_name = "set_attribute"
 
         try:
-
             LogManager.get_instance().debug(
                 debug_messages.get("API_CALLED").format(apiName=api_name)
             )
 
-            # Validate featureKey is a string
-            if not is_string(attribute_key):
-                LogManager.get_instance().error(
-                    error_messages.get("API_INVALID_PARAM").format(
-                        apiName=api_name,
-                        key="attribute_key",
-                        type=type(attribute_key).__name__,
-                        correctType="string",
+            # Determine which calling pattern is being used
+            if context is not None:
+                # Single attribute pattern: (key, value, context)
+                if not is_string(key_or_map):
+                    LogManager.get_instance().error(
+                        error_messages.get("API_INVALID_PARAM").format(
+                            apiName=api_name,
+                            key="key",
+                            type=type(key_or_map).__name__,
+                            correctType="string",
+                        )
                     )
-                )
-                raise TypeError("TypeError: attribute_key should be a string")
+                    raise TypeError("TypeError: key should be a string")
 
-            if (
-                not is_string(attribute_value)
-                and not isinstance(attribute_value, int)
-                and not isinstance(attribute_value, bool)
-            ):
-                LogManager.get_instance().error(
-                    error_messages.get("API_INVALID_PARAM").format(
-                        apiName=api_name,
-                        key="attribute_value",
-                        type=type(attribute_value).__name__,
-                        correctType="string or int or bool",
+                if not isinstance(value_or_context, (str, int, bool, float)):
+                    LogManager.get_instance().error(
+                        error_messages.get("API_INVALID_PARAM").format(
+                            apiName=api_name,
+                            key="value",
+                            type=type(value_or_context).__name__,
+                            correctType="string, integer, float, or boolean",
+                        )
                     )
-                )
-                raise TypeError(
-                    "TypeError: attribute_value should be an string or int or bool"
-                )
+                    raise TypeError(
+                        "TypeError: value should be a string, integer, float, or boolean"
+                    )
+
+                attribute_map = {key_or_map: value_or_context}
+                user_context = context
+            else:
+                # Multiple attributes pattern: (attribute_map, context)
+                if not is_object(key_or_map) or not key_or_map:
+                    LogManager.get_instance().error(
+                        error_messages.get("API_INVALID_PARAM").format(
+                            apiName=api_name,
+                            key="attribute_map",
+                            type=type(key_or_map).__name__,
+                            correctType="object",
+                        )
+                    )
+                    raise TypeError(
+                        "TypeError: attribute_map should be a non-empty object"
+                    )
+
+                # Validate all keys and values in the attribute map
+                for key, value in key_or_map.items():
+                    if not is_string(key):
+                        LogManager.get_instance().error(
+                            error_messages.get("API_INVALID_PARAM").format(
+                                apiName=api_name,
+                                key="key",
+                                type=type(key).__name__,
+                                correctType="string",
+                            )
+                        )
+                        raise TypeError("TypeError: key should be a string")
+                    if not isinstance(value, (str, int, bool, float)):
+                        LogManager.get_instance().error(
+                            error_messages.get("API_INVALID_PARAM").format(
+                                apiName=api_name,
+                                key=f"value for key '{key}'",
+                                type=type(value).__name__,
+                                correctType="string, integer, float, or boolean",
+                            )
+                        )
+                        raise TypeError(
+                            f"TypeError: value for key '{key}' should be a string, integer, float or boolean"
+                        )
+
+                attribute_map = key_or_map
+                user_context = value_or_context
 
             # Validate settings are loaded and valid
             if not SettingsManager.is_settings_valid(self.original_settings):
@@ -253,19 +301,17 @@ class VWOClient:
                 )
                 raise ValueError("Invalid Settings")
 
-            # Validate user ID is present in context
-            if not context or "id" not in context:
+            if not user_context or "id" not in user_context:
                 LogManager.get_instance().error(
                     error_messages.get("API_CONTEXT_INVALID")
                 )
                 raise ValueError("Invalid context")
 
-            context_model = ContextModel(context)
+            context_model = ContextModel(user_context)
 
-            # Fetch the feature flag value using FlagApi
             set_attribute_api = SetAttributeApi()
             set_attribute_api.set_attribute(
-                self._settings, attribute_key, attribute_value, context_model
+                self._settings, attribute_map, context_model
             )
             return
 

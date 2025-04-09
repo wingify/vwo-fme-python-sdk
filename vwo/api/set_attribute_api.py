@@ -19,36 +19,37 @@ from ..models.user.context_model import ContextModel
 from typing import Dict, Any
 from ..models.settings.settings_model import SettingsModel
 from ..models.user.context_model import ContextModel
-from ..utils.network_util import get_events_base_properties, get_attribute_payload_data, send_post_api_request
+from ..utils.network_util import (
+    get_events_base_properties,
+    get_attribute_payload_data,
+    send_post_api_request,
+)
 from ..enums.event_enum import EventEnum
 
+
 class SetAttributeApi:
-    def set_attribute(self, settings: SettingsModel, attribute_key: str, attribute_value: Any, context: ContextModel):
-        self.create_and_send_impression_for_attribute(settings, attribute_key, attribute_value, context)
-    
+    def set_attribute(
+        self, settings: SettingsModel, attribute_map: Dict, context: ContextModel
+    ):
+        self.create_and_send_impression_for_attribute(settings, attribute_map, context)
+
     def create_and_send_impression_for_attribute(
-        self,
-        settings: SettingsModel,
-        attribute_key: str,
-        attribute_value: Any, 
-        context: ContextModel
+        self, settings: SettingsModel, attribute_map: Dict, context: ContextModel
     ):
         properties = get_events_base_properties(
             EventEnum.VWO_SYNC_VISITOR_PROP.value,
             visitor_user_agent=context.get_user_agent(),
-            ip_address=context.get_ip_address()
+            ip_address=context.get_ip_address(),
         )
         # Construct payload data for tracking the goal
         payload = get_attribute_payload_data(
             settings,
             context.get_id(),
             EventEnum.VWO_SYNC_VISITOR_PROP.value,
-            attribute_key,
-            attribute_value,
+            attribute_map,
             visitor_user_agent=context.get_user_agent(),
-            ip_address=context.get_ip_address()
+            ip_address=context.get_ip_address(),
         )
 
         # Send the constructed properties and payload as a POST request
         send_post_api_request(properties, payload)
-            

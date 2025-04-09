@@ -30,6 +30,11 @@ from ..packages.network_layer.models.request_model import RequestModel
 from ..enums.headers_enum import HeadersEnum
 import asyncio
 import threading
+from ..utils.function_util import (
+    get_current_unix_timestamp,
+    get_current_unix_timestamp_in_millis,
+    get_random_number,
+)
 
 def get_settings_path(sdk_key: str, account_id: str) -> Dict[str, Any]:
     path = {
@@ -181,23 +186,26 @@ def get_attribute_payload_data(
     settings: SettingsModel,
     user_id: str,
     event_name: str,
-    attribute_key: str,
-    attribute_value: Any,
-    visitor_user_agent: str = '',
-    ip_address: str = ''
+    attribute_map: Dict,
+    visitor_user_agent: str = "",
+    ip_address: str = "",
 ) -> Dict[str, Any]:
-    properties = _get_event_base_payload(settings, user_id, event_name, visitor_user_agent, ip_address)
-    
-    properties['d']['event']['props']['isCustomEvent'] = True
-    properties['d']['event']['props'][Constants.VWO_FS_ENVIRONMENT] = settings.get_sdk_key()
-    properties['d']['visitor']['props'][attribute_key] = attribute_value
-    
-    LogManager.get_instance().debug(debug_messages.get('IMPRESSION_FOR_SYNC_VISITOR_PROP').format(
-        eventName = event_name,
-        accountId = settings.get_account_id(),
-        userId = user_id
-    ))
-    
+    properties = _get_event_base_payload(
+        settings, user_id, event_name, visitor_user_agent, ip_address
+    )
+
+    properties["d"]["event"]["props"]["isCustomEvent"] = True
+    properties["d"]["event"]["props"][
+        Constants.VWO_FS_ENVIRONMENT
+    ] = settings.get_sdk_key()
+    properties["d"]["visitor"]["props"].update(attribute_map)
+
+    LogManager.get_instance().debug(
+        debug_messages.get("IMPRESSION_FOR_SYNC_VISITOR_PROP").format(
+            eventName=event_name, accountId=settings.get_account_id(), userId=user_id
+        )
+    )
+
     return properties
 
 
