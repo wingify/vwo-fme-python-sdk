@@ -17,7 +17,7 @@ class Constants:
     # Mock package_file equivalent
     package_file = {
         "name": "vwo-fme-python-sdk",  # Replace with actual package name
-        "version": "1.6.0",  # Replace with actual package version
+        "version": "1.7.0",  # Replace with actual package version
     }
 
     # Constants
@@ -44,6 +44,7 @@ class Constants:
     SETTINGS = "settings"
     SETTINGS_EXPIRY = 10000000
     SETTINGS_TIMEOUT = 50000
+    POLLING_INTERVAL = 600000
 
     HOST_NAME = "dev.visualwebsiteoptimizer.com"  # TODO: change as needed
     SETTINGS_ENDPOINT = "/server-side/v2-settings"

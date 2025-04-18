@@ -27,6 +27,7 @@ from .packages.segmentation_evaluator.core.segmentation_manager import (
 )
 from .utils.settings_util import set_settings_and_add_campaigns_to_rules
 from .packages.storage.storage import Storage
+from .constants.Constants import Constants
 
 
 class VWOBuilder:
@@ -38,6 +39,7 @@ class VWOBuilder:
         self.log_manager = None
         self.original_settings = None
         self.is_settings_fetch_in_progress = False
+        self.is_valid_poll_interval_passed_from_init = False
         self.vwo_instance = None
 
     def set_network_manager(self):
@@ -131,13 +133,13 @@ class VWOBuilder:
             )
 
     def init_polling(self):
-        if not self.options.get("poll_interval"):
-            return self
-
         poll_interval = self.options.get("poll_interval")
         if poll_interval and isinstance(poll_interval, int) and poll_interval >= 1000:
-            self.check_and_poll(poll_interval)
-        else:
+            # this is to check if the poll_interval passed in options is valid
+            self.is_valid_poll_interval_passed_from_init = True
+            self.check_and_poll()
+        elif poll_interval:
+            # only log error if poll_interval is present in options
             LogManager.get_instance().error(
                 error_messages.get("INIT_OPTIONS_INVALID").format(
                     key="poll_interval", correctType="int >= 1000"
@@ -147,15 +149,37 @@ class VWOBuilder:
 
     def build(self, settings):
         self.vwo_instance = VWOClient(settings, self.options)
+
+        # if poll_interval is not present in options, set it to the pollInterval from settings
+        self.update_poll_interval_and_check_and_poll(settings)
         return self.vwo_instance
 
-    def check_and_poll(self, poll_interval):
+    def update_poll_interval_and_check_and_poll(
+        self, settings, should_check_and_poll=True
+    ):
+        # only update the poll_interval if it poll_interval is not valid or not present in options
+        if not self.is_valid_poll_interval_passed_from_init:
+            poll_interval = settings.get("pollInterval", Constants.POLLING_INTERVAL)
+            LogManager.get_instance().debug(
+                debug_messages.get("USING_POLL_INTERVAL_FROM_SETTINGS").format(
+                    source="settings" if settings.get("pollInterval") else "default",
+                    pollInterval=poll_interval,
+                )
+            )
+            self.options["poll_interval"] = poll_interval
+
+        # should_check_and_poll will be true only when we are updating the poll_interval first time from self.build method
+        # if we are updating the poll_interval already running polling, we don't need to check and poll again
+        if should_check_and_poll and not self.is_valid_poll_interval_passed_from_init:
+            self.check_and_poll()
+
+    def check_and_poll(self):
         def poll():
             try:
                 latest_settings = self.get_settings(True)
-                if json.dumps(latest_settings, sort_keys=True) != json.dumps(
-                    self.original_settings, sort_keys=True
-                ):
+                if latest_settings and json.dumps(
+                    latest_settings, sort_keys=True
+                ) != json.dumps(self.original_settings, sort_keys=True):
                     self.original_settings = latest_settings
                     LogManager.get_instance().info(
                         info_messages.get("POLLING_SET_SETTINGS")
@@ -163,7 +187,10 @@ class VWOBuilder:
                     set_settings_and_add_campaigns_to_rules(
                         latest_settings, self.vwo_instance
                     )
-                else:
+                    # reinitialize the poll_interval value if there is a change in settings
+                    # this is to ensure that we use the updated poll_interval value
+                    self.update_poll_interval_and_check_and_poll(latest_settings, False)
+                elif latest_settings:
                     LogManager.get_instance().info(
                         info_messages.get("POLLING_NO_CHANGE_IN_SETTINGS")
                     )
@@ -174,8 +201,8 @@ class VWOBuilder:
             finally:
                 # Reschedule the poll function to be called again after the interval
                 threading.Timer(
-                    poll_interval / 1000, poll
+                    self.options["poll_interval"] / 1000, poll
                 ).start()  # Timer expects seconds, so convert milliseconds
 
         # start the polling after given interval
-        threading.Timer(poll_interval / 1000, poll).start()
+        threading.Timer(self.options["poll_interval"] / 1000, poll).start()

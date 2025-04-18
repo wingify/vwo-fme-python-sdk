@@ -154,7 +154,13 @@ vwo_client.set_attribute('attribute_key', 'attribute_value', context)
 
 ### Polling Interval Adjustment
 
-The `poll_interval` is an optional parameter that allows the SDK to automatically fetch and update settings from the VWO server at specified intervals. Setting this parameter ensures your application always uses the latest configuration.
+The `poll_interval` is an optional parameter that allows the SDK to automatically fetch and update settings from the VWO server at specified intervals. The polling interval can be configured in three ways:
+
+1. Set via SDK options: If `poll_interval` is specified in the initialization options (must be >= 1000 milliseconds), that interval will be used
+2. VWO Application Settings: If configured in your VWO application settings, that interval will be used
+3. Default Fallback: If neither of the above is set, a 10 minute (600,000 milliseconds) polling interval is used
+
+Setting this parameter ensures your application always uses the latest configuration by periodically checking for and applying any updates.
 
 ```python
 options = {

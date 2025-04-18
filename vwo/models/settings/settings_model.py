@@ -13,25 +13,26 @@
 # limitations under the License.
 
 
-
-
 from typing import List, Dict, Optional
 from ..campaign.campaign_model import CampaignModel
 from ..campaign.feature_model import FeatureModel
 from ...utils.model_utils import _parse_campaign, _parse_feature
 import json
+from ...constants.Constants import Constants
+
 
 class SettingsModel:
     def __init__(self, data: Dict):
         # Parse and set attributes
-        self._features = [_parse_feature(f) for f in data['features']]
-        self._account_id = data['accountId']
-        self._groups = data.get('groups', {})
-        self._campaign_groups = data.get('campaignGroups', {})
-        self._campaigns = [_parse_campaign(c) for c in data['campaigns']]
-        self._sdk_key = data['sdkKey']
-        self._version = data['version']
-        self._collection_prefix = data.get('collectionPrefix', None)
+        self._features = [_parse_feature(f) for f in data["features"]]
+        self._account_id = data["accountId"]
+        self._groups = data.get("groups", {})
+        self._campaign_groups = data.get("campaignGroups", {})
+        self._campaigns = [_parse_campaign(c) for c in data["campaigns"]]
+        self._sdk_key = data["sdkKey"]
+        self._version = data["version"]
+        self._collection_prefix = data.get("collectionPrefix", None)
+        self._poll_interval = data.get("pollInterval", Constants.POLLING_INTERVAL)
 
     # Getter methods for accessing private attributes
     def get_features(self) -> List[FeatureModel]:
@@ -82,3 +83,9 @@ class SettingsModel:
 
     def set_collection_prefix(self, value: Optional[str]):
         self._collection_prefix = value
+
+    def set_poll_interval(self, value: int):
+        self._poll_interval = value
+
+    def get_poll_interval(self) -> int:
+        return self._poll_interval
