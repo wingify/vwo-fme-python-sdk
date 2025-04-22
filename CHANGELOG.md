@@ -4,6 +4,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-04-22
+
+### Added
+
+- Added support to add single `transport` or multiple transport using key `transports`. The transport parameter allows you to implement custom logging behavior by providing your own logging functions.
+
+  ```python
+  from vwo import init
+
+  class CustomTransport:
+    def __init__(self, config):
+        self.level = config.get('level', "ERROR")
+        self.config = config
+
+    def log(self, level, message):
+        # your custom implementation here
+
+  options = {
+      'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+      'account_id': '123456', # VWO Account ID
+      'logger' {
+        'transport': CustomTransport({'level': 'INFO'})
+      }
+  }
+
+  vwo_client = init(options)
+  ```
+
+- For multiple transports you can use the `transports` parameter. For example:
+  ```python
+  from vwo import init
+
+  class CustomTransportForInfo:
+      def __init__(self, config):
+          self.level = config.get('level', "INFO")
+          self.config = config
+
+      def log(self, level, message):
+          # your custom implementation here
+
+  class CustomTransportForError:
+      def __init__(self, config):
+          self.level = config.get('level', "ERROR")
+          self.config = config
+
+      def log(self, level, message):
+          # your custom implementation here
+
+  options = {
+      'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+      'account_id': '123456', # VWO Account ID
+      'logger' {
+          'transports': [
+              CustomTransportForInfo({'level': 'INFO'}),
+              CustomTransportForError({'level': 'ERROR'})
+          ]
+      }
+  }
+
+  vwo_client = init(options)
+  ```
+
 ## [1.7.0] - 2025-04-11
 
 ### Added

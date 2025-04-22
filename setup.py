@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class LicenseCheckCommand(Command):
 
     def run(self):
         subprocess.call(
-            'python3 ./scripts/apache_license_check.py vwo/ tests/ setup.py --copyright 2024 Wingify Software Pvt. Ltd."',
+            'python3 ./scripts/apache_license_check.py vwo/ tests/ setup.py --Copyright 2024-2025 Wingify Software Pvt. Ltd."',
             shell=True,
         )
 
@@ -121,7 +121,7 @@ class PostDevelopCommand(develop):
 
 setup(
     name="vwo-fme-python-sdk",
-    version="1.7.0",
+    version="1.8.0",
     description="VWO Feature Management and Experimentation SDK for Python",
     long_description=long_description,
     long_description_content_type="text/markdown",

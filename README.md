@@ -240,6 +240,24 @@ options = {
 vwo_client = init(options)
 ```
 
+### Integrations
+VWO FME SDKs provide seamless integration with third-party tools like analytics platforms, monitoring services, customer data platforms (CDPs), and messaging systems. This is achieved through a simple yet powerful callback mechanism that receives VWO-specific properties and can forward them to any third-party tool of your choice.
+
+```python
+def callback(properties):
+    # properties will contain all the required VWO specific information
+    print(properties)
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '12345', # VWO Account ID
+    'integrations': {
+        'callback': callback
+    }
+}
+vwo_client = init(options)
+```
+
 ### Logger
 
 VWO by default logs all `ERROR` level messages to your server console.
@@ -249,6 +267,7 @@ To gain more control over VWO's logging behaviour, you can use the `logger` para
 | ------------- | -------------------------------------- | ------------ | -------- | ----------------- |
 | `level`       | Log level to control verbosity of logs | Yes          | str   | `ERROR`           |
 | `prefix`      | Custom prefix for log messages         | No           | str   | `VWO-SDK`             |
+| `transport`      | Custom logger implementation	         | No           | object   |  See example below           |
 
 #### Example 1: Set log level to control verbosity of logs
 
@@ -277,21 +296,74 @@ options = {
 vwo_client = init(options)
 ```
 
-### Integrations
-VWO FME SDKs provide seamless integration with third-party tools like analytics platforms, monitoring services, customer data platforms (CDPs), and messaging systems. This is achieved through a simple yet powerful callback mechanism that receives VWO-specific properties and can forward them to any third-party tool of your choice.
+#### Example 3: Implement custom transport to handle logs your way
 
+The `transport` parameter allows you to implement custom logging behavior by providing your own logging functions. You can define handlers for different log levels (`debug`, `info`, `warn`, `error`, `trace`) to process log messages according to your needs.
+
+For example, you could:
+
+- Send logs to a third-party logging service
+- Write logs to a file
+- Format log messages differently
+- Filter or transform log messages
+- Route different log levels to different destinations
+
+The transport object should implement handlers for the log levels you want to customize. Each handler receives the log message as a parameter.
+
+For single transport you can use the `transport` parameter. For example:
 ```python
-def callback(properties):
-    # properties will contain all the required VWO specific information
-    print(properties)
+from vwo import init
+
+class CustomTransport:
+    def __init__(self, config):
+        self.level = config.get('level', "ERROR")
+        self.config = config
+
+    def log(self, level, message):
+        # your custom implementation here
 
 options = {
     'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
-    'account_id': '12345', # VWO Account ID
-    'integrations': {
-        'callback': callback
+    'account_id': '123456', # VWO Account ID
+    'logger' {
+        'transport': CustomTransport({'level': 'INFO'})
     }
 }
+
+vwo_client = init(options)
+```
+
+For multiple transports you can use the `transports` parameter. For example:
+```python
+from vwo import init
+
+class CustomTransportForInfo:
+    def __init__(self, config):
+        self.level = config.get('level', "INFO")
+        self.config = config
+
+    def log(self, level, message):
+        # your custom implementation here
+
+class CustomTransportForError:
+    def __init__(self, config):
+        self.level = config.get('level', "ERROR")
+        self.config = config
+
+    def log(self, level, message):
+        # your custom implementation here
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # VWO Account ID
+    'logger' {
+        'transports': [
+            CustomTransportForInfo({'level': 'INFO'}),
+            CustomTransportForError({'level': 'ERROR'})
+        ]
+    }
+}
+
 vwo_client = init(options)
 ```
 
@@ -328,4 +400,4 @@ Our [Code of Conduct](https://github.com/wingify/vwo-fme-python-sdk/blob/master/
 
 [Apache License, Version 2.0](https://github.com/wingify/vwo-fme-python-sdk/blob/master/LICENSE)
 
-Copyright 2024 Wingify Software Pvt. Ltd.
+Copyright 2024-2025 Wingify Software Pvt. Ltd.

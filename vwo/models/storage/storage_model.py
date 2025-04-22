@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
 # limitations under the License.
 
 
-
 from typing import Dict
+
+
 class Storage:
     def __init__(self, data: Dict):
         """
         Initialize the Storage model with the provided data dictionary.
-        
+
         :param data: A dictionary containing the storage attributes.
         """
-        self._feature_key = data.get('featureKey', None)
-        self._user = data.get('user', None)
-        self._rollout_id = data.get('rolloutId', None)
-        self._rollout_key = data.get('rolloutKey', None)
-        self._rollout_variation_id = data.get('rolloutVariationId', None)
-        self._experiment_id = data.get('experimentId', None)
-        self._experiment_key = data.get('experimentKey', None)
-        self._experiment_variation_id = data.get('experimentVariationId', None)
+        self._feature_key = data.get("featureKey", None)
+        self._user = data.get("user", None)
+        self._rollout_id = data.get("rolloutId", None)
+        self._rollout_key = data.get("rolloutKey", None)
+        self._rollout_variation_id = data.get("rolloutVariationId", None)
+        self._experiment_id = data.get("experimentId", None)
+        self._experiment_key = data.get("experimentKey", None)
+        self._experiment_variation_id = data.get("experimentVariationId", None)
 
     # Getter methods for accessing private attributes
     def get_feature_key(self) -> str:

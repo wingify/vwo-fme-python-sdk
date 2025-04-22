@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
 # limitations under the License.
 
 
-
 from .context_vwo_model import ContextVWOModel
 from typing import Dict
 
+
 class ContextModel:
     def __init__(self, context: Dict):
-        self.id = context.get('id')
-        self.user_agent = context.get('user_agent', None)
-        self.ip_address = context.get('ip_address', None)
-        self.custom_variables = context.get('custom_variables', {})
-        self.variation_targeting_variables = context.get('variation_targeting_variables', {})
-        self._vwo = ContextVWOModel(context.get('_vwo')) if '_vwo' in context else None
+        self.id = context.get("id")
+        self.user_agent = context.get("user_agent", None)
+        self.ip_address = context.get("ip_address", None)
+        self.custom_variables = context.get("custom_variables", {})
+        self.variation_targeting_variables = context.get(
+            "variation_targeting_variables", {}
+        )
+        self._vwo = ContextVWOModel(context.get("_vwo")) if "_vwo" in context else None
 
     def get_id(self) -> str:
         return str(self.id) if self.id is not None else None
@@ -44,7 +46,9 @@ class ContextModel:
     def get_variation_targeting_variables(self) -> Dict:
         return self.variation_targeting_variables
 
-    def set_variation_targeting_variables(self, variation_targeting_variables: Dict) -> None:
+    def set_variation_targeting_variables(
+        self, variation_targeting_variables: Dict
+    ) -> None:
         self.variation_targeting_variables = variation_targeting_variables
 
     def get_vwo(self) -> ContextVWOModel:
@@ -52,5 +56,3 @@ class ContextModel:
 
     def set_vwo(self, vwo: ContextVWOModel) -> None:
         self._vwo = vwo
-
-    

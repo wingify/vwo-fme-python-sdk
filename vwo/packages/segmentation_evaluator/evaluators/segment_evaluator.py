@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -200,7 +200,9 @@ class SegmentEvaluator:
                 for val in expected_values:
                     if val.startswith("wildcard(") and val.endswith(")"):
                         wildcard_pattern = val[9:-1]
-                        regex = re.compile(wildcard_pattern.replace("*", ".*"), re.IGNORECASE)
+                        regex = re.compile(
+                            wildcard_pattern.replace("*", ".*"), re.IGNORECASE
+                        )
                         if regex.match(actual_value):
                             return True
                 if actual_value.lower() in expected_values:

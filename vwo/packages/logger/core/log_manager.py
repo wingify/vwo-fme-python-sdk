@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,9 +24,12 @@ from typing import Dict, Any, Union
 from ....enums.event_enum import EventEnum
 from ....constants.Constants import Constants
 
+
 class LogManager(Logger):
     _instance = None
-    stored_messages = set()  # Set to store already logged messages for duplicate prevention
+    stored_messages = (
+        set()
+    )  # Set to store already logged messages for duplicate prevention
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -34,35 +37,44 @@ class LogManager(Logger):
         return cls._instance
 
     def __init__(self, config: Dict[str, Any] = None):
-        if 'initialized' in self.__dict__:
+        if "initialized" in self.__dict__:
             return
-        self.__dict__['initialized'] = True
+        self.__dict__["initialized"] = True
         self.config = config or {}
-        self.name = self.config.get('name', 'VWO Logger')
-        self.request_id = self.config.get('requestId', 'unique-request-id')
-        self.level = self.config.get('level', LogLevelEnum.ERROR)
-        self.prefix = self.config.get('prefix', 'VWO-SDK')
-        self.date_time_format = self.config.get('dateTimeFormat', lambda: datetime.datetime.utcnow().isoformat())
-        self.is_ansi_color_enabled = self.config.get('isAnsiColorEnabled', False)
+        self.name = self.config.get("name", "VWO Logger")
+        self.request_id = self.config.get("requestId", "unique-request-id")
+        self.level = self.config.get("level", LogLevelEnum.ERROR)
+        self.prefix = self.config.get("prefix", "VWO-SDK")
+        self.date_time_format = self.config.get(
+            "dateTimeFormat", lambda: datetime.datetime.utcnow().isoformat()
+        )
+        self.is_ansi_color_enabled = self.config.get("isAnsiColorEnabled", False)
 
         self.transport_manager = LogTransportManager(self.config)
         self.handle_transports()
-    
+
     @staticmethod
-    def get_instance() -> 'LogManager':
+    def get_instance() -> "LogManager":
         return LogManager()
 
     def handle_transports(self) -> None:
-        transports = self.config.get('transports', [])
+        transports = self.config.get("transports", [])
 
         if transports:
             self.add_transports(transports)
         else:
-            transport = self.config.get('transport')
+            transport = self.config.get("transport")
             if transport:
                 self.add_transport(transport)
             else:
-                self.add_transport(ConsoleTransport({'level': self.level, 'isAnsiColorEnabled': self.is_ansi_color_enabled}))
+                self.add_transport(
+                    ConsoleTransport(
+                        {
+                            "level": self.level,
+                            "isAnsiColorEnabled": self.is_ansi_color_enabled,
+                        }
+                    )
+                )
 
     def add_transport(self, transport: Union[Logger, Dict[str, Any]]) -> None:
         if isinstance(transport, Dict):
@@ -88,6 +100,7 @@ class LogManager(Logger):
 
     def error(self, message: str) -> None:
         from ....utils.log_message_util import send_log_to_vwo
+
         # Log the error using the transport manager
         self.transport_manager.log(LogLevelEnum.ERROR, message)
         send_log_to_vwo(message, LogLevelEnum.ERROR)

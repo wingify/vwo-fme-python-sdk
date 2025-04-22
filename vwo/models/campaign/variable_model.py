@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
 # limitations under the License.
 
 
-
-
-
 from typing import Any, Dict
+
 
 class VariableModel:
     def __init__(self, id: int, value: Any, type: str, key: str):
@@ -36,11 +34,11 @@ class VariableModel:
 
     def get_key(self) -> str:
         return self._key
-    
+
     def to_dict(self) -> Dict:
         return {
-            'id': self._id,
-            'value': self._value,
-            'type': self._type,
-            'key': self._key
+            "id": self._id,
+            "value": self._value,
+            "type": self._type,
+            "key": self._key,
         }

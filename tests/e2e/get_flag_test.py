@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ class VWOTest(unittest.TestCase):
 
     def test_05_get_flag_with_salt(self):
         self._helper_function_to_run_salt_test(test_data.get("GETFLAG_WITH_SALT"))
+
     def test_02_get_flag_with_meg_random(self):
         self._helper_function_to_run_test(test_data.get("GETFLAG_MEG_RANDOM"), False)
 
@@ -133,14 +134,18 @@ class VWOTest(unittest.TestCase):
             storage.clear()
             print("DEBUG: Test Data:")
             print(test_data)
-            
+
             with patch(
                 "vwo.vwo_builder.VWOBuilder.get_settings",
                 return_value=settings_files.get(test_data.get("settings")),
             ) as mock_get_settings:
                 # Debug print for the settings file being used
                 settings_file = settings_files.get(test_data.get("settings"))
-                options = {"sdk_key": self.sdk_key, "account_id": self.account_id, "logger": {"level": "DEBUG"}}
+                options = {
+                    "sdk_key": self.sdk_key,
+                    "account_id": self.account_id,
+                    "logger": {"level": "DEBUG"},
+                }
                 vwo_instance = init(options)
 
                 # Extract user IDs directly from the "userIds" key in test data
@@ -150,8 +155,12 @@ class VWOTest(unittest.TestCase):
 
                 for user_id in user_ids:
                     # Pass user_id as part of the context
-                    feature_flag_1 = vwo_instance.get_flag(feature_key_1, {"id": user_id})
-                    feature_flag_2 = vwo_instance.get_flag(feature_key_2, {"id": user_id})
+                    feature_flag_1 = vwo_instance.get_flag(
+                        feature_key_1, {"id": user_id}
+                    )
+                    feature_flag_2 = vwo_instance.get_flag(
+                        feature_key_2, {"id": user_id}
+                    )
 
                     # Get variables for comparison
                     variables_1 = feature_flag_1.get_variables()
@@ -170,6 +179,7 @@ class VWOTest(unittest.TestCase):
                             variables_2,
                             f"Variables for user {user_id} should not be the same!",
                         )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 
 
 class Constants:
-    # Mock package_file equivalent
+    # TODO: read from setup.py
     package_file = {
-        "name": "vwo-fme-python-sdk",  # Replace with actual package name
-        "version": "1.7.0",  # Replace with actual package version
+        "name": "vwo-fme-python-sdk",
+        "version": "1.8.0"
     }
 
     # Constants

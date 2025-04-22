@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,34 +26,41 @@ base_dir = os.path.dirname(__file__)
 # Set to store already logged messages (to avoid duplicates)
 stored_messages = set()
 
+
 def load_json_file(filename: str) -> Dict[str, str]:
     """
     Loads a JSON file and returns its content as a dictionary.
-    
+
     :param filename: The name of the JSON file to load.
     :return: A dictionary with the contents of the JSON file.
     """
-    filepath = os.path.join(base_dir, '../resources', filename)
-    with open(filepath, 'r') as file:
+    filepath = os.path.join(base_dir, "../resources", filename)
+    with open(filepath, "r") as file:
         return json.load(file)
-    
+
+
 # Load all required JSON files
-debug_messages = load_json_file('debug-messages.json')
-error_messages = load_json_file('error-messages.json')
-info_messages = load_json_file('info-message.json')
-trace_messages = load_json_file('trace-messages.json')
-warn_messages = load_json_file('warn-messages.json')
+debug_messages = load_json_file("debug-messages.json")
+error_messages = load_json_file("error-messages.json")
+info_messages = load_json_file("info-message.json")
+trace_messages = load_json_file("trace-messages.json")
+warn_messages = load_json_file("warn-messages.json")
+
 
 def send_log_to_vwo(message: str, message_type: str) -> None:
     """
     Sends a log message to VWO.
-    
+
     :param message: The message to send.
     :param message_type: The type of message (e.g., ERROR, INFO).
     """
-    from ..utils.network_util import get_events_base_properties, get_messaging_event_payload, send_messaging_event
+    from ..utils.network_util import (
+        get_events_base_properties,
+        get_messaging_event_payload,
+        send_messaging_event,
+    )
 
-    if os.getenv('TEST_ENV') == 'true':
+    if os.getenv("TEST_ENV") == "true":
         return  # Skip logging in test environment
 
     # Construct the message to check for duplicates
@@ -68,7 +75,9 @@ def send_log_to_vwo(message: str, message_type: str) -> None:
         properties = get_events_base_properties(EventEnum.VWO_LOG_EVENT.value)
 
         # Create the payload for the messaging event
-        payload = get_messaging_event_payload(message_type, message, EventEnum.VWO_LOG_EVENT.value)
+        payload = get_messaging_event_payload(
+            message_type, message, EventEnum.VWO_LOG_EVENT.value
+        )
 
         # Send the message via HTTP request
         send_messaging_event(properties, payload)

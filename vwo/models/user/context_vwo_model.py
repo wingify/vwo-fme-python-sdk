@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 from typing import Dict
 
+
 class ContextVWOModel:
     def __init__(self, context: Dict = None):
         # Initialize attributes with default empty dictionaries
@@ -23,8 +24,8 @@ class ContextVWOModel:
 
         # If context is provided, populate attributes
         if context:
-            self.location = context.get('location', {})
-            self.user_agent = context.get('userAgent', {})
+            self.location = context.get("location", {})
+            self.user_agent = context.get("userAgent", {})
 
     def get_location(self) -> Dict:
         return self.location

@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
 
 from enum import Enum, auto
 
+
 class SegmentOperatorValueEnum(Enum):
-    AND = 'and'
-    NOT = 'not'
-    OR = 'or'
-    CUSTOM_VARIABLE = 'custom_variable'
-    USER = 'user'
-    COUNTRY = 'country'
-    REGION = 'region'
-    CITY = 'city'
-    OPERATING_SYSTEM = 'os'
-    DEVICE_TYPE = 'device_type'
-    DEVICE = 'device'
-    BROWSER_AGENT = 'browser_string'
-    UA = 'ua'
-    FEATURE_ID = 'featureId'
+    AND = "and"
+    NOT = "not"
+    OR = "or"
+    CUSTOM_VARIABLE = "custom_variable"
+    USER = "user"
+    COUNTRY = "country"
+    REGION = "region"
+    CITY = "city"
+    OPERATING_SYSTEM = "os"
+    DEVICE_TYPE = "device_type"
+    DEVICE = "device"
+    BROWSER_AGENT = "browser_string"
+    UA = "ua"
+    FEATURE_ID = "featureId"

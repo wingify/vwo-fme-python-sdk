@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 
 from typing import Any, Dict, Optional
 
-class StorageConnector():
+
+class StorageConnector:
 
     def get(self, key: str, user_id: str) -> Optional[Dict[str, Any]]:
         pass

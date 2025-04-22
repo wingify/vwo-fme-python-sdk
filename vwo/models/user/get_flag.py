@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,9 @@
 # limitations under the License.
 
 
-
-
-
 from ..campaign.variable_model import VariableModel
 from typing import List, Any, Dict
+
 
 class GetFlag:
     def __init__(self):
@@ -26,7 +24,7 @@ class GetFlag:
 
     def is_enabled(self) -> bool:
         return self._is_enabled
-    
+
     def set_is_enabled(self, is_enabled: bool) -> None:
         self._is_enabled = is_enabled
 
@@ -36,7 +34,7 @@ class GetFlag:
         for variable in self._variables:
             variables.append(variable.to_dict())
         return variables
-    
+
     def set_variables(self, variables: List[VariableModel]) -> None:
         self._variables = variables
 
@@ -45,4 +43,3 @@ class GetFlag:
             if variable.get_key() == variable_key:
                 return variable.get_value()
         return default_value
-    

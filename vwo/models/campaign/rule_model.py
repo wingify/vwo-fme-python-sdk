@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,17 @@
 # limitations under the License.
 
 
-
 from typing import Optional
 
+
 class RuleModel:
-    def __init__(self, type: str, ruleKey: Optional[str], variationId: Optional[int] = None, campaignId: int = None):
+    def __init__(
+        self,
+        type: str,
+        ruleKey: Optional[str],
+        variationId: Optional[int] = None,
+        campaignId: int = None,
+    ):
         self._type = type
         self._rule_key = ruleKey
         self._variation_id = variationId
@@ -34,4 +40,3 @@ class RuleModel:
 
     def get_campaign_id(self) -> int:
         return self._campaign_id
-    

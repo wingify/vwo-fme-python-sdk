@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from typing import Dict
 # Determine the base directory (the directory containing this script)
 base_dir = os.path.dirname(__file__)
 
+
 def load_settings_json_files(directory_path):
     """
     Load all JSON files from a specified directory into a dictionary.
@@ -30,32 +31,33 @@ def load_settings_json_files(directory_path):
 
     # Iterate through all files in the directory
     for filename in os.listdir(directory_path):
-        if filename.endswith('.json'):
+        if filename.endswith(".json"):
             file_path = os.path.join(directory_path, filename)
             try:
-                with open(file_path, 'r', encoding='utf-8') as file:
+                with open(file_path, "r", encoding="utf-8") as file:
                     json_content = json.load(file)
                     # remove .json from filename
-                    filename = filename.split('.')[0]
+                    filename = filename.split(".")[0]
                     json_files_content[filename] = json_content
             except (json.JSONDecodeError, IOError) as e:
                 print(f"Error reading {filename}: {e}")
 
     return json_files_content
 
+
 def load_test_data_json_file(filename: str) -> Dict[str, str]:
     """
     Loads a JSON file and returns its content as a dictionary.
-    
+
     :param filename: The name of the JSON file to load.
     :return: A dictionary with the contents of the JSON file.
     """
-    filepath = os.path.join(base_dir, 'test_cases', filename)
-    with open(filepath, 'r') as file:
+    filepath = os.path.join(base_dir, "test_cases", filename)
+    with open(filepath, "r") as file:
         return json.load(file)
 
 
 # Load the JSON files
-settings_files = load_settings_json_files(os.path.join(base_dir, 'settings'))
-test_data = load_test_data_json_file('index.json')
-segmentor_dummy_dsl = load_test_data_json_file('dummy_dsl.json')
+settings_files = load_settings_json_files(os.path.join(base_dir, "settings"))
+test_data = load_test_data_json_file("index.json")
+segmentor_dummy_dsl = load_test_data_json_file("dummy_dsl.json")

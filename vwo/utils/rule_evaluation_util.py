@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from ..utils.decision_util import check_whitelisting_and_pre_seg
 from ..utils.impression_util import create_and_send_impression_for_variation_shown
 from ..services.storage_service import StorageService
 from typing import Dict
+
 
 def evaluate_rule(
     settings: SettingsModel,
@@ -57,21 +58,30 @@ def evaluate_rule(
         evaluated_feature_map,
         meg_group_winner_campaigns,
         storage_service,
-        decision
+        decision,
     )
 
     # If pre-segmentation is successful and a whitelisted object exists, proceed to send an impression
-    if pre_segmentation_result and is_object(whitelisted_object) and len(whitelisted_object) > 0:
+    if (
+        pre_segmentation_result
+        and is_object(whitelisted_object)
+        and len(whitelisted_object) > 0
+    ):
         # Update the decision object with campaign and variation details
-        decision.update({
-            'experimentId': campaign.get_id(),
-            'experimentKey': campaign.get_key(),
-            'experimentVariationId': whitelisted_object['variationId']
-        })
+        decision.update(
+            {
+                "experimentId": campaign.get_id(),
+                "experimentKey": campaign.get_key(),
+                "experimentVariationId": whitelisted_object["variationId"],
+            }
+        )
 
         # Send an impression for the variation shown
         create_and_send_impression_for_variation_shown(
-            settings, campaign.get_id(), whitelisted_object['variation'].get_id(), context
+            settings,
+            campaign.get_id(),
+            whitelisted_object["variation"].get_id(),
+            context,
         )
 
     # Return the results of the evaluation

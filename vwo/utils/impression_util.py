@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,21 +15,23 @@
 
 from ..models.settings.settings_model import SettingsModel
 from ..models.user.context_model import ContextModel
-from ..utils.network_util import get_events_base_properties, get_track_user_payload_data, send_post_api_request
+from ..utils.network_util import (
+    get_events_base_properties,
+    get_track_user_payload_data,
+    send_post_api_request,
+)
 from ..enums.event_enum import EventEnum
+
 
 # The function that creates and sends an impression for a variation shown event
 def create_and_send_impression_for_variation_shown(
-    settings: SettingsModel,
-    campaign_id: int,
-    variation_id: int,
-    context: ContextModel
+    settings: SettingsModel, campaign_id: int, variation_id: int, context: ContextModel
 ):
     # Get base properties for the event
     properties = get_events_base_properties(
         EventEnum.VWO_VARIATION_SHOWN.value,
         visitor_user_agent=context.get_user_agent(),
-        ip_address=context.get_ip_address()
+        ip_address=context.get_ip_address(),
     )
     # Construct payload data for tracking the user
     payload = get_track_user_payload_data(
@@ -39,7 +41,7 @@ def create_and_send_impression_for_variation_shown(
         campaign_id,
         variation_id,
         visitor_user_agent=context.get_user_agent(),
-        ip_address=context.get_ip_address()
+        ip_address=context.get_ip_address(),
     )
 
     # Send the constructed properties and payload as a POST request

@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 from typing import Dict
 
+
 class ImpactCampaignModel:
     def __init__(self, data: Dict):
         """
@@ -21,14 +22,14 @@ class ImpactCampaignModel:
 
         :param data: A dictionary containing the campaign ID and type.
         """
-        self._campaign_id = data.get('campaignId', None)
-        self._type = data.get('type', None)
+        self._campaign_id = data.get("campaignId", None)
+        self._type = data.get("type", None)
 
     # Getter methods for accessing private attributes
     def get_campaign_id(self) -> int:
         """
         Get the campaign ID.
-        
+
         :return: The campaign ID as an integer.
         """
         return self._campaign_id
@@ -36,7 +37,7 @@ class ImpactCampaignModel:
     def get_type(self) -> str:
         """
         Get the type of the campaign.
-        
+
         :return: The type as a string.
         """
         return self._type
@@ -45,7 +46,7 @@ class ImpactCampaignModel:
     def set_campaign_id(self, value: int):
         """
         Set the campaign ID.
-        
+
         :param value: The new campaign ID as an integer.
         """
         self._campaign_id = value
@@ -53,7 +54,7 @@ class ImpactCampaignModel:
     def set_type(self, value: str):
         """
         Set the type of the campaign.
-        
+
         :param value: The new type as a string.
         """
         self._type = value

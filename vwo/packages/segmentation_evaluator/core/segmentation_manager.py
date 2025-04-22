@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from ....models.campaign.feature_model import FeatureModel
 from ....models.user.context_model import ContextModel
 from ....utils.gateway_service_util import get_query_params, get_from_gateway_service
 
+
 class SegmentationManager:
     _instance = None  # Singleton instance of SegmentationManager
     evaluator = None  # Holds the instance of SegmentEvaluator
@@ -39,7 +40,7 @@ class SegmentationManager:
     def get_instance():
         """
         Singleton pattern implementation for getting the instance of SegmentationManager.
-        
+
         :return: The singleton instance.
         """
         if SegmentationManager._instance is None:
@@ -55,9 +56,11 @@ class SegmentationManager:
         if evaluator:
             self.evaluator = evaluator
         else:
-            self.evaluator = SegmentEvaluator() 
+            self.evaluator = SegmentEvaluator()
 
-    def set_contextual_data(self, settings: SettingsModel, feature: FeatureModel, context: ContextModel):
+    def set_contextual_data(
+        self, settings: SettingsModel, feature: FeatureModel, context: ContextModel
+    ):
         """
         Sets the contextual data for the segmentation process.
 
@@ -69,29 +72,32 @@ class SegmentationManager:
         self.evaluator.settings = settings  # Set settings in evaluator
         self.evaluator.context = context  # Set context in evaluator
         self.evaluator.feature = feature  # Set feature in evaluator
-         
+
         # if both user agent and ip address is none or empty then return
         if not context.get_user_agent() and not context.get_ip_address():
             return
 
-        if feature.get_is_gateway_service_required():  # Check if gateway service is required
-            if (
-                SettingsManager.get_instance().is_gateway_service_provided and
-                (context.get_vwo() is None)
+        if (
+            feature.get_is_gateway_service_required()
+        ):  # Check if gateway service is required
+            if SettingsManager.get_instance().is_gateway_service_provided and (
+                context.get_vwo() is None
             ):
                 query_params = {}
                 if context.get_user_agent():
-                    query_params['userAgent'] = context.get_user_agent()
+                    query_params["userAgent"] = context.get_user_agent()
 
                 if context.get_ip_address():
-                    query_params['ipAddress'] = context.get_ip_address()
+                    query_params["ipAddress"] = context.get_ip_address()
 
                 try:
                     params = get_query_params(query_params)
                     _vwo = get_from_gateway_service(params, UrlEnum.GET_USER_DATA.value)
                     context.set_vwo(ContextVWOModel(_vwo))
                 except Exception as err:
-                    LogManager.get_instance().error(f"Error in setting contextual data for segmentation. Got error: {err}")
+                    LogManager.get_instance().error(
+                        f"Error in setting contextual data for segmentation. Got error: {err}"
+                    )
 
     def validate_segmentation(self, dsl, properties):
         """

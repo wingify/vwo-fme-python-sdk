@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ from ..models.response_model import ResponseModel
 import requests
 import json
 
+
 class NetworkClient:
     def __init__(self):
         self.session = requests.Session()
@@ -26,10 +27,14 @@ class NetworkClient:
         response_model = ResponseModel()
         try:
             options = request_model.get_options()
-            response = self.session.get(options['url'], headers=options.get('headers'), timeout=options.get('timeout'))
+            response = self.session.get(
+                options["url"],
+                headers=options.get("headers"),
+                timeout=options.get("timeout"),
+            )
             response_model.set_status_code(response.status_code)
             response_model.set_headers(response.text)
-            if response.headers.get('Content-Type', '').startswith('application/json'):
+            if response.headers.get("Content-Type", "").startswith("application/json"):
                 response_model.set_data(response.json())
             else:
                 response_model.set_data(response.text)
@@ -41,10 +46,15 @@ class NetworkClient:
         response_model = ResponseModel()
         try:
             options = request_model.get_options()
-            response = self.session.post(options['url'], json=options.get('json'), headers=options.get('headers'), timeout=options.get('timeout'))
+            response = self.session.post(
+                options["url"],
+                json=options.get("json"),
+                headers=options.get("headers"),
+                timeout=options.get("timeout"),
+            )
             response_model.set_status_code(response.status_code)
             response_model.set_headers(response.headers)
-            if response.headers.get('Content-Type', '').startswith('application/json'):
+            if response.headers.get("Content-Type", "").startswith("application/json"):
                 response_model.set_data(response.json())
             else:
                 response_model.set_data(response.text)

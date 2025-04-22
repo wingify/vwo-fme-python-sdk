@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,17 @@
 # limitations under the License.
 
 
-
 from typing import Optional
 
+
 class MetricModel:
-    def __init__(self, id: int, hasProps: Optional[bool] = False, type: str = None, identifier: str = None):
+    def __init__(
+        self,
+        id: int,
+        hasProps: Optional[bool] = False,
+        type: str = None,
+        identifier: str = None,
+    ):
         self._id = id
         self._has_props = hasProps
         self._type = type
@@ -34,4 +40,3 @@ class MetricModel:
 
     def get_identifier(self) -> str:
         return self._identifier
-    

@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,38 +23,47 @@ dynamic = Any
 # Define a function type for comparison
 FunctionType = Callable[[dynamic], None]
 
+
 def is_object(val: dynamic) -> bool:
     """Checks if a value is an object excluding arrays, functions, regexes, promises, and dates."""
     return isinstance(val, Dict)
+
 
 def is_array(val: dynamic) -> bool:
     """Checks if a value is an array (List in Python)."""
     return isinstance(val, List)
 
+
 def is_null(val: dynamic) -> bool:
     """Checks if a value is None (null in Python)."""
     return val is None
+
 
 def is_undefined(val: dynamic) -> bool:
     """Checks if a value is None (undefined in Python)."""
     # In Python, 'undefined' is typically treated as None
     return val is None
 
+
 def is_defined(val: dynamic) -> bool:
     """Checks if a value is defined, i.e., not None."""
     return val is not None
+
 
 def is_number(val: dynamic) -> bool:
     """Checks if a value is a number, including NaN."""
     return isinstance(val, (int, float))
 
+
 def is_string(val: dynamic) -> bool:
     """Checks if a value is a string."""
     return isinstance(val, str)
 
+
 def is_boolean(val: dynamic) -> bool:
     """Checks if a value is a boolean."""
     return isinstance(val, bool)
+
 
 def is_nan(val: dynamic) -> bool:
     """Checks if a value is NaN."""
@@ -63,48 +72,54 @@ def is_nan(val: dynamic) -> bool:
     except TypeError:
         return False
 
+
 def is_date(val: dynamic) -> bool:
     """Checks if a value is a Date object."""
     return isinstance(val, datetime)
+
 
 def is_function(val: dynamic) -> bool:
     """Checks if a value is a function."""
     return callable(val)
 
+
 def is_regex(val: dynamic) -> bool:
     """Checks if a value is a regular expression."""
     return isinstance(val, re.Pattern)
 
+
 def is_promise(val: dynamic) -> bool:
     """Checks if a value is a Future object (closest to a Promise in Python)."""
     from concurrent.futures import Future
+
     return isinstance(val, Future)
+
 
 def get_type(val: dynamic) -> str:
     """Determines the type of the given value using various type-checking utility functions."""
     if is_object(val):
-        return 'Object'
+        return "Object"
     elif is_array(val):
-        return 'Array'
+        return "Array"
     elif is_null(val):
-        return 'Null'
+        return "Null"
     elif is_undefined(val):
-        return 'Undefined'
+        return "Undefined"
     elif is_nan(val):
-        return 'NaN'
+        return "NaN"
     elif is_number(val):
-        return 'Number'
+        return "Number"
     elif is_string(val):
-        return 'String'
+        return "String"
     elif is_boolean(val):
-        return 'Boolean'
+        return "Boolean"
     elif is_date(val):
-        return 'Date'
+        return "Date"
     elif is_regex(val):
-        return 'Regex'
+        return "Regex"
     elif is_function(val):
-        return 'Function'
+        return "Function"
     elif is_promise(val):
-        return 'Promise'
+        return "Promise"
     else:
-        return 'Unknown Type'
+        return "Unknown Type"

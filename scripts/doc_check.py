@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ def is_constant_class(Foo):
 
 # Reference taken from https://stackoverflow.com/a/25562415/13268491
 def import_submodules(package, recursive=True):
-    """ Import all submodules of a module, recursively, including subpackages
+    """Import all submodules of a module, recursively, including subpackages
 
     :param package: package (name or actual module)
     :type package: str | module
@@ -60,7 +60,12 @@ def find_non_doc_code(obj):
                     else:
                         find_non_doc_code(value)
                 if not value.__doc__:
-                    print('"' + inspect.getsourcefile(value) + '", line ' + str(inspect.getsourcelines(value)[-1]))
+                    print(
+                        '"'
+                        + inspect.getsourcefile(value)
+                        + '", line '
+                        + str(inspect.getsourcelines(value)[-1])
+                    )
                     is_document_missing = True
         except Exception:
             pass

@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,11 @@ import random
 from ..constants.Constants import Constants
 from ..utils.uuid_util import get_uuid
 from ..utils.data_type_util import is_object
-from ..utils.function_util import get_current_unix_timestamp, get_current_unix_timestamp_in_millis, get_random_number
+from ..utils.function_util import (
+    get_current_unix_timestamp,
+    get_current_unix_timestamp_in_millis,
+    get_random_number,
+)
 from ..packages.logger.core.log_manager import LogManager
 from ..services.url_service import UrlService
 from ..enums.url_enum import UrlEnum
@@ -36,44 +40,43 @@ from ..utils.function_util import (
     get_random_number,
 )
 
+
 def get_settings_path(sdk_key: str, account_id: str) -> Dict[str, Any]:
     path = {
-        'i': sdk_key,              # Inject API key
-        'r': random.random(),      # Random number for cache busting
-        'a': account_id            # Account ID
+        "i": sdk_key,  # Inject API key
+        "r": random.random(),  # Random number for cache busting
+        "a": account_id,  # Account ID
     }
     return path
+
 
 # Function to construct tracking path for an event
 def get_track_event_path(event: str, account_id: str, user_id: str) -> Dict[str, Any]:
     return {
-        'event_type': event,
-        'account_id': account_id,
-        'uId': user_id,
-        'u': get_uuid(user_id, account_id),
-        'sdk': Constants.SDK_NAME,
-        'sdk-v': Constants.SDK_VERSION,
-        'random': get_random_number(),
-        'ap': Constants.AP,
-        'sId': get_current_unix_timestamp(),
-        'ed': json.dumps({'p': 'server'})
+        "event_type": event,
+        "account_id": account_id,
+        "uId": user_id,
+        "u": get_uuid(user_id, account_id),
+        "sdk": Constants.SDK_NAME,
+        "sdk-v": Constants.SDK_VERSION,
+        "random": get_random_number(),
+        "ap": Constants.AP,
+        "sId": get_current_unix_timestamp(),
+        "ed": json.dumps({"p": "server"}),
     }
+
 
 # Function to construct query parameters for event batching
 def get_event_batching_query_params(account_id: str) -> Dict[str, Any]:
-    return {
-        'a': account_id,
-        'sd': Constants.SDK_NAME,
-        'sv': Constants.SDK_VERSION
-    }
+    return {"a": account_id, "sd": Constants.SDK_NAME, "sv": Constants.SDK_VERSION}
+
 
 # Function to build generic properties for tracking events
 def get_events_base_properties(
-    event_name: str,
-    visitor_user_agent: str = '',
-    ip_address: str = ''
+    event_name: str, visitor_user_agent: str = "", ip_address: str = ""
 ) -> Dict[str, Any]:
     from ..services.settings_manager import SettingsManager
+
     # Get the instance of SettingsManager
     settings = SettingsManager.get_instance()
 
@@ -82,53 +85,54 @@ def get_events_base_properties(
     account_id = settings.get_account_id()
 
     return {
-        'en': event_name,
-        'a': account_id,
-        'env': sdk_key,
-        'eTime': get_current_unix_timestamp_in_millis(),
-        'random': get_random_number(),
-        'p': 'FS',
-        'visitor_ua': visitor_user_agent,
-        'visitor_ip': ip_address,
-        'url': Constants.HTTPS_PROTOCOL + UrlService.get_base_url() + UrlEnum.EVENTS.value
+        "en": event_name,
+        "a": account_id,
+        "env": sdk_key,
+        "eTime": get_current_unix_timestamp_in_millis(),
+        "random": get_random_number(),
+        "p": "FS",
+        "visitor_ua": visitor_user_agent,
+        "visitor_ip": ip_address,
+        "url": Constants.HTTPS_PROTOCOL
+        + UrlService.get_base_url()
+        + UrlEnum.EVENTS.value,
     }
+
 
 # Function to build payload for tracking events
 def _get_event_base_payload(
     settings: SettingsModel,
     user_id: str,
     event_name: str,
-    visitor_user_agent: str = '',
-    ip_address: str = ''
+    visitor_user_agent: str = "",
+    ip_address: str = "",
 ) -> Dict[str, Any]:
     from ..services.settings_manager import SettingsManager
+
     uuid_value = get_uuid(user_id, SettingsManager.get_instance().get_account_id())
     sdk_key = SettingsManager.get_instance().get_sdk_key()
     properties = {
-        'd': {
-            'msgId': f"{uuid_value}-{get_current_unix_timestamp_in_millis()}",
-            'visId': uuid_value,
-            'sessionId': get_current_unix_timestamp(),
-            'visitor_ua': visitor_user_agent,
-            'visitor_ip': ip_address,
-            'event': {
-                'props': {
-                    'vwo_sdkName': Constants.SDK_NAME,
-                    'vwo_sdkVersion': Constants.SDK_VERSION,
-                    'vwo_envKey': sdk_key
+        "d": {
+            "msgId": f"{uuid_value}-{get_current_unix_timestamp_in_millis()}",
+            "visId": uuid_value,
+            "sessionId": get_current_unix_timestamp(),
+            "visitor_ua": visitor_user_agent,
+            "visitor_ip": ip_address,
+            "event": {
+                "props": {
+                    "vwo_sdkName": Constants.SDK_NAME,
+                    "vwo_sdkVersion": Constants.SDK_VERSION,
+                    "vwo_envKey": sdk_key,
                 },
-                'name': event_name,
-                'time': get_current_unix_timestamp_in_millis()
+                "name": event_name,
+                "time": get_current_unix_timestamp_in_millis(),
             },
-            'visitor': {
-                'props': {
-                    Constants.VWO_FS_ENVIRONMENT: sdk_key
-                }
-            }
+            "visitor": {"props": {Constants.VWO_FS_ENVIRONMENT: sdk_key}},
         }
     }
-    
+
     return properties
+
 
 # Function to build payload for tracking user data
 def get_track_user_payload_data(
@@ -137,22 +141,25 @@ def get_track_user_payload_data(
     event_name: str,
     campaign_id: int,
     variation_id: int,
-    visitor_user_agent: str = '',
-    ip_address: str = ''
+    visitor_user_agent: str = "",
+    ip_address: str = "",
 ) -> Dict[str, Any]:
-    properties = _get_event_base_payload(settings, user_id, event_name, visitor_user_agent, ip_address)
-    
-    properties['d']['event']['props']['id'] = campaign_id
-    properties['d']['event']['props']['variation'] = str(variation_id)
-    properties['d']['event']['props']['isFirst'] = 1
-    
-    LogManager.get_instance().debug(debug_messages.get('IMPRESSION_FOR_TRACK_USER').format(
-        accountId = settings.get_account_id(),
-        userId = user_id,
-        campaignId = campaign_id
-    ))
-    
+    properties = _get_event_base_payload(
+        settings, user_id, event_name, visitor_user_agent, ip_address
+    )
+
+    properties["d"]["event"]["props"]["id"] = campaign_id
+    properties["d"]["event"]["props"]["variation"] = str(variation_id)
+    properties["d"]["event"]["props"]["isFirst"] = 1
+
+    LogManager.get_instance().debug(
+        debug_messages.get("IMPRESSION_FOR_TRACK_USER").format(
+            accountId=settings.get_account_id(), userId=user_id, campaignId=campaign_id
+        )
+    )
+
     return properties
+
 
 # Function to build payload for tracking goals with custom event properties
 def get_track_goal_payload_data(
@@ -160,26 +167,29 @@ def get_track_goal_payload_data(
     user_id: str,
     event_name: str,
     event_properties: Dict[str, Any],
-    visitor_user_agent: str = '',
-    ip_address: str = ''
+    visitor_user_agent: str = "",
+    ip_address: str = "",
 ) -> Dict[str, Any]:
-    properties = _get_event_base_payload(settings, user_id, event_name, visitor_user_agent, ip_address)
-    
-    properties['d']['event']['props']['isCustomEvent'] = True
-    properties['d']['event']['props']['variation'] = 1  # Temporary value for variation
-    properties['d']['event']['props']['id'] = 1  # Temporary value for ID
-    
+    properties = _get_event_base_payload(
+        settings, user_id, event_name, visitor_user_agent, ip_address
+    )
+
+    properties["d"]["event"]["props"]["isCustomEvent"] = True
+    properties["d"]["event"]["props"]["variation"] = 1  # Temporary value for variation
+    properties["d"]["event"]["props"]["id"] = 1  # Temporary value for ID
+
     if event_properties and is_object(event_properties):
         for prop, value in event_properties.items():
-            properties['d']['event']['props'][prop] = value
-    
-    LogManager.get_instance().debug(debug_messages.get('IMPRESSION_FOR_TRACK_GOAL').format(
-        eventName = event_name,
-        accountId = settings.get_account_id(),
-        userId = user_id
-    ))
-    
+            properties["d"]["event"]["props"][prop] = value
+
+    LogManager.get_instance().debug(
+        debug_messages.get("IMPRESSION_FOR_TRACK_GOAL").format(
+            eventName=event_name, accountId=settings.get_account_id(), userId=user_id
+        )
+    )
+
     return properties
+
 
 # Function to build payload for syncing visitor attributes
 def get_attribute_payload_data(
@@ -217,10 +227,11 @@ event_loop_initialized = False
 main_event_loop = None
 loop_lock = threading.Lock()
 
+
 # Function to send a POST API request without waiting for the response
 def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
     global event_loop_initialized, main_event_loop
-    
+
     # Importing the SettingsManager here to avoid circular import issues or unnecessary imports
     from ..services.settings_manager import SettingsManager
 
@@ -229,8 +240,8 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
 
     # Retrieve 'visitor_ua' and 'visitor_ip' from the payload if they exist
     # Strip any whitespace and ensure they are valid strings before adding to headers
-    visitor_ua = payload['d'].get('visitor_ua')
-    visitor_ip = payload['d'].get('visitor_ip')
+    visitor_ua = payload["d"].get("visitor_ua")
+    visitor_ip = payload["d"].get("visitor_ip")
 
     # Add 'visitor_ua' to headers if it's a valid, non-empty string after stripping whitespace
     if visitor_ua and isinstance(visitor_ua, str) and visitor_ua.strip():
@@ -243,17 +254,17 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
     try:
         # Get the instance of NetworkManager that handles making network requests
         network_instance = NetworkManager.get_instance()
-        
+
         # Create a RequestModel object that holds all the necessary data for the POST request
         request = RequestModel(
             UrlService.get_base_url(),
-            'POST',
+            "POST",
             UrlEnum.EVENTS.value,
             properties,
             payload,
             headers,
             SettingsManager.get_instance().protocol,
-            SettingsManager.get_instance().port
+            SettingsManager.get_instance().port,
         )
 
         # Lock the event loop initialization to prevent race conditions in multi-threaded environments
@@ -262,7 +273,9 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
             if event_loop_initialized and main_event_loop.is_running():
                 # If the loop is running, submit the asynchronous POST request to the loop
                 # This will not block the main thread
-                asyncio.run_coroutine_threadsafe(network_instance.post_async(request), main_event_loop)
+                asyncio.run_coroutine_threadsafe(
+                    network_instance.post_async(request), main_event_loop
+                )
             else:
                 # If the event loop has not been initialized or is not running:
                 # 1. Mark the event loop as initialized
@@ -270,59 +283,72 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
                 # 3. Start the event loop in a separate thread so it doesn't block the main thread
                 event_loop_initialized = True
                 main_event_loop = asyncio.new_event_loop()
-                threading.Thread(target=start_event_loop, args=(main_event_loop,), daemon=True).start()
-                
+                threading.Thread(
+                    target=start_event_loop, args=(main_event_loop,), daemon=True
+                ).start()
+
                 # Submit the asynchronous POST request to the newly started event loop
-                asyncio.run_coroutine_threadsafe(network_instance.post_async(request), main_event_loop)
+                asyncio.run_coroutine_threadsafe(
+                    network_instance.post_async(request), main_event_loop
+                )
 
     except Exception as err:
         LogManager.get_instance().error(
-            error_messages.get('NETWORK_CALL_FAILED').format(
-                method='POST',
+            error_messages.get("NETWORK_CALL_FAILED").format(
+                method="POST",
                 err=err,
             ),
         )
 
+
 # Function to construct the messaging event payload
-def get_messaging_event_payload(message_type: str, message: str, event_name: str) -> Dict[str, Any]:
+def get_messaging_event_payload(
+    message_type: str, message: str, event_name: str
+) -> Dict[str, Any]:
     from ..services.settings_manager import SettingsManager
+
     # Get user ID and properties
     settings = SettingsManager.get_instance()
     user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
     properties = _get_event_base_payload(None, user_id, event_name, None, None)
 
     # Set the environment key and product
-    properties['d']['event']['props']['vwo_envKey'] = settings.get_sdk_key()
-    properties['d']['event']['props']['product'] = "fme"  # Assuming 'product' is a required field
+    properties["d"]["event"]["props"]["vwo_envKey"] = settings.get_sdk_key()
+    properties["d"]["event"]["props"][
+        "product"
+    ] = "fme"  # Assuming 'product' is a required field
 
     # Set the message data
     data = {
-        'type': message_type,
-        'content': {
-            'title': message,
-            'dateTime': get_current_unix_timestamp_in_millis()
-        }
+        "type": message_type,
+        "content": {
+            "title": message,
+            "dateTime": get_current_unix_timestamp_in_millis(),
+        },
     }
 
     # Add data to the properties
-    properties['d']['event']['props']['data'] = data
+    properties["d"]["event"]["props"]["data"] = data
 
     return properties
 
-def send_messaging_event(properties: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+
+def send_messaging_event(
+    properties: Dict[str, Any], payload: Dict[str, Any]
+) -> Dict[str, Any]:
     network_instance = NetworkManager.get_instance()
 
     try:
         # Prepare the request model
         request = RequestModel(
             Constants.HOST_NAME,
-            'POST',
+            "POST",
             UrlEnum.EVENTS.value,
             properties,
             payload,
             None,
             Constants.HTTPS_PROTOCOL,
-            443
+            443,
         )
 
         # Flag to check if the event loop is initialized
@@ -332,11 +358,15 @@ def send_messaging_event(properties: Dict[str, Any], payload: Dict[str, Any]) ->
         # Start a new event loop in a separate thread if it hasn't been initialized yet
         if not event_loop_initialized:
             main_event_loop = asyncio.new_event_loop()
-            threading.Thread(target=start_event_loop, args=(main_event_loop,), daemon=True).start()
+            threading.Thread(
+                target=start_event_loop, args=(main_event_loop,), daemon=True
+            ).start()
             event_loop_initialized = True
 
         # Submit the asynchronous POST request to the newly started event loop
-        asyncio.run_coroutine_threadsafe(network_instance.post_async(request), main_event_loop)
+        asyncio.run_coroutine_threadsafe(
+            network_instance.post_async(request), main_event_loop
+        )
 
         # Return a success message
         return {"success": True, "message": "Event sent successfully"}
@@ -344,8 +374,8 @@ def send_messaging_event(properties: Dict[str, Any], payload: Dict[str, Any]) ->
     except Exception as err:
         # Log the error
         LogManager.get_instance().error(
-            error_messages.get('NETWORK_CALL_FAILED').format(
-                method='POST',
+            error_messages.get("NETWORK_CALL_FAILED").format(
+                method="POST",
                 err=err,
             )
         )
@@ -353,10 +383,11 @@ def send_messaging_event(properties: Dict[str, Any], payload: Dict[str, Any]) ->
         # Return a failure message
         return {"success": False, "message": "Failed to send event"}
 
+
 # Function to start the event loop in a new thread
 def start_event_loop(loop):
     # Set the provided loop as the current event loop for the new thread
     asyncio.set_event_loop(loop)
-    
+
     # Run the event loop indefinitely to handle any submitted asynchronous tasks
     loop.run_forever()

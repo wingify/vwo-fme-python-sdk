@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ from .function_util import add_linked_campaigns_to_settings
 from .gateway_service_util import add_is_gateway_service_required_flag
 from typing import Any, Dict
 
-def set_settings_and_add_campaigns_to_rules(settings: Dict, vwo_client_instance: Any) -> None:    
+
+def set_settings_and_add_campaigns_to_rules(
+    settings: Dict, vwo_client_instance: Any
+) -> None:
     # Initialize the settings model with the provided settings
     vwo_client_instance._settings = SettingsModel(settings)
     vwo_client_instance.original_settings = settings
@@ -27,8 +30,10 @@ def set_settings_and_add_campaigns_to_rules(settings: Dict, vwo_client_instance:
     campaigns = vwo_client_instance._settings.get_campaigns()
     for index, campaign in enumerate(campaigns):
         set_variation_allocation(campaign)
-        campaigns[index] = campaign  # Update the campaign back into the List (if necessary)
-    
+        campaigns[index] = (
+            campaign  # Update the campaign back into the List (if necessary)
+        )
+
     # Add linked campaigns to settings and set gateway service required flag
     add_linked_campaigns_to_settings(vwo_client_instance._settings)
     add_is_gateway_service_required_flag(vwo_client_instance._settings)

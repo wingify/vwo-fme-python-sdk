@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@ from typing import Dict, Any, Optional
 
 
 class GlobalRequestModel:
-    def __init__(self,
-                 url: Optional[str] = None,
-                 query: Optional[Dict[str, Any]] = None,
-                 body: Optional[Dict[str, Any]] = None,
-                 headers: Optional[Dict[str, str]] = None,
-                 timeout: int = 3000,
-                 is_development_mode: bool = False):
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        query: Optional[Dict[str, Any]] = None,
+        body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: int = 3000,
+        is_development_mode: bool = False,
+    ):
         self.url = url
         self.query = query or {}
         self.body = body or {}

@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +15,20 @@
 
 from typing import Dict, Any, Optional
 
+
 class RequestModel:
-    def __init__(self,
-                 url: Optional[str] = None,
-                 method: str = 'GET',
-                 path: str = '',
-                 query: Optional[Dict[str, Any]] = None,
-                 body: Optional[Dict[str, Any]] = None,
-                 headers: Optional[Dict[str, str]] = None,
-                 scheme: str = 'https',
-                 port: Optional[int] = None,
-                 timeout: int = 3000):
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        method: str = "GET",
+        path: str = "",
+        query: Optional[Dict[str, Any]] = None,
+        body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        scheme: str = "https",
+        port: Optional[int] = None,
+        timeout: int = 3000,
+    ):
         self.url = url
         self.method = method
         self.path = path
@@ -91,27 +94,27 @@ class RequestModel:
         self.path = path
 
     def get_options(self) -> Dict[str, Any]:
-        query_params = '&'.join([f"{key}={value}" for key, value in self.query.items()])
+        query_params = "&".join([f"{key}={value}" for key, value in self.query.items()])
         options = {
-            'url': self.url,
-            'method': self.method,
-            'headers': self.headers,
-            'timeout': self.timeout,
+            "url": self.url,
+            "method": self.method,
+            "headers": self.headers,
+            "timeout": self.timeout,
         }
 
         if self.scheme and self.url:
-            options['url'] = f"{self.scheme}://{self.url}"
-        
+            options["url"] = f"{self.scheme}://{self.url}"
+
         if self.port:
-            options['url'] += f":{self.port}"
-        
+            options["url"] += f":{self.port}"
+
         if self.path:
-            options['url'] += self.path
-        
+            options["url"] += self.path
+
         if query_params:
-            options['url'] += f"?{query_params}"
-        
+            options["url"] += f"?{query_params}"
+
         if self.body:
-            options['json'] = self.body
+            options["json"] = self.body
 
         return options

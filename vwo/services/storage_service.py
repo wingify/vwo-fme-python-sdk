@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +21,14 @@ from ..utils.data_type_util import is_null, is_undefined
 from ..packages.logger.core.log_manager import LogManager
 from ..utils.log_message_util import error_messages
 
+
 class StorageService:
     def __init__(self):
         self.storage_data: Dict[str, Any] = {}
 
-    def get_data_in_storage(self, feature_key: Any, context: ContextModel) -> Dict[Any, Any]:
+    def get_data_in_storage(
+        self, feature_key: Any, context: ContextModel
+    ) -> Dict[Any, Any]:
         storage_instance = Storage.get_instance().get_connector()
 
         if is_null(storage_instance) or is_undefined(storage_instance):
@@ -38,7 +41,7 @@ class StorageService:
             return data
         except Exception as err:
             LogManager.get_instance().error(
-                error_messages.get('STORED_DATA_ERROR').format(err)
+                error_messages.get("STORED_DATA_ERROR").format(err)
             )
             return {"status": StorageEnum.NO_DATA_FOUND.value}
 

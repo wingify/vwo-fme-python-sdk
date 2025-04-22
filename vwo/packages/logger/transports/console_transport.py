@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@ from ..logger import Logger
 from ..enums.log_level_enum import LogLevelEnum
 from typing import Any, Dict
 
+
 class ConsoleTransport(Logger):
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
-        self.level = self.config.get('level', LogLevelEnum.ERROR)
-        self.is_ansi_color_enabled = self.config.get('isAnsiColorEnabled', False)
+        self.level = self.config.get("level", LogLevelEnum.ERROR)
+        self.is_ansi_color_enabled = self.config.get("isAnsiColorEnabled", False)
 
     def trace(self, message: str) -> None:
         self.console_log(message)

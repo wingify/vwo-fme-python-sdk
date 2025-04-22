@@ -1,4 +1,4 @@
-# Copyright 2024 Wingify Software Pvt. Ltd.
+# Copyright 2024-2025 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 
 from enum import Enum
 
+
 class EventEnum(Enum):
-    VWO_VARIATION_SHOWN = 'vwo_variationShown'
-    VWO_SYNC_VISITOR_PROP = 'vwo_syncVisitorProp'
-    VWO_LOG_EVENT = 'vwo_log'
+    VWO_VARIATION_SHOWN = "vwo_variationShown"
+    VWO_SYNC_VISITOR_PROP = "vwo_syncVisitorProp"
+    VWO_LOG_EVENT = "vwo_log"
