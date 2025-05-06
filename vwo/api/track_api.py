@@ -93,5 +93,13 @@ class TrackApi:
             ip_address=context.get_ip_address(),
         )
 
-        # Send the constructed properties and payload as a POST request
-        send_post_api_request(properties, payload)
+        from vwo.vwo_client import VWOClient
+        vwo_instance = VWOClient.get_instance()
+
+        # Check if batch events are enabled
+        if vwo_instance.batch_event_queue is not None:
+            # Enqueue the event to the batch queue
+            vwo_instance.batch_event_queue.enqueue(payload)
+        else:
+            # Send the event immediately if batch events are not enabled
+            send_post_api_request(properties, payload)

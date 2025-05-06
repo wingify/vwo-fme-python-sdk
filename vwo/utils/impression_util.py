@@ -27,6 +27,7 @@ from ..enums.event_enum import EventEnum
 def create_and_send_impression_for_variation_shown(
     settings: SettingsModel, campaign_id: int, variation_id: int, context: ContextModel
 ):
+    from ..vwo_client import VWOClient
     # Get base properties for the event
     properties = get_events_base_properties(
         EventEnum.VWO_VARIATION_SHOWN.value,
@@ -44,5 +45,12 @@ def create_and_send_impression_for_variation_shown(
         ip_address=context.get_ip_address(),
     )
 
-    # Send the constructed properties and payload as a POST request
-    send_post_api_request(properties, payload)
+    vwo_instance = VWOClient.get_instance()
+
+    # Check if batch events are enabled
+    if vwo_instance.batch_event_queue is not None:
+        # Enqueue the event to the batch queue
+        vwo_instance.batch_event_queue.enqueue(payload)
+    else:
+        # Send the event immediately if batch events are not enabled
+        send_post_api_request(properties, payload)

@@ -37,6 +37,9 @@ class VWO:
         # Fetch settings synchronously and build the VWO instance
         settings = VWO.vwo_builder.get_settings(force=False)
         VWO.instance = VWO.vwo_builder.build(settings)
+        
+        # Initialize batching
+        VWO.vwo_builder.init_batching()
         return VWO.instance
 
     @staticmethod

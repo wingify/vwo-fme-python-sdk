@@ -14,6 +14,8 @@
 
 
 from typing import Dict, Any, Optional
+
+from vwo.services.batch_event_queue import BatchEventQueue
 from .packages.network_layer.manager.network_manager import NetworkManager
 from .services.settings_manager import SettingsManager
 from .vwo_client import VWOClient
@@ -41,9 +43,11 @@ class VWOBuilder:
         self.is_settings_fetch_in_progress = False
         self.is_valid_poll_interval_passed_from_init = False
         self.vwo_instance = None
+        self.is_batching_used = False
+        self.batch_event_queue = None
 
     def set_network_manager(self):
-        NetworkManager.get_instance().attach_client()
+        NetworkManager.get_instance(self.options.get("threading", {})).attach_client()
         LogManager.get_instance().debug(
             debug_messages.get("SERVICE_INITIALIZED").format(service="Network Layer")
         )
@@ -146,6 +150,79 @@ class VWOBuilder:
                 )
             )
         return self
+
+    def init_batching(self):
+        """
+        Initializes batching based on the options provided.
+        """
+        # Check if BatchEventData is present in options and initialize BatchEventQueue
+        if (
+            "batch_event_data" in self.options
+            and self.options["batch_event_data"] is not None
+        ):
+            from .services.settings_manager import SettingsManager
+            settings_manager = SettingsManager.get_instance()
+
+            if settings_manager.is_gateway_service_provided:
+                LogManager.get_instance().warn("Gateway service is configured. Event batching will be handled by the gateway. SDK batching is disabled.")
+                return self
+            
+            if "batch_event_data" in self.options and self.options["batch_event_data"] is not None:
+                batch_event_data = self.options["batch_event_data"]
+                events_per_request = batch_event_data.get('events_per_request', 100)
+                request_time_interval = batch_event_data.get('request_time_interval', 600)
+
+
+                # Check if events_per_request is valid
+                is_events_per_request_valid = isinstance(events_per_request, int) and 0 < events_per_request <= 5000
+                
+                # Check if request_time_interval is valid
+                is_request_time_interval_valid = isinstance(request_time_interval, int) and 0 < request_time_interval
+
+                # Check if both are invalid
+                if not is_events_per_request_valid and not is_request_time_interval_valid:
+                    LogManager.get_instance().error(
+                        "Values mismatch from the expectation of both parameters. Batching not initialized."
+                    )
+                    return self
+
+                # Handle invalid events_per_request
+                if not is_events_per_request_valid:
+                    LogManager.get_instance().error(
+                        "Events_per_request values is invalid (should be greater than 0 and less than 5000). Using default value of events_per_request parameter : 100."
+                    )
+                    events_per_request = 100
+
+                # Handle invalid request_time_interval
+                if not is_request_time_interval_valid:
+                    LogManager.get_instance().error(
+                        "Request_time_interval values is invalid (should be greater than 0). Using default value of request_time_interval parameter : 600 seconds."
+                    )
+                    request_time_interval = 600
+
+                # Initialize the BatchEventQueue
+                self.batch_event_queue = BatchEventQueue(
+                    events_per_request=events_per_request,
+                    request_time_interval=request_time_interval,
+                    flush_callback=batch_event_data.get('flush_callback', None),
+                    account_id=self.options.get("account_id", 0),
+                    sdk_key=self.options.get("sdk_key", ""),
+                )
+
+                # Assuming vwo_client is defined and linked to this builder
+                self.vwo_instance.batch_event_queue = self.batch_event_queue
+                self.is_batching_used = True
+
+                # Log the result
+                LogManager.get_instance().debug(
+                    debug_messages.get("BATCHING_INITIALIZED").format(
+                        is_batching_used=self.is_batching_used
+                    )
+                )
+            else:
+                self.is_batching_used = False
+
+            return self
 
     def build(self, settings):
         self.vwo_instance = VWOClient(settings, self.options)

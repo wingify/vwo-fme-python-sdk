@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from vwo.services.batch_event_queue import BatchEventQueue
 from .models.settings.settings_model import SettingsModel
 from .utils.settings_util import set_settings_and_add_campaigns_to_rules
 from .services.url_service import UrlService
@@ -32,15 +33,38 @@ from .services.settings_manager import SettingsManager
 class VWOClient:
     _settings: SettingsModel = None
     original_settings: Dict = None
+    batch_event_queue: BatchEventQueue = None 
+    _vwo_client_instance = None
 
     def __init__(self, settings: str, options: Dict):
         self.options = options
         if settings is None or settings == {}:
             return
         set_settings_and_add_campaigns_to_rules(settings, self)
+
+        # Set the singleton instance to the current instance
+        if VWOClient._vwo_client_instance is None:
+            VWOClient._vwo_client_instance = self
+        
         UrlService(self._settings.get_collection_prefix())
 
         LogManager.get_instance().info(info_messages.get("CLIENT_INITIALIZED"))
+    
+    @staticmethod
+    def get_instance():
+        """
+        This method is used to get the singleton instance of the VWOClient.
+        """
+        return VWOClient._vwo_client_instance
+    
+    # Getter for the batch_event_queue
+    def get_batch_event_queue(self):
+        return self._batch_event_queue  
+
+    # Setter for the batch_event_queue
+    def set_batch_event_queue(self, value):
+        self._batch_event_queue = value  
+        
 
     def get_flag(self, feature_key: str, context: Dict) -> GetFlag:
         """
@@ -376,3 +400,37 @@ class VWOClient:
                 )
             )
             return
+    
+    
+    def flush_events(self):
+        """
+        Flushes events from the batch event queue and clears the queue.
+        This method will also handle calling the flush callback upon completion.
+        """
+        api_name = "flush_events"
+        try:
+            # Log that the API has been called
+            LogManager.get_instance().debug(
+                debug_messages.get("API_CALLED").format(apiName=api_name)
+            )
+            
+            if self.batch_event_queue:
+                LogManager.get_instance().debug(
+                    f"Flushing events for accountId: {self.options.get('account_id')}. Queue size: {len(self.batch_event_queue.batch_queue)}"
+                )
+                # Trigger the flush and clear the queue
+                flush_result = self.batch_event_queue.flush_and_clear_timer()
+                return flush_result
+            else:
+                LogManager.get_instance().error(
+                    f"Cannot flush events. Batch event queue is empty for accountId: {self.options.get('account_id')}"
+                )
+                return False
+
+        except Exception as err:
+            LogManager.get_instance().error(
+                error_messages.get("API_THROW_ERROR").format(
+                    apiName=api_name, err=str(err)
+                )
+            )
+            return False

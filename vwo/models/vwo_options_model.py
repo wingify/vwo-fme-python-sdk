@@ -15,7 +15,7 @@
 
 from typing import Dict
 
-
+from vwo.models.batch_event_data import BatchEventData
 class VWOOptionsModel:
     def __init__(self, options: Dict):
         """
@@ -34,6 +34,17 @@ class VWOOptionsModel:
         self.integrations = options.get("integrations", None)
         self.network = options.get("network", None)
         self.vwoBuilder = options.get("vwoBuilder", None)
+
+        # Initialize BatchEventData
+        batch_event_data = options.get('batch_event_data', None)
+        if batch_event_data:
+            self.batchEventData = BatchEventData(
+                events_per_request=batch_event_data.get('events_per_request'),
+                request_time_interval=batch_event_data.get('request_time_interval'),
+                flush_callback=batch_event_data.get('flush_callback', None)
+            )
+        else:
+            self.batchEventData = None
 
     def get_account_id(self) -> str:
         """
@@ -122,3 +133,11 @@ class VWOOptionsModel:
         :return: The VWO builder instance.
         """
         return self.vwoBuilder
+    
+    def get_batch_event_data(self):
+        """
+        Get the batch event data.
+        
+        :return: The BatchEventData instance.
+        """
+        return self.batchEventData

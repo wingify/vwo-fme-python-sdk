@@ -10,5 +10,6 @@
   
     "IMPRESSION_FOR_TRACK_USER": "Impression built for vwo_variationShown(VWO standard event for tracking user) event haivng Account ID:{accountId}, User ID:{userId}, and experiment ID:{campaignId}",
     "IMPRESSION_FOR_TRACK_GOAL": "Impression built for event:{eventName} event having Account ID:{accountId}, and user ID:{userId}",
-    "IMPRESSION_FOR_SYNC_VISITOR_PROP": "Impression built for {eventName}(VWO internal event) event for Account ID:{accountId}, and user ID:{userId}"
+    "IMPRESSION_FOR_SYNC_VISITOR_PROP": "Impression built for {eventName}(VWO internal event) event for Account ID:{accountId}, and user ID:{userId}",
+    "BATCHING_INITIALIZED": "BATCHING_INITIALIZED"
   }

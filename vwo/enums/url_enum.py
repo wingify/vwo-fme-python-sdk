@@ -20,7 +20,7 @@ class UrlEnum(Enum):
     BASE_URL = "dev.visualwebsiteoptimizer.com"
     SETTINGS_URL = "/server-side/settings"
     # WEBHOOK_SETTINGS_URL = '/server-side/pull'
-    # BATCH_EVENTS = '/server-side/batch-events'
-    EVENTS = "/events/t"
-    ATTRIBUTE_CHECK = "/check-attribute"
-    GET_USER_DATA = "/get-user-details"
+    EVENTS = '/events/t'
+    ATTRIBUTE_CHECK = '/check-attribute'
+    GET_USER_DATA = '/get-user-details'
+    BATCH_EVENTS = '/server-side/batch-events-v2'

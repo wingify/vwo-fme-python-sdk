@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     package_file = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.8.0"
+        "version": "1.9.0"
     }
 
     # Constants
@@ -56,3 +56,6 @@ class Constants:
     RANDOM_ALGO = 1
 
     VWO_META_MEG_KEY = "_vwo_meta_meg_"
+
+    THREAD_POOL_MAX_WORKERS = 5
+    SHOULD_USE_THREADING = True
