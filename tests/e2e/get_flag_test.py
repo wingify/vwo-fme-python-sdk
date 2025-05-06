@@ -56,7 +56,13 @@ class VWOTest(unittest.TestCase):
             with patch(
                 "vwo.vwo_builder.VWOBuilder.get_settings",
                 return_value=settings_files.get(data.get("settings")),
-            ) as mock_get_settings:
+            ) as mock_get_settings, patch(
+                "vwo.vwo_builder.VWOBuilder.update_poll_interval_and_check_and_poll",
+                return_value=None,  # Mocking the method to return nothing
+            ), patch(
+                "vwo.packages.network_layer.manager.network_manager.NetworkManager.post",
+                return_value=None,  # Mocking the post method to return nothing
+            ):
                 storage = user_storage()
                 options = {"sdk_key": self.sdk_key, "account_id": self.account_id}
 
@@ -132,13 +138,17 @@ class VWOTest(unittest.TestCase):
         for test_data in salt_test_data:
             # Debug print for the test data
             storage.clear()
-            print("DEBUG: Test Data:")
-            print(test_data)
 
             with patch(
                 "vwo.vwo_builder.VWOBuilder.get_settings",
                 return_value=settings_files.get(test_data.get("settings")),
-            ) as mock_get_settings:
+            ) as mock_get_settings, patch(
+                "vwo.vwo_builder.VWOBuilder.update_poll_interval_and_check_and_poll",
+                return_value=None,  # Mocking the method to return nothing
+            ), patch(
+                "vwo.packages.network_layer.manager.network_manager.NetworkManager.post",
+                return_value=None,  # Mocking the post method to return nothing
+            ):
                 # Debug print for the settings file being used
                 settings_file = settings_files.get(test_data.get("settings"))
                 options = {
