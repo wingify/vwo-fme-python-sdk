@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2025-05-06
+
+### Added
+
+- Added support for `batch_event_data` configuration to optimize network requests by batching multiple events together. This allows you to:
+  
+  - Configure `request_time_interval` to flush events after a specified time interval
+  - Set `events_per_request` to control maximum events per batch
+  - Implement `flush_callback` to handle batch processing results
+  - Manually trigger event flushing via `flush_events()` method
+
+  ```python
+  from vwo import init
+  
+  def event_flush_callback(error, payload):
+        # your implementation here
+
+  options = {
+      'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+      'account_id': '123456', # VWO Account ID
+      'batch_event_data': {
+        'events_per_request': 60,  # Send up to 100 events per request
+        'request_time_interval': 100, # Flush events every 60 seconds
+        'flush_callback': event_flush_callback
+      }
+  }
+
+  vwo_client = init(options)
+  ```
+
+  - You can also manually flush events using the `flush_events()` method:
+  ```python
+  vwo_client.flush_events()
+  ```
+
 ## [1.8.0] - 2025-04-22
 
 ### Added

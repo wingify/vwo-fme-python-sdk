@@ -63,6 +63,8 @@ To customize the SDK further, additional parameters can be passed to the `init()
 | `storage`                    | Custom storage connector for persisting user decisions and campaign data. data.                                                                                   | No           | Dictionary   | See [Storage](#storage) section |
 | `logger`                     | Toggle log levels for more insights or for debugging purposes. You can also customize your own transport in order to have better control over log messages. | No           | Dictionary   | See [Logger](#logger) section   |
 | `integrations`               | Callback function for integrating with third-party analytics services.                                                                                      | No           | Function | See [Integrations](#integrations) section |
+| `batch_event_data`             | Configuration for batch event processing to optimize network requests                                                                                       | No           | Dictionary   | See [Batch Events](#batch-events) section |
+| `threading`                  | Toggle threading for better (enabled by default) performance.                                                                               | No           | Dictionary     | See [Threading](#threading) section |
 
 ### User Context
 
@@ -365,6 +367,104 @@ options = {
 }
 
 vwo_client = init(options)
+```
+
+### Threading
+
+The SDK leverages threading to efficiently manage concurrent operations. Threading is enabled by default, but can be disabled by configuring the `threading` parameter during initialization. This gives you control over the SDK's concurrency behavior based on your application's needs.
+
+| Parameter | Description | Required | Type | Default |
+| --------- | ----------- | -------- | ---- | ------- |
+| `enabled` | Enable or disable threading. | No | Boolean | `true` |
+| `max_workers` | Maximum number of threads to use. | No | Integer | `5` |
+
+#### Disable Threading
+
+When threading is disabled, all tracking calls will block the main execution thread until they complete. This means your application will wait for each VWO operation before continuing.
+
+Example showing blocking behavior:
+
+```python
+# By disabling threading, the SDK will wait for the response from the server for each tracking call.
+from vwo import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # VWO Account ID
+    'threading': {
+        'enabled': False
+    }
+  }
+
+  vwo_client = init(options)
+```
+
+#### Enable Threading (Default)
+
+Threading in the VWO SDK provides several important benefits:
+
+1. **Asynchronous Event Tracking**: When enabled, all tracking calls are processed asynchronously in the background. This prevents these network calls from blocking your application's main execution flow.
+
+2. **Improved Performance**: By processing tracking and network operations in separate threads, your application remains responsive and can continue serving user requests without waiting for VWO operations to complete.
+
+Example of how threading improves performance:
+- Without threading: Each tracking call blocks until the server responds
+- With threading: Tracking calls return immediately while processing happens in background
+
+The SDK uses a thread pool to manage these concurrent operations efficiently. The default pool size of 5 threads is suitable for most applications, but you can adjust it based on your needs:
+
+```python
+# By default, threading is enabled and the max_workers is set to 5.
+# you can customize the max_workers by passing the max_workers parameter in the threading configuration.
+from vwo import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # VWO Account ID
+    'threading': {
+        'enabled': True,
+        'max_workers': 10
+    }
+  }
+
+  vwo_client = init(options)
+```
+
+### Batch Events
+
+The `batch_event_data` configuration allows you to optimize network requests by batching multiple events together. This is particularly useful for high-traffic applications where you want to reduce the number of API calls.
+
+| **Parameter**         | **Description**                                                         | **Required** | **Type** | **Default** |
+| --------------------- | ----------------------------------------------------------------------- | ------------ | -------- | ----------- |
+| `request_time_interval` | Time interval (in seconds) after which events are flushed to the server | No           | Number   | `600`       |
+| `events_per_request`    | Maximum number of events to batch together before sending to the server | No           | Number   | `100`       |
+| `flush_callback`       | Callback function to be executed after events are flushed               | No           | Function | See example |
+
+Example usage:
+
+```python
+from vwo import init
+
+def event_flush_callback(error, payload):
+    # your implementation here
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # VWO Account ID
+    'batch_event_data': {
+        'events_per_request': 60,  # Send up to 100 events per request
+        'request_time_interval': 100, # Flush events every 60 seconds
+        'flush_callback': event_flush_callback
+    }
+}
+
+vwo_client = init(options)
+```
+
+You can also manually flush events using the `flush_events()` method:
+
+```python
+vwo_client.flush_events()
 ```
 
 ## Local development
