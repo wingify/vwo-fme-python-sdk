@@ -34,6 +34,8 @@ class VWOOptionsModel:
         self.integrations = options.get("integrations", None)
         self.network = options.get("network", None)
         self.vwoBuilder = options.get("vwoBuilder", None)
+        self.is_usage_stats_disabled = options.get("is_usage_stats_disabled", False)
+        self._vwo_meta = options.get("_vwo_meta", None)
 
         # Initialize BatchEventData
         batch_event_data = options.get('batch_event_data', None)
@@ -141,3 +143,19 @@ class VWOOptionsModel:
         :return: The BatchEventData instance.
         """
         return self.batchEventData
+    
+    def get_is_usage_stats_disabled(self) -> bool:
+        """
+        Check if usage stats are disabled.
+
+        :return: True if usage stats are disabled, False otherwise.
+        """
+        return self.is_usage_stats_disabled
+
+    def get_vwo_meta(self) -> Dict:
+        """
+        Get the VWO meta data.
+
+        :return: The VWO meta data as a dictionary.
+        """
+        return self._vwo_meta

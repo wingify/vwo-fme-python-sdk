@@ -32,7 +32,7 @@ class VWO:
         VWO.vwo_builder = options_vwo_builder or VWOBuilder(options)
 
         # Configure the builder
-        VWO.vwo_builder.set_logger().set_settings_manager().set_storage().set_network_manager().set_segmentation().init_polling()
+        VWO.vwo_builder.set_logger().set_settings_manager().set_storage().set_network_manager().set_segmentation().init_polling().init_usage_stats()
 
         # Fetch settings synchronously and build the VWO instance
         settings = VWO.vwo_builder.get_settings(force=False)

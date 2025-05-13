@@ -32,7 +32,7 @@ from ..utils.log_message_util import debug_messages, error_messages
 from ..packages.network_layer.manager.network_manager import NetworkManager
 from ..packages.network_layer.models.request_model import RequestModel
 from ..enums.headers_enum import HeadersEnum
-
+from ..utils.usage_stats_util import UsageStatsUtil
 
 def get_settings_path(sdk_key: str, account_id: str) -> Dict[str, Any]:
     path = {
@@ -145,6 +145,10 @@ def get_track_user_payload_data(
     properties["d"]["event"]["props"]["variation"] = str(variation_id)
     properties["d"]["event"]["props"]["isFirst"] = 1
 
+    usage_stats_data = UsageStatsUtil().get_usage_stats()
+    if len(usage_stats_data) > 0:
+        properties["d"]["event"]["props"]["vwoMeta"] = usage_stats_data
+
     LogManager.get_instance().debug(
         debug_messages.get("IMPRESSION_FOR_TRACK_USER").format(
             accountId=settings.get_account_id(), userId=user_id, campaignId=campaign_id
@@ -248,7 +252,10 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
         # Create a background thread to send the request
         def send_request():
             try:
-                network_instance.post(request)
+                response = network_instance.post(request)
+                if response.status_code == 200:
+                    # clear the usage stats data
+                    UsageStatsUtil().clear_usage_stats()
             except Exception as e:
                 LogManager.get_instance().error(
                     error_messages.get("NETWORK_CALL_FAILED").format(

@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     package_file = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.9.0"
+        "version": "1.9.1"
     }
 
     # Constants

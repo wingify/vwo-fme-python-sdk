@@ -30,6 +30,7 @@ from .packages.segmentation_evaluator.core.segmentation_manager import (
 from .utils.settings_util import set_settings_and_add_campaigns_to_rules
 from .packages.storage.storage import Storage
 from .constants.Constants import Constants
+from .utils.usage_stats_util import UsageStatsUtil
 
 
 class VWOBuilder:
@@ -223,6 +224,16 @@ class VWOBuilder:
                 self.is_batching_used = False
 
             return self
+        
+    def init_usage_stats(self):
+        """
+        Initializes usage statistics for the SDK.
+        """
+        if self.options.get("is_usage_stats_disabled"):
+            return
+
+        UsageStatsUtil().set_usage_stats(self.options)
+        return self
 
     def build(self, settings):
         self.vwo_instance = VWOClient(settings, self.options)
