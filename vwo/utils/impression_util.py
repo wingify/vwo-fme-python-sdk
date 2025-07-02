@@ -53,4 +53,4 @@ def create_and_send_impression_for_variation_shown(
         vwo_instance.batch_event_queue.enqueue(payload)
     else:
         # Send the event immediately if batch events are not enabled
-        send_post_api_request(properties, payload)
+        send_post_api_request(properties, payload, context.get_id())

@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     package_file = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.9.1"
+        "version": "1.10.0"
     }
 
     # Constants
@@ -59,3 +59,6 @@ class Constants:
 
     THREAD_POOL_MAX_WORKERS = 5
     SHOULD_USE_THREADING = True
+
+    MAX_RETRIES = 3
+    INITIAL_WAIT_TIME = 2

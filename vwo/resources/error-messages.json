@@ -25,5 +25,8 @@
   
     "NETWORK_CALL_FAILED": "Error occurred while sending {method} request. Error:{err}",
     "BATCH_FLUSH_FAILED": "Failed to send batch events. Retrying next time.",
-    "BATCH_FLUSH_ERROR": "Error occurred while sending batch events. Error:{error}"
+    "BATCH_FLUSH_ERROR": "Error occurred while sending batch events. Error:{error}",
+
+    "NETWORK_CALL_RETRY_ATTEMPT": "Request failed for {endPoint}, Error: {err}. Retrying in {delay} seconds, attempt {attempt} of {maxRetries}",
+    "NETWORK_CALL_RETRY_FAILED": "Max retries reached. Request failed for {endPoint}, Error: {err}"
   }

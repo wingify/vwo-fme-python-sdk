@@ -25,6 +25,7 @@ from ....enums.event_enum import EventEnum
 from ....constants.Constants import Constants
 
 
+
 class LogManager(Logger):
     _instance = None
     stored_messages = (

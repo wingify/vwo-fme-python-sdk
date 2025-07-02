@@ -28,11 +28,12 @@ from ..packages.logger.core.log_manager import LogManager
 from ..services.url_service import UrlService
 from ..enums.url_enum import UrlEnum
 from ..models.settings.settings_model import SettingsModel
-from ..utils.log_message_util import debug_messages, error_messages
+from ..utils.log_message_util import debug_messages, error_messages, info_messages
 from ..packages.network_layer.manager.network_manager import NetworkManager
 from ..packages.network_layer.models.request_model import RequestModel
 from ..enums.headers_enum import HeadersEnum
 from ..utils.usage_stats_util import UsageStatsUtil
+
 
 def get_settings_path(sdk_key: str, account_id: str) -> Dict[str, Any]:
     path = {
@@ -215,8 +216,11 @@ def get_attribute_payload_data(
 
     return properties
 
+
 # Function to send a POST API request without waiting for the response
-def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
+def send_post_api_request(
+    properties: Dict[str, Any], payload: Dict[str, Any], user_id: str
+):
     # Importing the SettingsManager here to avoid circular import issues or unnecessary imports
     from ..services.settings_manager import SettingsManager
 
@@ -245,6 +249,9 @@ def send_post_api_request(properties: Dict[str, Any], payload: Dict[str, Any]):
             SettingsManager.get_instance().protocol,
             SettingsManager.get_instance().port,
         )
+
+        # Will be used for logging purpose inside post_async method
+        request.set_user_id(user_id)
 
         # Get network instance
         network_instance = NetworkManager.get_instance()
@@ -283,6 +290,7 @@ def send_post_batch_request(
     payload: dict, account_id: int, sdk_key: str, flush_callback=None
 ):
     from ..services.settings_manager import SettingsManager
+
     try:
         # Prepare the batch payload
         batch_payload = {"ev": payload}
@@ -298,8 +306,8 @@ def send_post_batch_request(
             query,
             batch_payload,
             {
-                'Authorization': sdk_key,
-                'Content-Type': "application/json",
+                "Authorization": sdk_key,
+                "Content-Type": "application/json",
             },
             SettingsManager.get_instance().protocol,
             SettingsManager.get_instance().port,
@@ -331,6 +339,7 @@ def send_post_batch_request(
         if flush_callback:
             flush_callback(str(ex), payload)
         return False
+
 
 # Function to construct the messaging event payload
 def get_messaging_event_payload(
@@ -387,13 +396,8 @@ def send_messaging_event(
         def send_request():
             try:
                 network_instance.post(request)
-            except Exception as e:
-                LogManager.get_instance().error(
-                    error_messages.get("NETWORK_CALL_FAILED").format(
-                        method="POST",
-                        err=str(e),
-                    ),
-                )
+            except Exception:
+                pass
 
         # Start the request in a background thread if threading is enabled
         if network_instance.should_use_threading:
@@ -403,11 +407,5 @@ def send_messaging_event(
 
         return {"success": True, "message": "Event sent successfully"}
 
-    except Exception as err:
-        LogManager.get_instance().error(
-            error_messages.get("NETWORK_CALL_FAILED").format(
-                method="POST",
-                err=err,
-            )
-        )
+    except Exception:
         return {"success": False, "message": "Failed to send event"}

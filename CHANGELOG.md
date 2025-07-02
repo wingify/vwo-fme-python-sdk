@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2025-07-02
+
+### Added
+
+- Added exponential backoff retry mechanism for failed network requests. This improves reliability by automatically retrying failed requests with increasing delays between attempts.
+
 ## [1.9.1] - 2025-05-07
 
 ### Added
@@ -15,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for `batch_event_data` configuration to optimize network requests by batching multiple events together. This allows you to:
-  
+
   - Configure `request_time_interval` to flush events after a specified time interval
   - Set `events_per_request` to control maximum events per batch
   - Implement `flush_callback` to handle batch processing results
@@ -23,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   ```python
   from vwo import init
-  
+
   def event_flush_callback(error, payload):
         # your implementation here
 

@@ -134,10 +134,7 @@ class SettingsManager:
             return response_data
 
         except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("SETTINGS_FETCH_ERROR").format(err=str(err))
-            )
-            raise
+            raise err
 
     def get_settings(self, force_fetch=False):
         if force_fetch:

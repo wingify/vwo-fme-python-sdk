@@ -93,6 +93,12 @@ class RequestModel:
     def set_path(self, path: str):
         self.path = path
 
+    def set_user_id(self, user_id: str):
+        self.user_id = user_id
+
+    def get_user_id(self) -> str:
+        return self.user_id
+
     def get_options(self) -> Dict[str, Any]:
         query_params = "&".join([f"{key}={value}" for key, value in self.query.items()])
         options = {
