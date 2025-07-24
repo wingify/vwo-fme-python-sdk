@@ -104,6 +104,9 @@ class SettingsManager:
         options = get_settings_path(self.sdk_key, self.account_id)
         options["platform"] = "server"
         options["api-version"] = 1
+        options["sn"] = Constants.SDK_NAME
+        options["sv"] = Constants.SDK_VERSION
+
         if not network_instance.get_config().get_development_mode():
             options["s"] = "prod"
 

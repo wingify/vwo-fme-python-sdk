@@ -15,14 +15,14 @@
 
 class Constants:
     # TODO: read from setup.py
-    package_file = {
+    sdk_meta = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.10.0"
+        "version": "1.10.1"
     }
 
     # Constants
-    SDK_NAME = package_file["name"]
-    SDK_VERSION = package_file["version"]
+    SDK_NAME = sdk_meta["name"]
+    SDK_VERSION = sdk_meta["version"]
 
     PLATFORM = "server"
 
