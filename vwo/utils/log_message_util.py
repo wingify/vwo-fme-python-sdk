@@ -57,7 +57,7 @@ def send_log_to_vwo(message: str, message_type: str) -> None:
     from ..utils.network_util import (
         get_events_base_properties,
         get_messaging_event_payload,
-        send_messaging_event,
+        send_event,
     )
 
     if os.getenv("TEST_ENV") == "true":
@@ -80,4 +80,4 @@ def send_log_to_vwo(message: str, message_type: str) -> None:
         )
 
         # Send the message via HTTP request
-        send_messaging_event(properties, payload)
+        send_event(properties, payload, EventEnum.VWO_LOG_EVENT.value)

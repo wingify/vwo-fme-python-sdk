@@ -14,9 +14,11 @@
 
 
 from typing import Dict, Any, Optional
+import time
 from vwo.vwo_builder import VWOBuilder
 from vwo.vwo_client import VWOClient
 from vwo.enums.url_enum import UrlEnum
+from vwo.utils.event_util import send_sdk_init_event
 
 
 class VWO:
@@ -37,6 +39,8 @@ class VWO:
         # Fetch settings synchronously and build the VWO instance
         settings = VWO.vwo_builder.get_settings(force=False)
         VWO.instance = VWO.vwo_builder.build(settings)
+        VWO.instance.settings_fetch_time = VWO.vwo_builder.setting_file_manager.settings_fetch_time
+        VWO.instance.is_settings_valid_on_init = VWO.vwo_builder.setting_file_manager.is_settings_valid_on_init
         
         # Initialize batching
         VWO.vwo_builder.init_batching()
@@ -48,6 +52,9 @@ class VWO:
 
 
 def init(options: Dict[str, Any]) -> Optional["VWOClient"]:
+    # Start timer for total init time
+    start_time_for_init = time.time() * 1000  # Convert to milliseconds
+    
     if not options or "sdk_key" not in options or not options["sdk_key"]:
         print(
             "SDK key is required to initialize VWO. Please provide the sdk_key in the options.",
@@ -62,5 +69,21 @@ def init(options: Dict[str, Any]) -> Optional["VWOClient"]:
         )
         return None
 
-    instance = VWO.set_instance(options)
-    return instance
+    try:
+        instance = VWO.set_instance(options)
+        
+        # Calculate SDK init time
+        sdk_init_time = int((time.time() * 1000) - start_time_for_init)
+
+        # Check if original_settings is not None before accessing .get()
+        was_initialized = False
+        if instance.original_settings is not None:
+            was_initialized = instance.original_settings.get("sdkMetaInfo", {}).get("wasInitializedEarlier")
+
+        if instance.is_settings_valid_on_init and not was_initialized:
+            send_sdk_init_event(instance.settings_fetch_time, sdk_init_time)
+
+        return instance
+    except Exception as e:
+        print("VWO initialization failed. Error:", e)
+        return None

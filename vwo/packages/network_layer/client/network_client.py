@@ -119,16 +119,7 @@ class NetworkClient:
 
                 if response.status_code < 200 or response.status_code >= 300:
                     raise requests.HTTPError(f"HTTP {response.status_code} error")
-
-                LogManager.get_instance().info(
-                    info_messages.get("NETWORK_CALL_SUCCESS").format(
-                        event=request_model.get_query().get("en"),
-                        endPoint=options["url"].split("?")[0],
-                        accountId=request_model.get_query().get("a"),
-                        userId=request_model.get_user_id(),
-                        uuid=request_model.get_body().get("d").get("visId"),
-                    )
-                )
+        
                 return response_model
 
             except (

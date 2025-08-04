@@ -13,8 +13,9 @@
 # limitations under the License.
 
 
+from typing import Any, Dict
+import random
 from ..packages.network_layer.manager.network_manager import NetworkManager
-from ..utils.network_util import get_settings_path
 from ..packages.network_layer.models.request_model import RequestModel
 from ..constants.Constants import Constants
 from ..packages.logger.core.log_manager import LogManager
@@ -23,6 +24,7 @@ from ..models.schemas.settings_schema import SETTINGS_FILE_SCHEMA
 import json
 import requests
 import jsonschema
+import time
 
 
 class SettingsManager:
@@ -34,6 +36,8 @@ class SettingsManager:
         self.expiry = Constants.SETTINGS_EXPIRY
         self.network_timeout = Constants.SETTINGS_TIMEOUT
         self.is_gateway_service_provided = False
+        self.settings_fetch_time = None  # time taken to fetch the settings
+        self.is_settings_valid_on_init = False
 
         if "gateway_service" in options and "url" in options["gateway_service"]:
             self.is_gateway_service_provided = True
@@ -94,6 +98,15 @@ class SettingsManager:
             )
             return None
 
+
+    def get_settings_path(self) -> Dict[str, Any]:
+        path = {
+            "i": self.sdk_key,  # Inject API key
+            "r": random.random(),  # Random number for cache busting
+            "a": self.account_id,  # Account ID
+        }
+        return path
+
     def fetch_settings(self, is_via_webhook=False):
         if not self.sdk_key or not self.account_id:
             raise ValueError(
@@ -101,7 +114,7 @@ class SettingsManager:
             )
 
         network_instance = NetworkManager.get_instance()
-        options = get_settings_path(self.sdk_key, self.account_id)
+        options = self.get_settings_path()
         options["platform"] = "server"
         options["api-version"] = 1
         options["sn"] = Constants.SDK_NAME
@@ -115,6 +128,8 @@ class SettingsManager:
             if not is_via_webhook
             else Constants.WEBHOOK_SETTINTS_ENDPOINT
         )
+        # Start timer for settings fetch
+        settings_fetch_start_time = time.time() * 1000  # Convert to milliseconds
 
         try:
             request = RequestModel(
@@ -134,6 +149,8 @@ class SettingsManager:
             if response.status_code != 200:
                 raise Exception(f"Failed to fetch settings: {response_data}")
 
+            # Calculate settings fetch time
+            self.settings_fetch_time = int((time.time() * 1000) - settings_fetch_start_time)
             return response_data
 
         except Exception as err:
@@ -147,6 +164,7 @@ class SettingsManager:
             # For demonstration, we'll skip actual caching
             fetched_settings = self.fetch_settings_and_cache_in_storage()
             if self.is_settings_valid(fetched_settings):
+                self.is_settings_valid_on_init = True
                 LogManager.get_instance().info(
                     info_messages.get("SETTINGS_FETCH_SUCCESS").format()
                 )

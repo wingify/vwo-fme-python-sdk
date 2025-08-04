@@ -28,5 +28,7 @@
     "BATCH_FLUSH_ERROR": "Error occurred while sending batch events. Error:{error}",
 
     "NETWORK_CALL_RETRY_ATTEMPT": "Request failed for {endPoint}, Error: {err}. Retrying in {delay} seconds, attempt {attempt} of {maxRetries}",
-    "NETWORK_CALL_RETRY_FAILED": "Max retries reached. Request failed for {endPoint}, Error: {err}"
+    "NETWORK_CALL_RETRY_FAILED": "Max retries reached. Request failed for {endPoint}, Error: {err}",
+
+    "SDK_INIT_EVENT_FAILED": "Error occurred while sending SDK init event. Error:{err}"
   }

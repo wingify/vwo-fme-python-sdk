@@ -33,16 +33,8 @@ from ..packages.network_layer.manager.network_manager import NetworkManager
 from ..packages.network_layer.models.request_model import RequestModel
 from ..enums.headers_enum import HeadersEnum
 from ..utils.usage_stats_util import UsageStatsUtil
-
-
-def get_settings_path(sdk_key: str, account_id: str) -> Dict[str, Any]:
-    path = {
-        "i": sdk_key,  # Inject API key
-        "r": random.random(),  # Random number for cache busting
-        "a": account_id,  # Account ID
-    }
-    return path
-
+from ..services.settings_manager import SettingsManager
+from ..enums.event_enum import EventEnum
 
 # Function to construct tracking path for an event
 def get_track_event_path(event: str, account_id: str, user_id: str) -> Dict[str, Any]:
@@ -69,7 +61,6 @@ def get_event_batching_query_params(account_id: str) -> Dict[str, Any]:
 def get_events_base_properties(
     event_name: str, visitor_user_agent: str = "", ip_address: str = ""
 ) -> Dict[str, Any]:
-    from ..services.settings_manager import SettingsManager
 
     # Get the instance of SettingsManager
     settings = SettingsManager.get_instance()
@@ -101,7 +92,6 @@ def _get_event_base_payload(
     visitor_user_agent: str = "",
     ip_address: str = "",
 ) -> Dict[str, Any]:
-    from ..services.settings_manager import SettingsManager
 
     uuid_value = get_uuid(user_id, SettingsManager.get_instance().get_account_id())
     sdk_key = SettingsManager.get_instance().get_sdk_key()
@@ -221,9 +211,6 @@ def get_attribute_payload_data(
 def send_post_api_request(
     properties: Dict[str, Any], payload: Dict[str, Any], user_id: str
 ):
-    # Importing the SettingsManager here to avoid circular import issues or unnecessary imports
-    from ..services.settings_manager import SettingsManager
-
     try:
         # Initialize the headers dictionary for the request
         headers = {}
@@ -263,6 +250,17 @@ def send_post_api_request(
                 if response.status_code == 200:
                     # clear the usage stats data
                     UsageStatsUtil().clear_usage_stats()
+                    
+                    request_query = request.get_query()
+                    LogManager.get_instance().info(
+                        info_messages.get("NETWORK_CALL_SUCCESS").format(
+                            event=request_query.get("en"),
+                            endPoint=request.get_url().split("?")[0],
+                            accountId=request_query.get("a"),
+                            userId=request.get_user_id(),
+                            uuid=request.get_body().get("d").get("visId"),
+                        )
+                    )
             except Exception as e:
                 LogManager.get_instance().error(
                     error_messages.get("NETWORK_CALL_FAILED").format(
@@ -289,7 +287,6 @@ def send_post_api_request(
 def send_post_batch_request(
     payload: dict, account_id: int, sdk_key: str, flush_callback=None
 ):
-    from ..services.settings_manager import SettingsManager
 
     try:
         # Prepare the batch payload
@@ -313,6 +310,7 @@ def send_post_batch_request(
             SettingsManager.get_instance().port,
         )
 
+        request_model.set_user_id("NA")
         # Call PostAsync to send the request asynchronously
         network_manager = NetworkManager.get_instance()
         response = network_manager.post(request_model)
@@ -345,8 +343,6 @@ def send_post_batch_request(
 def get_messaging_event_payload(
     message_type: str, message: str, event_name: str
 ) -> Dict[str, Any]:
-    from ..services.settings_manager import SettingsManager
-
     # Get user ID and properties
     settings = SettingsManager.get_instance()
     user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
@@ -373,20 +369,65 @@ def get_messaging_event_payload(
     return properties
 
 
-def send_messaging_event(
-    properties: Dict[str, Any], payload: Dict[str, Any]
+def get_sdk_init_event_payload(
+    event_name: str,
+    settings_fetch_time: Optional[int] = None,
+    sdk_init_time: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Constructs the payload for sdk init called event.
+    
+    Args:
+        event_name: The name of the event.
+        settings_fetch_time: Time taken to fetch settings in milliseconds.
+        sdk_init_time: Time taken to initialize the SDK in milliseconds.
+        
+    Returns:
+        The constructed payload with required fields.
+    """
+    # Get user ID and properties
+    settings = SettingsManager.get_instance()
+    user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
+    properties = _get_event_base_payload(None, user_id, event_name, None, None)
+
+    # Set the required fields as specified
+    properties["d"]["event"]["props"][Constants.VWO_FS_ENVIRONMENT] = settings.get_sdk_key()
+    properties["d"]["event"]["props"]["product"] = "fme"
+    
+    data = {
+        "isSDKInitialized": True,
+        "settingsFetchTime": settings_fetch_time,
+        "sdkInitTime": sdk_init_time,
+    }
+    properties["d"]["event"]["props"]["data"] = data
+
+    return properties
+
+
+def send_event(
+    properties: Dict[str, Any], payload: Dict[str, Any], event_name: str
 ) -> Dict[str, Any]:
     try:
+        #if event_name is not VWO_LOG_EVENT, then set base url to constants.hostname
+        if event_name == EventEnum.VWO_LOG_EVENT.value:
+            base_url = Constants.HOST_NAME
+            protocol = Constants.HTTPS_PROTOCOL
+            port = 443
+        else:
+            base_url = UrlService.get_base_url()
+            protocol = SettingsManager.get_instance().protocol
+            port = SettingsManager.get_instance().port
+
         # Create the request model
         request = RequestModel(
-            Constants.HOST_NAME,
+            base_url,
             "POST",
             UrlEnum.EVENTS.value,
             properties,
             payload,
             None,
-            Constants.HTTPS_PROTOCOL,
-            443,
+            protocol,
+            port,
         )
 
         # Get network instance

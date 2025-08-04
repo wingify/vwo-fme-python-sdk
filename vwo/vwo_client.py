@@ -98,7 +98,8 @@ class VWOClient:
                 raise TypeError("TypeError: featureKey should be a string")
 
             # Validate settings are loaded and valid
-            if not SettingsManager.is_settings_valid(self.original_settings):
+            settings_manager = SettingsManager.get_instance()
+            if not settings_manager or not settings_manager.is_settings_valid(self.original_settings):
                 LogManager.get_instance().error(
                     error_messages.get("API_SETTING_INVALID")
                 )
@@ -181,7 +182,8 @@ class VWOClient:
                 raise TypeError("TypeError: event_properties should be an object")
 
             # Validate settings are loaded and valid
-            if not SettingsManager.is_settings_valid(self.original_settings):
+            settings_manager = SettingsManager.get_instance()
+            if not settings_manager or not settings_manager.is_settings_valid(self.original_settings):
                 LogManager.get_instance().error(
                     error_messages.get("API_SETTING_INVALID")
                 )
@@ -319,7 +321,8 @@ class VWOClient:
                 user_context = value_or_context
 
             # Validate settings are loaded and valid
-            if not SettingsManager.is_settings_valid(self.original_settings):
+            settings_manager = SettingsManager.get_instance()
+            if not settings_manager or not settings_manager.is_settings_valid(self.original_settings):
                 LogManager.get_instance().error(
                     error_messages.get("API_SETTING_INVALID")
                 )
@@ -378,7 +381,8 @@ class VWOClient:
                 )
 
             # validate the settings
-            if not SettingsManager.is_settings_valid(settings_to_update):
+            settings_manager = SettingsManager.get_instance()
+            if not settings_manager or not settings_manager.is_settings_valid(settings_to_update):
                 LogManager.get_instance().error(
                     error_messages.get("API_SETTING_INVALID")
                 )
