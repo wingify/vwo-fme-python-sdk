@@ -18,7 +18,7 @@ import time
 from vwo.vwo_builder import VWOBuilder
 from vwo.vwo_client import VWOClient
 from vwo.enums.url_enum import UrlEnum
-from vwo.utils.event_util import send_sdk_init_event
+from vwo.utils.event_util import send_sdk_init_event, send_sdk_usage_stats_event
 
 
 class VWO:
@@ -82,6 +82,15 @@ def init(options: Dict[str, Any]) -> Optional["VWOClient"]:
 
         if instance.is_settings_valid_on_init and not was_initialized:
             send_sdk_init_event(instance.settings_fetch_time, sdk_init_time)
+
+        # send sdk usage stats event
+        # get usage stats account id from settings
+        usage_stats_account_id = None
+        if instance.original_settings is not None:
+            usage_stats_account_id = instance.original_settings.get("usageStatsAccountId")
+        
+        if usage_stats_account_id:
+            send_sdk_usage_stats_event(usage_stats_account_id)
 
         return instance
     except Exception as e:
