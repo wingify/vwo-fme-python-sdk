@@ -59,7 +59,7 @@ def get_event_batching_query_params(account_id: str) -> Dict[str, Any]:
 
 # Function to build generic properties for tracking events
 def get_events_base_properties(
-    event_name: str, visitor_user_agent: str = "", ip_address: str = ""
+    event_name: str, visitor_user_agent: str = "", ip_address: str = "", is_usage_stats_event: bool = False, usage_stats_account_id: int = None
 ) -> Dict[str, Any]:
 
     # Get the instance of SettingsManager
@@ -69,10 +69,9 @@ def get_events_base_properties(
     sdk_key = settings.get_sdk_key()
     account_id = settings.get_account_id()
 
-    return {
+    properties = {
         "en": event_name,
         "a": account_id,
-        "env": sdk_key,
         "eTime": get_current_unix_timestamp_in_millis(),
         "random": get_random_number(),
         "p": "FS",
@@ -83,6 +82,14 @@ def get_events_base_properties(
         + UrlEnum.EVENTS.value,
     }
 
+    if not is_usage_stats_event:
+        # set env key for standard sdk events
+        properties["env"] = sdk_key
+    else:
+        # set account id for internal usage stats event
+        properties["a"] = str(usage_stats_account_id)
+    return properties
+
 
 # Function to build payload for tracking events
 def _get_event_base_payload(
@@ -91,10 +98,27 @@ def _get_event_base_payload(
     event_name: str,
     visitor_user_agent: str = "",
     ip_address: str = "",
+    is_usage_stats_event: bool = False,
+    usage_stats_account_id: int = None,
 ) -> Dict[str, Any]:
 
-    uuid_value = get_uuid(user_id, SettingsManager.get_instance().get_account_id())
+    account_id = SettingsManager.get_instance().get_account_id()
+    if is_usage_stats_event:
+        # set account id for internal usage stats event
+        account_id = usage_stats_account_id
+
+    uuid_value = get_uuid(str(user_id), str(account_id))
     sdk_key = SettingsManager.get_instance().get_sdk_key()
+
+    props = {
+        "vwo_sdkName": Constants.SDK_NAME,
+        "vwo_sdkVersion": Constants.SDK_VERSION,
+    }
+
+    if not is_usage_stats_event:
+        # set env key for standard sdk events
+        props["vwo_envKey"] = sdk_key
+
     properties = {
         "d": {
             "msgId": f"{uuid_value}-{get_current_unix_timestamp_in_millis()}",
@@ -103,17 +127,20 @@ def _get_event_base_payload(
             "visitor_ua": visitor_user_agent,
             "visitor_ip": ip_address,
             "event": {
-                "props": {
-                    "vwo_sdkName": Constants.SDK_NAME,
-                    "vwo_sdkVersion": Constants.SDK_VERSION,
-                    "vwo_envKey": sdk_key,
-                },
+                "props": props,
                 "name": event_name,
                 "time": get_current_unix_timestamp_in_millis(),
             },
-            "visitor": {"props": {Constants.VWO_FS_ENVIRONMENT: sdk_key}},
         }
     }
+
+    if not is_usage_stats_event:
+        # set visitor props for standard sdk events
+        properties["d"]["visitor"] = {
+            "props": {
+                Constants.VWO_FS_ENVIRONMENT: sdk_key,
+            },
+        }
 
     return properties
 
@@ -135,10 +162,6 @@ def get_track_user_payload_data(
     properties["d"]["event"]["props"]["id"] = campaign_id
     properties["d"]["event"]["props"]["variation"] = str(variation_id)
     properties["d"]["event"]["props"]["isFirst"] = 1
-
-    usage_stats_data = UsageStatsUtil().get_usage_stats()
-    if len(usage_stats_data) > 0:
-        properties["d"]["event"]["props"]["vwoMeta"] = usage_stats_data
 
     LogManager.get_instance().debug(
         debug_messages.get("IMPRESSION_FOR_TRACK_USER").format(
@@ -352,7 +375,7 @@ def get_messaging_event_payload(
     properties["d"]["event"]["props"]["vwo_envKey"] = settings.get_sdk_key()
     properties["d"]["event"]["props"][
         "product"
-    ] = "fme"  # Assuming 'product' is a required field
+    ] = Constants.PRODUCT_NAME
 
     # Set the message data
     data = {
@@ -392,7 +415,7 @@ def get_sdk_init_event_payload(
 
     # Set the required fields as specified
     properties["d"]["event"]["props"][Constants.VWO_FS_ENVIRONMENT] = settings.get_sdk_key()
-    properties["d"]["event"]["props"]["product"] = "fme"
+    properties["d"]["event"]["props"]["product"] = Constants.PRODUCT_NAME
     
     data = {
         "isSDKInitialized": True,
@@ -404,12 +427,37 @@ def get_sdk_init_event_payload(
     return properties
 
 
+def get_sdk_usage_stats_event_payload(
+    event_name: str, usage_stats_account_id: int
+) -> Dict[str, Any]:
+    """
+    Constructs the payload for sdk usage stats event.
+    
+    Args:
+        event_name: The name of the event.
+        usage_stats_account_id: Account ID for usage stats event.
+        
+    Returns:
+        The constructed payload with required fields.
+    """
+    # Get user ID and properties
+    settings = SettingsManager.get_instance()
+    user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
+    properties = _get_event_base_payload(None, user_id, event_name, None, None, True, usage_stats_account_id)
+
+    # Set the required fields as specified
+    properties["d"]["event"]["props"]["product"] = Constants.PRODUCT_NAME
+    properties["d"]["event"]["props"]["vwoMeta"] = UsageStatsUtil().get_usage_stats()
+
+    return properties
+
+
 def send_event(
     properties: Dict[str, Any], payload: Dict[str, Any], event_name: str
 ) -> Dict[str, Any]:
     try:
         #if event_name is not VWO_LOG_EVENT, then set base url to constants.hostname
-        if event_name == EventEnum.VWO_LOG_EVENT.value:
+        if event_name == EventEnum.VWO_LOG_EVENT.value or event_name == EventEnum.VWO_USAGE_STATS.value:
             base_url = Constants.HOST_NAME
             protocol = Constants.HTTPS_PROTOCOL
             port = 443

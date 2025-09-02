@@ -21,3 +21,4 @@ class EventEnum(Enum):
     VWO_SYNC_VISITOR_PROP = "vwo_syncVisitorProp"
     VWO_LOG_EVENT = "vwo_log"
     VWO_SDK_INIT_EVENT = "vwo_fmeSdkInit"
+    VWO_USAGE_STATS = "vwo_sdkUsageStats"

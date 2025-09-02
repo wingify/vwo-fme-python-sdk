@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     sdk_meta = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.11.0"
+        "version": "1.12.0"
     }
 
     # Constants
@@ -62,3 +62,4 @@ class Constants:
 
     MAX_RETRIES = 3
     INITIAL_WAIT_TIME = 2
+    PRODUCT_NAME = "fme"

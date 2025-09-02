@@ -16,7 +16,7 @@ from typing import Dict, Any, Union
 import sys
 from ..constants.Constants import Constants
 from ..packages.logger.enums.log_level_number_enum import LogLevelNumberEnum
-
+from ..services.settings_manager import SettingsManager
 
 class UsageStatsUtil:
     """
@@ -45,17 +45,19 @@ class UsageStatsUtil:
             options (Dict[str, Any]): Configuration options for the SDK containing:
                 - storage: Storage service configuration
                 - logger: Logger configuration
-                - batch_events: Event batching configuration
+                - batch_event_data: Event batching configuration
                 - integrations: Integrations configuration
                 - polling_interval: Polling interval configuration
                 - sdk_name: SDK name configuration
         """
         data: Dict[str, Union[str, int]] = {}
+        data["a"] = SettingsManager.get_instance().get_account_id()
+        data["env"] = SettingsManager.get_instance().get_sdk_key()
 
         # Map configuration options to usage stats flags
         if options.get("integrations"):
             data["ig"] = 1  # Integration enabled
-        if options.get("batch_events"):
+        if options.get("batch_event_data"):
             data["eb"] = 1  # Event batching enabled
 
         if options.get("gateway_service"):

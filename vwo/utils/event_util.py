@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from typing import Optional
-from .network_util import get_events_base_properties, get_sdk_init_event_payload, send_event
+from .network_util import get_events_base_properties, get_sdk_init_event_payload, get_sdk_usage_stats_event_payload, send_event
 from ..enums.event_enum import EventEnum
 from ..vwo_client import VWOClient
 from ..packages.logger.core.log_manager import LogManager
@@ -50,4 +50,29 @@ def send_sdk_init_event(settings_fetch_time: Optional[int] = None, sdk_init_time
                 err=str(e)
             )
         )
-        pass 
+        pass
+
+
+def send_sdk_usage_stats_event(usage_stats_account_id: int) -> None:
+    """
+    Sends a usage stats event to VWO.
+    This event is triggered when the SDK is initialized.
+    
+    :param usage_stats_account_id: Account ID for usage stats event
+    """
+    # Create the query parameters
+    properties = get_events_base_properties(EventEnum.VWO_USAGE_STATS.value, "", "", True, usage_stats_account_id)
+
+    # Create the payload with required fields
+    payload = get_sdk_usage_stats_event_payload(EventEnum.VWO_USAGE_STATS.value, usage_stats_account_id)
+
+    vwo_instance = VWOClient.get_instance()
+
+    # Check if batch events are enabled
+    if vwo_instance.batch_event_queue is not None and vwo_instance.batch_event_queue.is_enabled():
+        # Enqueue the event to the batch queue
+        vwo_instance.batch_event_queue.enqueue(payload)
+    else:
+        # Send the event immediately if batch events are not enabled
+        send_event(properties, payload, EventEnum.VWO_USAGE_STATS.value)
+    
