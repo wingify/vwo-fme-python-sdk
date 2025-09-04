@@ -35,6 +35,7 @@ from ..enums.headers_enum import HeadersEnum
 from ..utils.usage_stats_util import UsageStatsUtil
 from ..services.settings_manager import SettingsManager
 from ..enums.event_enum import EventEnum
+from vwo.models.user.context_model import ContextModel
 
 # Function to construct tracking path for an event
 def get_track_event_path(event: str, account_id: str, user_id: str) -> Dict[str, Any]:
@@ -77,6 +78,8 @@ def get_events_base_properties(
         "p": "FS",
         "visitor_ua": visitor_user_agent,
         "visitor_ip": ip_address,
+        "sn": Constants.SDK_NAME,
+        "sv": Constants.SDK_VERSION,
         "url": Constants.HTTPS_PROTOCOL
         + UrlService.get_base_url()
         + UrlEnum.EVENTS.value,
@@ -154,7 +157,14 @@ def get_track_user_payload_data(
     variation_id: int,
     visitor_user_agent: str = "",
     ip_address: str = "",
+    context: ContextModel,
 ) -> Dict[str, Any]:
+    user_id = context.get_id()
+    visitor_user_agent = context.get_user_agent()
+    ip_address = context.get_ip_address()
+    post_segmentation_variables = context.get_post_segmentation_variables()
+    custom_variables = context.get_custom_variables()
+
     properties = _get_event_base_payload(
         settings, user_id, event_name, visitor_user_agent, ip_address
     )
@@ -163,6 +173,32 @@ def get_track_user_payload_data(
     properties["d"]["event"]["props"]["variation"] = str(variation_id)
     properties["d"]["event"]["props"]["isFirst"] = 1
 
+    usage_stats_data = UsageStatsUtil().get_usage_stats()
+    if len(usage_stats_data) > 0:
+        properties["d"]["event"]["props"]["vwoMeta"] = usage_stats_data
+
+    # Add post-segmentation variables if they exist in custom variables
+    if post_segmentation_variables is not None and custom_variables is not None:
+        for key in post_segmentation_variables:
+            if key in custom_variables:
+                properties["d"]["visitor"]["props"][key] = custom_variables[key]
+
+    # Add IP address as a standard attribute if available
+    if ip_address:
+        properties["d"]["visitor"]["props"]["ip"] = ip_address
+    
+    # If user agent is passed, add os_version and browser_version
+    if visitor_user_agent:
+        if context.get_vwo() is not None and context.get_vwo().get_ua_info() is not None:
+            ua_info = context.get_vwo().get_ua_info()
+            if "os_version" in ua_info:
+                properties["d"]["visitor"]["props"]["vwo_osv"] = ua_info.get("os_version")
+            if "browser_version" in ua_info:
+                properties["d"]["visitor"]["props"]["vwo_bv"] = ua_info.get("browser_version")
+        else:
+            LogManager.get_instance().error(
+                "To pass user agent related details as standard attributes, please set gateway as well in init method"
+            )
     LogManager.get_instance().debug(
         debug_messages.get("IMPRESSION_FOR_TRACK_USER").format(
             accountId=settings.get_account_id(), userId=user_id, campaignId=campaign_id
@@ -170,7 +206,6 @@ def get_track_user_payload_data(
     )
 
     return properties
-
 
 # Function to build payload for tracking goals with custom event properties
 def get_track_goal_payload_data(
@@ -316,7 +351,7 @@ def send_post_batch_request(
         batch_payload = {"ev": payload}
 
         # Prepare query parameters
-        query = {"a": str(account_id), "env": sdk_key}
+        query = {"a": str(account_id), "env": sdk_key, "sn": Constants.SDK_NAME, "sv": Constants.SDK_VERSION}
 
         # Create the RequestModel with necessary data
         request_model = RequestModel(

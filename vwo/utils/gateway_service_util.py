@@ -67,7 +67,7 @@ def get_query_params(query_params: Dict[str, Any]) -> Dict[str, str]:
 def add_is_gateway_service_required_flag(settings: SettingsModel) -> None:
     # Regex pattern to match the specified fields
     main_pattern = re.compile(
-        r"\b(country|region|city|os|device_type|browser_string|ua)\b", re.IGNORECASE
+        r"\b(country|region|city|os|device_type|browser_string|ua|os_version|browser_version)\b", re.IGNORECASE
     )
     # Regex pattern to match inlist(...) under custom_variable
     custom_variable_pattern = re.compile(r"inlist\([^)]*\)", re.IGNORECASE)

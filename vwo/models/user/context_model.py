@@ -14,7 +14,7 @@
 
 
 from .context_vwo_model import ContextVWOModel
-from typing import Dict
+from typing import Dict, List
 
 
 class ContextModel:
@@ -27,6 +27,7 @@ class ContextModel:
             "variation_targeting_variables", {}
         )
         self._vwo = ContextVWOModel(context.get("_vwo")) if "_vwo" in context else None
+        self.post_segmentation_variables = context.get("post_segmentation_variables", [])
 
     def get_id(self) -> str:
         return str(self.id) if self.id is not None else None
@@ -56,3 +57,9 @@ class ContextModel:
 
     def set_vwo(self, vwo: ContextVWOModel) -> None:
         self._vwo = vwo
+
+    def get_post_segmentation_variables(self) -> List[str]:
+        return self.post_segmentation_variables
+
+    def set_post_segmentation_variables(self, post_segmentation_variables: List[str]) -> None:
+        self.post_segmentation_variables = post_segmentation_variables

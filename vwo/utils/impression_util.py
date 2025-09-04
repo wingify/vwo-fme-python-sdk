@@ -37,12 +37,10 @@ def create_and_send_impression_for_variation_shown(
     # Construct payload data for tracking the user
     payload = get_track_user_payload_data(
         settings,
-        context.get_id(),
         EventEnum.VWO_VARIATION_SHOWN.value,
         campaign_id,
         variation_id,
-        visitor_user_agent=context.get_user_agent(),
-        ip_address=context.get_ip_address(),
+        context,
     )
 
     vwo_instance = VWOClient.get_instance()

@@ -18,6 +18,7 @@ from typing import Dict, Any
 from ..utils.segment_util import get_key_value, match_with_regex
 from ..enums.segment_operand_regex_enum import SegmentOperandRegexEnum
 from ..enums.segment_operand_value_enum import SegmentOperandValueEnum
+from ..enums.segment_operator_value_enum import SegmentOperatorValueEnum
 from ...logger.core.log_manager import LogManager
 from ....utils.gateway_service_util import get_from_gateway_service
 from ....enums.url_enum import UrlEnum
@@ -244,48 +245,42 @@ class SegmentOperandEvaluator:
         :param tag_value: The value of the tag to compare against.
         :return: The result of the evaluation.
         """
+        result = False
+
         if tag_value is None:
             return False
 
         # Ensure operand_value and tag_value are strings
-        operand_value = str(operand_value)
-        tag_value = str(tag_value)
+        operand_value_str = str(operand_value)
+        tag_value_str = str(tag_value)
+
         if operand_type == SegmentOperandValueEnum.LOWER_VALUE.value:
-            return operand_value.lower() == tag_value.lower()
+            result = operand_value_str.lower() == tag_value_str.lower()
         elif operand_type == SegmentOperandValueEnum.STARTING_ENDING_STAR_VALUE.value:
-            return operand_value in tag_value
+            result = tag_value_str.find(operand_value_str) != -1
         elif operand_type == SegmentOperandValueEnum.STARTING_STAR_VALUE.value:
-            return tag_value.endswith(operand_value)
+            result = tag_value_str.endswith(operand_value_str)
         elif operand_type == SegmentOperandValueEnum.ENDING_STAR_VALUE.value:
-            return tag_value.startswith(operand_value)
+            result = tag_value_str.startswith(operand_value_str)
         elif operand_type == SegmentOperandValueEnum.REGEX_VALUE.value:
             try:
-                pattern = re.compile(operand_value)
-                return bool(pattern.search(tag_value))
+                pattern = re.compile(operand_value_str)
+                matcher = pattern.search(tag_value_str)
+                result = matcher is not None
             except re.error:
-                return False
+                result = False
         elif operand_type == SegmentOperandValueEnum.GREATER_THAN_VALUE.value:
-            try:
-                return float(tag_value) > float(operand_value)
-            except ValueError:
-                return False
+            result = self.compare_versions(tag_value_str, operand_value_str) > 0
         elif operand_type == SegmentOperandValueEnum.GREATER_THAN_EQUAL_TO_VALUE.value:
-            try:
-                return float(tag_value) >= float(operand_value)
-            except ValueError:
-                return False
+            result = self.compare_versions(tag_value_str, operand_value_str) >= 0
         elif operand_type == SegmentOperandValueEnum.LESS_THAN_VALUE.value:
-            try:
-                return float(tag_value) < float(operand_value)
-            except ValueError:
-                return False
+            result = self.compare_versions(tag_value_str, operand_value_str) < 0
         elif operand_type == SegmentOperandValueEnum.LESS_THAN_EQUAL_TO_VALUE.value:
-            try:
-                return float(tag_value) <= float(operand_value)
-            except ValueError:
-                return False
+            result = self.compare_versions(tag_value_str, operand_value_str) <= 0
         else:
-            return tag_value == operand_value
+            result = tag_value_str == operand_value_str
+
+        return result
 
     def convert_value(self, value):
         # Check if the value is a boolean
@@ -303,3 +298,121 @@ class SegmentOperandEvaluator:
         except ValueError:
             # Return the value as is if it's not a number
             return value
+
+    def evaluate_string_operand_dsl(self, dsl_operand_value, context: ContextModel, operand_type: SegmentOperatorValueEnum):
+        """
+        Evaluates a given string tag value against a DSL operand value.
+
+        :param dsl_operand_value: The DSL operand string (e.g., "contains(\"value\")").
+        :param context: The context object containing the value to evaluate.
+        :param operand_type: The type of operand being evaluated (ip_address, browser_version, os_version).
+        :return: True if tag value matches DSL operand criteria, false otherwise.
+        """
+        operand = str(dsl_operand_value)
+
+        # Determine the tag value based on operand type
+        tag_value = self.get_tag_value_for_operand_type(context, operand_type)
+
+
+        if tag_value is None:
+            self.log_missing_context_error(operand_type)
+            return False
+        
+        operand_type_and_value = self.pre_process_operand_value(operand)
+        processed_values = self.process_values(operand_type_and_value["operand_value"], tag_value)
+        tag_value = processed_values["tag_value"]
+
+        return self.extract_result(
+            operand_type_and_value["operand_type"], 
+            processed_values["operand_value"].strip().replace('"', ''), 
+            tag_value
+        )
+
+    def get_tag_value_for_operand_type(self, context: ContextModel, operand_type: SegmentOperatorValueEnum):
+        """
+        Gets the appropriate tag value based on the operand type.
+
+        :param context: The context object.
+        :param operand_type: The type of operand.
+        :return: The tag value or None if not available.
+        """
+        if operand_type == SegmentOperatorValueEnum.IP.value:
+            return context.get_ip_address()
+        elif operand_type == SegmentOperatorValueEnum.BROWSER_VERSION.value:
+            return self.get_browser_version_from_context(context)
+        else:
+            # Default works for OS version
+            return self.get_os_version_from_context(context)
+
+    def get_browser_version_from_context(self, context: ContextModel):
+        """
+        Gets browser version from context.
+
+        :param context: The context object.
+        :return: The browser version or None if not available.
+        """
+        if context.get_vwo() is None or context.get_vwo().get_ua_info() is None or len(context.get_vwo().get_ua_info()) == 0:
+            return None
+        
+        user_agent = context.get_vwo().get_ua_info()
+        
+        # Assuming UserAgent dictionary contains browser_version
+        if "browser_version" in user_agent:
+            return str(user_agent["browser_version"]) if user_agent["browser_version"] is not None else None
+        return None
+
+    def get_os_version_from_context(self, context: ContextModel):
+        """
+        Gets OS version from context.
+
+        :param context: The context object.
+        :return: The OS version or None if not available.
+        """
+        if context.get_vwo() is None or context.get_vwo().get_ua_info() is None or len(context.get_vwo().get_ua_info()) == 0:
+            return None
+        
+        user_agent = context.get_vwo().get_ua_info()
+        # Assuming UserAgent dictionary contains os_version
+        if "os_version" in user_agent:
+            return str(user_agent["os_version"]) if user_agent["os_version"] is not None else None
+        return None
+
+    def log_missing_context_error(self, operand_type: SegmentOperatorValueEnum):
+        """
+        Logs appropriate error message for missing context.
+
+        :param operand_type: The type of operand.
+        """
+        if operand_type == SegmentOperatorValueEnum.IP.value:
+            LogManager.get_instance().info("To evaluate IP segmentation, please provide ipAddress in context")
+        elif operand_type == SegmentOperatorValueEnum.BROWSER_VERSION.value:
+            LogManager.get_instance().info("To evaluate browser version segmentation, please provide userAgent in context")
+        else:
+            LogManager.get_instance().info("To evaluate OS version segmentation, please provide userAgent in context")
+
+    def compare_versions(self, version1: str, version2: str):
+        """
+        Compares two version strings using semantic versioning rules.
+        Supports formats like "1.2.3", "1.0", "2.1.4.5", etc.
+
+        :param version1: First version string
+        :param version2: Second version string
+        :return: -1 if version1 < version2, 0 if equal, 1 if version1 > version2
+        """
+        # Split versions by dots and convert to integers
+        parts1 = [int(part) if part.isdigit() else 0 for part in version1.split('.')]
+        parts2 = [int(part) if part.isdigit() else 0 for part in version2.split('.')]
+
+        # Find the maximum length to handle different version formats
+        max_length = max(len(parts1), len(parts2))
+
+        for i in range(max_length):
+            part1 = parts1[i] if i < len(parts1) else 0
+            part2 = parts2[i] if i < len(parts2) else 0
+
+            if part1 < part2:
+                return -1
+            elif part1 > part2:
+                return 1
+        
+        return 0  # Versions are equal
