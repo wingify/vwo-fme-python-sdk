@@ -35,6 +35,8 @@ from ..enums.headers_enum import HeadersEnum
 from ..utils.usage_stats_util import UsageStatsUtil
 from ..services.settings_manager import SettingsManager
 from ..enums.event_enum import EventEnum
+from vwo.models.user.context_model import ContextModel
+
 
 # Function to construct tracking path for an event
 def get_track_event_path(event: str, account_id: str, user_id: str) -> Dict[str, Any]:
@@ -59,7 +61,11 @@ def get_event_batching_query_params(account_id: str) -> Dict[str, Any]:
 
 # Function to build generic properties for tracking events
 def get_events_base_properties(
-    event_name: str, visitor_user_agent: str = "", ip_address: str = "", is_usage_stats_event: bool = False, usage_stats_account_id: int = None
+    event_name: str,
+    visitor_user_agent: str = "",
+    ip_address: str = "",
+    is_usage_stats_event: bool = False,
+    usage_stats_account_id: int = None,
 ) -> Dict[str, Any]:
 
     # Get the instance of SettingsManager
@@ -77,6 +83,8 @@ def get_events_base_properties(
         "p": "FS",
         "visitor_ua": visitor_user_agent,
         "visitor_ip": ip_address,
+        "sn": Constants.SDK_NAME,
+        "sv": Constants.SDK_VERSION,
         "url": Constants.HTTPS_PROTOCOL
         + UrlService.get_base_url()
         + UrlEnum.EVENTS.value,
@@ -148,13 +156,17 @@ def _get_event_base_payload(
 # Function to build payload for tracking user data
 def get_track_user_payload_data(
     settings: SettingsModel,
-    user_id: str,
     event_name: str,
     campaign_id: int,
     variation_id: int,
-    visitor_user_agent: str = "",
-    ip_address: str = "",
+    context: ContextModel,
 ) -> Dict[str, Any]:
+    user_id = context.get_id()
+    visitor_user_agent = context.get_user_agent()
+    ip_address = context.get_ip_address()
+    post_segmentation_variables = context.get_post_segmentation_variables()
+    custom_variables = context.get_custom_variables()
+
     properties = _get_event_base_payload(
         settings, user_id, event_name, visitor_user_agent, ip_address
     )
@@ -163,6 +175,39 @@ def get_track_user_payload_data(
     properties["d"]["event"]["props"]["variation"] = str(variation_id)
     properties["d"]["event"]["props"]["isFirst"] = 1
 
+    usage_stats_data = UsageStatsUtil().get_usage_stats()
+    if len(usage_stats_data) > 0:
+        properties["d"]["event"]["props"]["vwoMeta"] = usage_stats_data
+
+    # Add post-segmentation variables if they exist in custom variables
+    if post_segmentation_variables is not None and custom_variables is not None:
+        for key in post_segmentation_variables:
+            if key in custom_variables:
+                properties["d"]["visitor"]["props"][key] = custom_variables[key]
+
+    # Add IP address as a standard attribute if available
+    if ip_address:
+        properties["d"]["visitor"]["props"]["ip"] = ip_address
+
+    # If user agent is passed, add os_version and browser_version
+    if visitor_user_agent:
+        if (
+            context.get_vwo() is not None
+            and context.get_vwo().get_ua_info() is not None
+        ):
+            ua_info = context.get_vwo().get_ua_info()
+            if "os_version" in ua_info:
+                properties["d"]["visitor"]["props"]["vwo_osv"] = ua_info.get(
+                    "os_version"
+                )
+            if "browser_version" in ua_info:
+                properties["d"]["visitor"]["props"]["vwo_bv"] = ua_info.get(
+                    "browser_version"
+                )
+        else:
+            LogManager.get_instance().error(
+                "To pass user agent related details as standard attributes, please set gateway as well in init method"
+            )
     LogManager.get_instance().debug(
         debug_messages.get("IMPRESSION_FOR_TRACK_USER").format(
             accountId=settings.get_account_id(), userId=user_id, campaignId=campaign_id
@@ -273,7 +318,7 @@ def send_post_api_request(
                 if response.status_code == 200:
                     # clear the usage stats data
                     UsageStatsUtil().clear_usage_stats()
-                    
+
                     request_query = request.get_query()
                     LogManager.get_instance().info(
                         info_messages.get("NETWORK_CALL_SUCCESS").format(
@@ -316,7 +361,12 @@ def send_post_batch_request(
         batch_payload = {"ev": payload}
 
         # Prepare query parameters
-        query = {"a": str(account_id), "env": sdk_key}
+        query = {
+            "a": str(account_id),
+            "env": sdk_key,
+            "sn": Constants.SDK_NAME,
+            "sv": Constants.SDK_VERSION,
+        }
 
         # Create the RequestModel with necessary data
         request_model = RequestModel(
@@ -373,9 +423,7 @@ def get_messaging_event_payload(
 
     # Set the environment key and product
     properties["d"]["event"]["props"]["vwo_envKey"] = settings.get_sdk_key()
-    properties["d"]["event"]["props"][
-        "product"
-    ] = Constants.PRODUCT_NAME
+    properties["d"]["event"]["props"]["product"] = Constants.PRODUCT_NAME
 
     # Set the message data
     data = {
@@ -399,12 +447,12 @@ def get_sdk_init_event_payload(
 ) -> Dict[str, Any]:
     """
     Constructs the payload for sdk init called event.
-    
+
     Args:
         event_name: The name of the event.
         settings_fetch_time: Time taken to fetch settings in milliseconds.
         sdk_init_time: Time taken to initialize the SDK in milliseconds.
-        
+
     Returns:
         The constructed payload with required fields.
     """
@@ -414,9 +462,11 @@ def get_sdk_init_event_payload(
     properties = _get_event_base_payload(None, user_id, event_name, None, None)
 
     # Set the required fields as specified
-    properties["d"]["event"]["props"][Constants.VWO_FS_ENVIRONMENT] = settings.get_sdk_key()
+    properties["d"]["event"]["props"][
+        Constants.VWO_FS_ENVIRONMENT
+    ] = settings.get_sdk_key()
     properties["d"]["event"]["props"]["product"] = Constants.PRODUCT_NAME
-    
+
     data = {
         "isSDKInitialized": True,
         "settingsFetchTime": settings_fetch_time,
@@ -432,18 +482,20 @@ def get_sdk_usage_stats_event_payload(
 ) -> Dict[str, Any]:
     """
     Constructs the payload for sdk usage stats event.
-    
+
     Args:
         event_name: The name of the event.
         usage_stats_account_id: Account ID for usage stats event.
-        
+
     Returns:
         The constructed payload with required fields.
     """
     # Get user ID and properties
     settings = SettingsManager.get_instance()
     user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
-    properties = _get_event_base_payload(None, user_id, event_name, None, None, True, usage_stats_account_id)
+    properties = _get_event_base_payload(
+        None, user_id, event_name, None, None, True, usage_stats_account_id
+    )
 
     # Set the required fields as specified
     properties["d"]["event"]["props"]["product"] = Constants.PRODUCT_NAME
@@ -456,8 +508,11 @@ def send_event(
     properties: Dict[str, Any], payload: Dict[str, Any], event_name: str
 ) -> Dict[str, Any]:
     try:
-        #if event_name is not VWO_LOG_EVENT, then set base url to constants.hostname
-        if event_name == EventEnum.VWO_LOG_EVENT.value or event_name == EventEnum.VWO_USAGE_STATS.value:
+        # if event_name is not VWO_LOG_EVENT, then set base url to constants.hostname
+        if (
+            event_name == EventEnum.VWO_LOG_EVENT.value
+            or event_name == EventEnum.VWO_USAGE_STATS.value
+        ):
             base_url = Constants.HOST_NAME
             protocol = Constants.HTTPS_PROTOCOL
             port = 443

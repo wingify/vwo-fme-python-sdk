@@ -55,6 +55,18 @@ class SegmentEvaluator:
             return SegmentOperandEvaluator().evaluate_user_agent_dsl(
                 sub_dsl, self.context
             )
+        elif operator == SegmentOperatorValueEnum.IP.value:
+            return SegmentOperandEvaluator().evaluate_string_operand_dsl(
+                sub_dsl, self.context, SegmentOperatorValueEnum.IP.value
+            )
+        elif operator == SegmentOperatorValueEnum.BROWSER_VERSION.value:
+            return SegmentOperandEvaluator().evaluate_string_operand_dsl(
+                sub_dsl, self.context, SegmentOperatorValueEnum.BROWSER_VERSION.value
+            )
+        elif operator == SegmentOperatorValueEnum.OS_VERSION.value:
+            return SegmentOperandEvaluator().evaluate_string_operand_dsl(
+                sub_dsl, self.context, SegmentOperatorValueEnum.OS_VERSION.value
+            )
         else:
             return False
 

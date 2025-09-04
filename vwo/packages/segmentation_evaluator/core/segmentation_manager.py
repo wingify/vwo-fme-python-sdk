@@ -22,6 +22,8 @@ from ....models.settings.settings_model import SettingsModel
 from ....models.campaign.feature_model import FeatureModel
 from ....models.user.context_model import ContextModel
 from ....utils.gateway_service_util import get_query_params, get_from_gateway_service
+from ....constants.Constants import Constants
+from ....services.url_service import UrlService
 
 
 class SegmentationManager:
@@ -77,27 +79,32 @@ class SegmentationManager:
         if not context.get_user_agent() and not context.get_ip_address():
             return
 
-        if (
-            feature.get_is_gateway_service_required()
-        ):  # Check if gateway service is required
-            if SettingsManager.get_instance().is_gateway_service_provided and (
-                context.get_vwo() is None
-            ):
-                query_params = {}
-                if context.get_user_agent():
-                    query_params["userAgent"] = context.get_user_agent()
+        # Call gateway service if required for segmentation OR if gateway service is provided and user agent is available
+        should_call_gateway_service = (
+            (feature.get_is_gateway_service_required() and Constants.HOST_NAME not in UrlService.get_base_url()) or
+            (Constants.HOST_NAME not in UrlService.get_base_url() and 
+             (context.get_user_agent() or context.get_ip_address()))
+        )
+        
+        if should_call_gateway_service and context.get_vwo() is None:
+            query_params = {}
+            if not context.get_user_agent() and not context.get_ip_address():
+                return
+                
+            if context.get_user_agent():
+                query_params["userAgent"] = context.get_user_agent()
 
-                if context.get_ip_address():
-                    query_params["ipAddress"] = context.get_ip_address()
+            if context.get_ip_address():
+                query_params["ipAddress"] = context.get_ip_address()
 
-                try:
-                    params = get_query_params(query_params)
-                    _vwo = get_from_gateway_service(params, UrlEnum.GET_USER_DATA.value)
-                    context.set_vwo(ContextVWOModel(_vwo))
-                except Exception as err:
-                    LogManager.get_instance().error(
-                        f"Error in setting contextual data for segmentation. Got error: {err}"
-                    )
+            try:
+                params = get_query_params(query_params)
+                _vwo = get_from_gateway_service(params, UrlEnum.GET_USER_DATA.value)
+                context.set_vwo(ContextVWOModel(_vwo))
+            except Exception as err:
+                LogManager.get_instance().error(
+                    f"Error in setting contextual data for segmentation. Got error: {err}"
+                )
 
     def validate_segmentation(self, dsl, properties):
         """
