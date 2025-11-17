@@ -41,6 +41,7 @@ def _parse_feature(feature_data: Dict[str, Any]) -> FeatureModel:
         is_gateway_service_required=feature_data.get(
             "isgateway_serviceRequired", False
         ),
+        isDebuggerEnabled=feature_data.get("isDebuggerEnabled", False),
     )
 
 

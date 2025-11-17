@@ -50,6 +50,15 @@ class UrlService:
             return f"{base_url}/{UrlService.collection_prefix}"
 
         return base_url
+    
+    @staticmethod
+    def get_base_url_with_collection_prefix(base_url: str):
+        """
+        Retrieves the base URL with collection prefix.
+        """
+        if hasattr(UrlService, "collection_prefix") and UrlService.collection_prefix:
+            return f"{base_url}/{UrlService.collection_prefix}"
+        return base_url
 
     @staticmethod
     def _is_valid_string(value):

@@ -16,8 +16,9 @@
 from typing import Any, Dict, Optional
 import json
 import random
+from unicodedata import category
 from ..constants.Constants import Constants
-from ..utils.uuid_util import get_uuid
+from ..utils.uuid_util import get_random_uuid, get_uuid
 from ..utils.data_type_util import is_object
 from ..utils.function_util import (
     get_current_unix_timestamp,
@@ -36,7 +37,12 @@ from ..utils.usage_stats_util import UsageStatsUtil
 from ..services.settings_manager import SettingsManager
 from ..enums.event_enum import EventEnum
 from vwo.models.user.context_model import ContextModel
-
+from ..enums.api_enum import ApiEnum
+from ..packages.network_layer.models.response_model import ResponseModel
+from ..enums.campaign_type_enum import CampaignTypeEnum
+from ..enums.debug_category_enum import DebugCategoryEnum
+from ..packages.logger.enums.log_level_enum import LogLevelEnum
+from ..utils.debugger_service_util import send_debug_event_to_vwo
 
 # Function to construct tracking path for an event
 def get_track_event_path(event: str, account_id: str, user_id: str) -> Dict[str, Any]:
@@ -171,6 +177,9 @@ def get_track_user_payload_data(
         settings, user_id, event_name, visitor_user_agent, ip_address
     )
 
+    if context.get_vwo_session_id() is not None and context.get_vwo_session_id() != 0:
+        properties["d"]["sessionId"] = context.get_vwo_session_id()
+
     properties["d"]["event"]["props"]["id"] = campaign_id
     properties["d"]["event"]["props"]["variation"] = str(variation_id)
     properties["d"]["event"]["props"]["isFirst"] = 1
@@ -189,25 +198,6 @@ def get_track_user_payload_data(
     if ip_address:
         properties["d"]["visitor"]["props"]["ip"] = ip_address
 
-    # If user agent is passed, add os_version and browser_version
-    if visitor_user_agent:
-        if (
-            context.get_vwo() is not None
-            and context.get_vwo().get_ua_info() is not None
-        ):
-            ua_info = context.get_vwo().get_ua_info()
-            if "os_version" in ua_info:
-                properties["d"]["visitor"]["props"]["vwo_osv"] = ua_info.get(
-                    "os_version"
-                )
-            if "browser_version" in ua_info:
-                properties["d"]["visitor"]["props"]["vwo_bv"] = ua_info.get(
-                    "browser_version"
-                )
-        else:
-            LogManager.get_instance().error(
-                "To pass user agent related details as standard attributes, please set gateway as well in init method"
-            )
     LogManager.get_instance().debug(
         debug_messages.get("IMPRESSION_FOR_TRACK_USER").format(
             accountId=settings.get_account_id(), userId=user_id, campaignId=campaign_id
@@ -220,15 +210,16 @@ def get_track_user_payload_data(
 # Function to build payload for tracking goals with custom event properties
 def get_track_goal_payload_data(
     settings: SettingsModel,
-    user_id: str,
+    context: ContextModel,
     event_name: str,
     event_properties: Dict[str, Any],
-    visitor_user_agent: str = "",
-    ip_address: str = "",
 ) -> Dict[str, Any]:
     properties = _get_event_base_payload(
-        settings, user_id, event_name, visitor_user_agent, ip_address
+        settings, context.get_id(), event_name, context.get_user_agent(), context.get_ip_address()
     )
+
+    if context.get_vwo_session_id() is not None and context.get_vwo_session_id() != 0:
+        properties["d"]["sessionId"] = context.get_vwo_session_id()
 
     properties["d"]["event"]["props"]["isCustomEvent"] = True
     properties["d"]["event"]["props"]["variation"] = 1  # Temporary value for variation
@@ -240,7 +231,7 @@ def get_track_goal_payload_data(
 
     LogManager.get_instance().debug(
         debug_messages.get("IMPRESSION_FOR_TRACK_GOAL").format(
-            eventName=event_name, accountId=settings.get_account_id(), userId=user_id
+            eventName=event_name, accountId=settings.get_account_id(), userId=context.get_id()
         )
     )
 
@@ -250,15 +241,16 @@ def get_track_goal_payload_data(
 # Function to build payload for syncing visitor attributes
 def get_attribute_payload_data(
     settings: SettingsModel,
-    user_id: str,
+    context: ContextModel,
     event_name: str,
-    attribute_map: Dict,
-    visitor_user_agent: str = "",
-    ip_address: str = "",
+    attribute_map: Dict
 ) -> Dict[str, Any]:
     properties = _get_event_base_payload(
-        settings, user_id, event_name, visitor_user_agent, ip_address
+        settings, context.get_id(), event_name, context.get_user_agent(), context.get_ip_address()
     )
+
+    if context.get_vwo_session_id() is not None and context.get_vwo_session_id() != 0:
+        properties["d"]["sessionId"] = context.get_vwo_session_id()
 
     properties["d"]["event"]["props"]["isCustomEvent"] = True
     properties["d"]["event"]["props"][
@@ -268,7 +260,7 @@ def get_attribute_payload_data(
 
     LogManager.get_instance().debug(
         debug_messages.get("IMPRESSION_FOR_SYNC_VISITOR_PROP").format(
-            eventName=event_name, accountId=settings.get_account_id(), userId=user_id
+            eventName=event_name, accountId=settings.get_account_id(), userId=context.get_id()
         )
     )
 
@@ -277,8 +269,16 @@ def get_attribute_payload_data(
 
 # Function to send a POST API request without waiting for the response
 def send_post_api_request(
-    properties: Dict[str, Any], payload: Dict[str, Any], user_id: str
+    properties: Dict[str, Any], payload: Dict[str, Any], user_id: str, feature_info: Optional[Dict[str, Any]] = None
 ):
+    """
+    Sends a POST API request without waiting for the response.
+
+    :param properties: The properties of the request.
+    :param payload: The payload of the request.
+    :param user_id: The user ID of the request.
+    :param feature_info: The feature information of the request.
+    """
     try:
         # Initialize the headers dictionary for the request
         headers = {}
@@ -293,6 +293,23 @@ def send_post_api_request(
         if visitor_ip and isinstance(visitor_ip, str) and visitor_ip.strip():
             headers[HeadersEnum.IP.value] = visitor_ip.strip()
 
+        event_name = payload["d"].get("event").get("name")
+        api_name = None
+        extra_data_for_message = None
+        if event_name == EventEnum.VWO_VARIATION_SHOWN.value:
+            api_name = ApiEnum.GET_FLAG.value
+            # if campaign type is rollout or personalize
+            if feature_info.get("campaign_type") in (CampaignTypeEnum.ROLLOUT.value, CampaignTypeEnum.PERSONALIZE.value):
+                extra_data_for_message = f"feature: {feature_info.get('feature_key')}, rule: {feature_info.get('variation_name')}"
+            else:
+                extra_data_for_message = f"feature: {feature_info.get('feature_key')}, rule: {feature_info.get('campaign_key')} and variation: {feature_info.get('variation_name')}"
+        elif event_name == EventEnum.VWO_SYNC_VISITOR_PROP.value:
+            api_name = ApiEnum.SET_ATTRIBUTE.value
+            extra_data_for_message = api_name
+        elif event_name != EventEnum.VWO_LOG_EVENT.value or event_name != EventEnum.VWO_DEBUGGER_EVENT.value or event_name != EventEnum.VWO_SDK_INIT_EVENT.value or event_name != EventEnum.VWO_USAGE_STATS.value:
+            api_name = ApiEnum.TRACK_EVENT.value
+            extra_data_for_message = api_name
+        
         # Create the request model
         request = RequestModel(
             UrlService.get_base_url(),
@@ -307,14 +324,35 @@ def send_post_api_request(
 
         # Will be used for logging purpose inside post_async method
         request.set_user_id(user_id)
-
         # Get network instance
         network_instance = NetworkManager.get_instance()
-
         # Create a background thread to send the request
         def send_request():
             try:
                 response = network_instance.post(request)
+                if response.get_total_attempts() > 0:
+                    debug_category = DebugCategoryEnum.RETRY.value
+                    msg_t = Constants.NETWORK_CALL_SUCCESS_WITH_RETRIES
+                    msg = info_messages.get(msg_t).format(extraData=extra_data_for_message, attempts=response.get_total_attempts(), err=response.get_error())
+                    lt = LogLevelEnum.INFO.value
+                    if response.status_code != 200:
+                        debug_category = DebugCategoryEnum.NETWORK.value
+                        msg_t = Constants.NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES
+                        msg = error_messages.get(msg_t).format(extraData=extra_data_for_message, attempts=response.get_total_attempts(), err=response.get_error())
+                        lt = LogLevelEnum.ERROR.value
+                    
+                    debug_event_props = {
+                        "cg": debug_category,
+                        "lt": lt,
+                        "msg_t": msg_t,
+                        "msg": msg,
+                        "an": api_name,
+                        "uuid": request.get_body().get("d").get("visId"),
+                        "sId": request.get_body().get("d").get("sessionId"),
+                    }
+                    # Send the debug event to VWO
+                    send_debug_event_to_vwo(debug_event_props);
+
                 if response.status_code == 200:
                     # clear the usage stats data
                     UsageStatsUtil().clear_usage_stats()
@@ -330,12 +368,7 @@ def send_post_api_request(
                         )
                     )
             except Exception as e:
-                LogManager.get_instance().error(
-                    error_messages.get("NETWORK_CALL_FAILED").format(
-                        method="POST",
-                        err=str(e),
-                    ),
-                )
+                LogManager.get_instance().error_log("NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES", data={"extraData": "event: " + event_name, "attempts": 0, "err": str(e)}, debug_data={"an": api_name, "uuid": request.get_body().get("d").get("visId"), "sId": request.get_body().get("d").get("sessionId")})
 
         # Start the request in a background thread if threading is enabled
         if network_instance.should_use_threading:
@@ -344,12 +377,7 @@ def send_post_api_request(
             send_request()
 
     except Exception as err:
-        LogManager.get_instance().error(
-            error_messages.get("NETWORK_CALL_FAILED").format(
-                method="POST",
-                err=err,
-            ),
-        )
+        LogManager.get_instance().error_log("NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES", data={"extraData": "event: " + event_name, "attempts": 0, "err": str(err)}, debug_data={"an": api_name, "uuid": payload["d"].get("visId"), "sId": payload["d"].get("sessionId")})
 
 
 def send_post_batch_request(
@@ -402,9 +430,7 @@ def send_post_batch_request(
                 )
             return False
     except Exception as ex:
-        LogManager.get_instance().error(
-            f"Error occurred while sending batch events: {ex}"
-        )
+        LogManager.get_instance().error_log("ERROR_FLUSHING_BATCH_EVENTS", data={"error": str(ex)}, debug_data={"an": ApiEnum.FLUSH_EVENTS.value})
 
         # Call flush callback with error
         if flush_callback:
@@ -512,15 +538,18 @@ def send_event(
         if (
             event_name == EventEnum.VWO_LOG_EVENT.value
             or event_name == EventEnum.VWO_USAGE_STATS.value
+            or event_name == EventEnum.VWO_DEBUGGER_EVENT.value
         ):
             base_url = Constants.HOST_NAME
             protocol = Constants.HTTPS_PROTOCOL
             port = 443
+            base_url = UrlService.get_base_url_with_collection_prefix(base_url)
         else:
             base_url = UrlService.get_base_url()
             protocol = SettingsManager.get_instance().protocol
             port = SettingsManager.get_instance().port
-
+        
+        
         # Create the request model
         request = RequestModel(
             base_url,
@@ -553,3 +582,42 @@ def send_event(
 
     except Exception:
         return {"success": False, "message": "Failed to send event"}
+
+def get_debugger_event_payload(event_props: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Constructs the payload for debugger event.
+
+    Args:
+        event_props: The properties of the event.
+
+    Returns:
+        The constructed payload with required fields.
+    """
+
+    account_id = str(SettingsManager.get_instance().get_account_id())
+    sdk_key = SettingsManager.get_instance().get_sdk_key()
+    
+    payload = _get_event_base_payload(None, account_id + "_" + sdk_key, EventEnum.VWO_DEBUGGER_EVENT.value)
+    uuid = event_props.get("uuid")
+    
+    if uuid is None:
+        event_props["uuid"] = payload["d"].get("visId")
+    else:
+        payload["d"]["msgId"] = f"{uuid}-{get_current_unix_timestamp_in_millis()}"
+        payload["d"]["visId"] = uuid
+    
+    session_id = event_props.get("sId")
+    if session_id is None:
+        event_props["sId"] = payload["d"].get("sessionId")
+    else:
+        payload["d"]["sessionId"] = session_id
+    
+    payload["d"]["event"]["props"] = {}
+    payload["d"]["event"]["props"]["vwoMeta"] = event_props
+
+    payload["d"]["event"]["props"]["vwoMeta"]["a"] = account_id
+    payload["d"]["event"]["props"]["vwoMeta"]["product"] = Constants.PRODUCT_NAME
+    payload["d"]["event"]["props"]["vwoMeta"]["sn"] = Constants.SDK_NAME
+    payload["d"]["event"]["props"]["vwoMeta"]["sv"] = Constants.SDK_VERSION
+    payload["d"]["event"]["props"]["vwoMeta"]["eventId"] = get_random_uuid(sdk_key)
+    return payload

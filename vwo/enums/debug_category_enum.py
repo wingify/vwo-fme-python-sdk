@@ -16,10 +16,9 @@
 from enum import Enum
 
 
-class EventEnum(Enum):
-    VWO_VARIATION_SHOWN = "vwo_variationShown"
-    VWO_SYNC_VISITOR_PROP = "vwo_syncVisitorProp"
-    VWO_LOG_EVENT = "vwo_log"
-    VWO_SDK_INIT_EVENT = "vwo_fmeSdkInit"
-    VWO_USAGE_STATS = "vwo_sdkUsageStats"
-    VWO_DEBUGGER_EVENT = "vwo_sdkDebug"
+class DebugCategoryEnum(Enum):
+    NETWORK = "network"
+    DECISION = "decision"
+    INITIALIZATION = "initialization"
+    RETRY = "retry"
+    ERROR = "error"

@@ -22,6 +22,7 @@ class ResponseModel:
         self.headers = {}
         self.data = None
         self.error = None
+        self.total_attempts = 0
 
     def set_status_code(self, status_code: int):
         self.status_code = status_code
@@ -46,3 +47,9 @@ class ResponseModel:
 
     def get_error(self) -> Any:
         return self.error
+
+    def set_total_attempts(self, total_attempts: int):
+        self.total_attempts = total_attempts
+
+    def get_total_attempts(self) -> int:
+        return self.total_attempts

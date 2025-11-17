@@ -17,7 +17,7 @@ from .network_util import get_events_base_properties, get_sdk_init_event_payload
 from ..enums.event_enum import EventEnum
 from ..vwo_client import VWOClient
 from ..packages.logger.core.log_manager import LogManager
-from ..utils.log_message_util import error_messages
+from ..enums.api_enum import ApiEnum
 
 def send_sdk_init_event(settings_fetch_time: Optional[int] = None, sdk_init_time: Optional[int] = None) -> None:
     """
@@ -45,11 +45,7 @@ def send_sdk_init_event(settings_fetch_time: Optional[int] = None, sdk_init_time
             # Send the event immediately if batch events are not enabled
             send_event(properties, payload, EventEnum.VWO_SDK_INIT_EVENT.value)
     except Exception as e:
-        LogManager.get_instance().error(
-            error_messages.get("SDK_INIT_EVENT_FAILED").format(
-                err=str(e)
-            )
-        )
+        LogManager.get_instance().error_log("SDK_INIT_EVENT_FAILED", data={"err": str(e)}, debug_data={"an": ApiEnum.INIT.value})
         pass
 
 

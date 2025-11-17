@@ -25,11 +25,11 @@ from ....enums.url_enum import UrlEnum
 from ....utils.data_type_util import is_boolean
 from ....models.user.context_model import ContextModel
 from ....services.settings_manager import SettingsManager
-
+from ....enums.api_enum import ApiEnum
 
 class SegmentOperandEvaluator:
     def evaluate_custom_variable_dsl(
-        self, dsl_operand_value, properties: Dict[str, Any]
+        self, dsl_operand_value, properties: Dict[str, Any], context: ContextModel
     ):
         """
         Evaluates a custom variable DSL expression.
@@ -49,7 +49,7 @@ class SegmentOperandEvaluator:
             list_id_regex = r"inlist\([^)]*\)"
             match = re.search(list_id_regex, operand)
             if not match or len(match.groups()) < 1:
-                print("Invalid 'inList' operand format")
+                LogManager.get_instance().error_log("INVALID_ATTRIBUTE_LIST_FORMAT", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
                 return False
 
             tag_value = properties[operand_key]
@@ -64,13 +64,13 @@ class SegmentOperandEvaluator:
 
             try:
                 res = get_from_gateway_service(
-                    query_params_obj, UrlEnum.ATTRIBUTE_CHECK.value
+                    query_params_obj, UrlEnum.ATTRIBUTE_CHECK.value, context
                 )
                 if not res or res == "false":
                     return False
                 return res
             except Exception as error:
-                print("Error while fetching data:", error)
+                LogManager.get_instance().error_log("ERROR_FETCHING_DATA_FROM_GATEWAY", data={"err": str(error)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
                 return False
         else:
             tag_value = properties[operand_key]
@@ -105,9 +105,7 @@ class SegmentOperandEvaluator:
         """
         operand = dsl_operand_value
         if not context.get_user_agent():
-            LogManager.get_instance().info(
-                "To Evaluate user_agent segmentation, please provide user_agent in context"
-            )
+            LogManager.get_instance().error_log("INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
             return False
 
         tag_value = context.get_user_agent()
@@ -343,7 +341,7 @@ class SegmentOperandEvaluator:
         tag_value = self.get_tag_value_for_operand_type(context, operand_type)
 
         if tag_value is None:
-            self.log_missing_context_error(operand_type)
+            self.log_missing_context_error(operand_type, context)
             return False
 
         operand_type_and_value = self.pre_process_operand_value(operand)
@@ -425,16 +423,14 @@ class SegmentOperandEvaluator:
             )
         return None
 
-    def log_missing_context_error(self, operand_type: SegmentOperatorValueEnum):
+    def log_missing_context_error(self, operand_type: SegmentOperatorValueEnum, context: ContextModel):
         """
         Logs appropriate error message for missing context.
 
         :param operand_type: The type of operand.
         """
         if operand_type == SegmentOperatorValueEnum.IP.value:
-            LogManager.get_instance().info(
-                "To evaluate IP segmentation, please provide ipAddress in context"
-            )
+            LogManager.get_instance().error_log("INVALID_IP_ADDRESS_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
         elif operand_type == SegmentOperatorValueEnum.BROWSER_VERSION.value:
             LogManager.get_instance().info(
                 "To evaluate browser version segmentation, please provide userAgent in context"

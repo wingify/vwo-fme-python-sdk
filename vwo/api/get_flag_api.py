@@ -16,9 +16,7 @@
 from typing import Dict, Any, List
 from ..models.settings.settings_model import SettingsModel
 from ..models.user.context_model import ContextModel
-from ..models.user.context_model import ContextModel
 from ..services.hooks_manager import HooksManager
-from ..packages.logger.core.log_manager import LogManager
 from ..enums.api_enum import ApiEnum
 from ..enums.campaign_type_enum import CampaignTypeEnum
 from ..utils.log_message_util import debug_messages, info_messages, error_messages
@@ -40,6 +38,10 @@ from ..models.user.get_flag import GetFlag
 from ..services.storage_service import StorageService
 from ..decorators.storage_decorator import StorageDecorator
 from ..utils.campaign_util import get_variation_from_campaign_key
+from ..enums.debug_category_enum import DebugCategoryEnum
+from ..packages.logger.enums.log_level_enum import LogLevelEnum
+from ..constants.Constants import Constants
+from ..utils.debugger_service_util import send_debug_event_to_vwo
 
 
 class GetFlagApi:
@@ -72,6 +74,13 @@ class GetFlagApi:
             "featureKey": feature.get_key() if feature else None,
             "userId": context.get_id() if context else None,
             "api": ApiEnum.GET_FLAG.value,
+        }
+
+        debug_event_props = {
+            "an": ApiEnum.GET_FLAG.value,
+            "fk": feature_key,
+            "uuid": context.get_vwo_uuid(),
+            "sId": context.get_vwo_session_id(),
         }
 
         storage_service = StorageService()
@@ -128,11 +137,7 @@ class GetFlagApi:
                 self._passed_rules_information.update(feature_info)
 
         if feature is None:
-            LogManager.get_instance().error(
-                error_messages.get("FEATURE_NOT_FOUND").format(
-                    featureKey=feature_key,
-                )
-            )
+            LogManager.get_instance().error_log("FEATURE_NOT_FOUND", data={"featureKey": feature_key}, debug_data = debug_event_props)
             self._get_flag_response.set_is_enabled(False)
             return self._get_flag_response
 
@@ -194,6 +199,7 @@ class GetFlagApi:
                         rollout_rules_to_evaluate[0].get_id(),
                         variation.get_id(),
                         context,
+                        feature_key,
                     )
 
         if not roll_out_rules:
@@ -262,6 +268,7 @@ class GetFlagApi:
                         experiment_rules_to_evaluate[0].get_id(),
                         variation.get_id(),
                         context,
+                        feature_key,
                     )
 
         if self._get_flag_response.is_enabled():
@@ -276,6 +283,16 @@ class GetFlagApi:
 
         hook_manager.set(decision)
         hook_manager.execute(hook_manager.get())
+
+        # send debug event, if debugger is enabled
+        if feature.get_is_debugger_enabled():
+            debug_event_props["cg"] = DebugCategoryEnum.DECISION.value
+            debug_event_props["lt"] = LogLevelEnum.INFO.value
+            debug_event_props["msg_t"] = Constants.FLAG_DECISION_GIVEN
+            
+            # update debug event props with decision keys
+            self.update_debug_event_props_with_message(debug_event_props, decision)
+            send_debug_event_to_vwo(debug_event_props);
 
         if (
             feature.get_impact_campaign()
@@ -300,6 +317,7 @@ class GetFlagApi:
                     2 if self._get_flag_response.is_enabled() else 1
                 ),  # 2 is for Variation (flag enabled), 1 is for Control (flag disabled)
                 context,
+                feature_key,
             )
 
         return self._get_flag_response
@@ -327,3 +345,40 @@ class GetFlagApi:
                 }
             )
         decision.update(self._passed_rules_information)
+
+    def update_debug_event_props_with_message(
+        self,
+        debug_event_props: Dict[str, Any],
+        decision: Dict[str, Any],
+    ) -> None:
+        """
+        Updates the debug event props with the decision keys.
+
+        :param debug_event_props: The debug event props to update.
+        :param decision: The decision object to extract the keys from.
+        """
+        feature_key = decision.get("featureKey") or ""
+        message = f"Flag decision given for feature:{feature_key}."
+
+        rollout_key = decision.get("rolloutKey")
+        rollout_variation_id = decision.get("rolloutVariationId")
+        if rollout_key and rollout_variation_id:
+            prefix = f"{feature_key}_"
+            rollout_suffix = (
+                rollout_key[len(prefix):]
+                if isinstance(rollout_key, str) and isinstance(feature_key, str) and rollout_key.startswith(prefix)
+                else rollout_key
+            )
+            message += f" Got rollout:{rollout_suffix} with variation:{rollout_variation_id}"
+
+        experiment_key = decision.get("experimentKey")
+        experiment_variation_id = decision.get("experimentVariationId")
+        if experiment_key and experiment_variation_id:
+            prefix = f"{feature_key}_"
+            experiment_suffix = (
+                experiment_key[len(prefix):]
+                if isinstance(experiment_key, str) and isinstance(feature_key, str) and experiment_key.startswith(prefix)
+                else experiment_key
+            )
+            message += f" and experiment:{experiment_suffix} with variation:{experiment_variation_id}"
+        debug_event_props["msg"] = message

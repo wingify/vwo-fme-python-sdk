@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     sdk_meta = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.13.0"
+        "version": "1.14.0"
     }
 
     # Constants
@@ -63,3 +63,12 @@ class Constants:
     MAX_RETRIES = 3
     INITIAL_WAIT_TIME = 2
     PRODUCT_NAME = "fme"
+
+    # Debugger constants
+    V2_SETTINGS = "v2-settings"
+    POLLING = "polling"
+    BROWSER_STORAGE = "browserStorage"
+    FLAG_DECISION_GIVEN = "FLAG_DECISION_GIVEN"
+    NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES = "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES"
+    NETWORK_CALL_SUCCESS_WITH_RETRIES = "NETWORK_CALL_SUCCESS_WITH_RETRIES"
+    IMPACT_ANALYSIS = "IMPACT_ANALYSIS"

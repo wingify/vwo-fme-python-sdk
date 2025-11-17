@@ -15,7 +15,9 @@
 
 from .context_vwo_model import ContextVWOModel
 from typing import Dict, List
-
+from ...utils.uuid_util import get_uuid
+from ...services.settings_manager import SettingsManager
+from ...utils.function_util import get_current_unix_timestamp
 
 class ContextModel:
     def __init__(self, context: Dict):
@@ -28,6 +30,8 @@ class ContextModel:
         )
         self._vwo = ContextVWOModel(context.get("_vwo")) if "_vwo" in context else None
         self.post_segmentation_variables = context.get("post_segmentation_variables", [])
+        self._vwo_uuid = get_uuid(self.id, str(SettingsManager.get_instance().get_account_id()))
+        self._vwo_session_id = get_current_unix_timestamp()
 
     def get_id(self) -> str:
         return str(self.id) if self.id is not None else None
@@ -63,3 +67,15 @@ class ContextModel:
 
     def set_post_segmentation_variables(self, post_segmentation_variables: List[str]) -> None:
         self.post_segmentation_variables = post_segmentation_variables
+
+    def get_vwo_uuid(self) -> str:
+        return self._vwo_uuid
+
+    def get_vwo_session_id(self) -> str:
+        return self._vwo_session_id
+
+    def set_vwo_uuid(self, vwo_uuid: str) -> None:
+        self._vwo_uuid = vwo_uuid
+
+    def set_vwo_session_id(self, vwo_session_id: str) -> None:
+        self._vwo_session_id = vwo_session_id

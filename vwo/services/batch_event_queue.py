@@ -20,6 +20,7 @@ from vwo.packages.network_layer.manager.network_manager import NetworkManager
 from ..utils.network_util import send_post_batch_request 
 from ..utils.log_message_util import error_messages, info_messages
 from vwo.packages.logger.core.log_manager import LogManager
+from ..enums.api_enum import ApiEnum
 
 class BatchEventQueue:
     MAX_EVENTS_PER_REQUEST = 5000
@@ -117,11 +118,7 @@ class BatchEventQueue:
                     )
                     self.batch_queue.extend(events_to_send)
             except Exception as e:
-                LogManager.get_instance().error(
-                    error_messages.get("BATCH_FLUSH_ERROR").format(
-                        error=str(e)
-                    )
-                )
+                LogManager.get_instance().error_log("ERROR_FLUSHING_BATCH_EVENTS", data={"error": str(e)}, debug_data={"an": ApiEnum.FLUSH_EVENTS.value})
                 self.batch_queue.extend(events_to_send)
             finally:
                 # Reset the flag after flush
@@ -139,9 +136,5 @@ class BatchEventQueue:
             is_sent_successfully = send_post_batch_request(events, self.account_id, self.sdk_key, self.flush_callback)
             return is_sent_successfully
         except Exception as ex:
-            LogManager.get_instance().error(
-                error_messages.get("BATCH_FLUSH_ERROR").format(
-                    error=str(ex)
-                )
-            )
+            LogManager.get_instance().error_log("ERROR_FLUSHING_BATCH_EVENTS", data={"error": str(ex)}, debug_data={"an": ApiEnum.FLUSH_EVENTS.value})
             return False
