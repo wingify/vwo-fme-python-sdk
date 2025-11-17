@@ -24,6 +24,7 @@ from ....models.user.context_model import ContextModel
 from ....utils.gateway_service_util import get_query_params, get_from_gateway_service
 from ....constants.Constants import Constants
 from ....services.url_service import UrlService
+from ....enums.api_enum import ApiEnum
 
 
 class SegmentationManager:
@@ -99,12 +100,10 @@ class SegmentationManager:
 
             try:
                 params = get_query_params(query_params)
-                _vwo = get_from_gateway_service(params, UrlEnum.GET_USER_DATA.value)
+                _vwo = get_from_gateway_service(params, UrlEnum.GET_USER_DATA.value, context)
                 context.set_vwo(ContextVWOModel(_vwo))
             except Exception as err:
-                LogManager.get_instance().error(
-                    f"Error in setting contextual data for segmentation. Got error: {err}"
-                )
+                LogManager.get_instance().error_log("ERROR_SETTING_SEGMENTATION_CONTEXT",data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
 
     def validate_segmentation(self, dsl, properties):
         """

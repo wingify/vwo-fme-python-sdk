@@ -21,11 +21,17 @@ from ..utils.network_util import (
     send_post_api_request,
 )
 from ..enums.event_enum import EventEnum
+from ..utils.campaign_util import (
+    get_campaign_key_from_campaign_id,
+    get_variation_name_from_campaign_id_and_variation_id,
+    get_campaign_type_from_campaign_id,
+)
+from ..constants.Constants import Constants
 
 
 # The function that creates and sends an impression for a variation shown event
 def create_and_send_impression_for_variation_shown(
-    settings: SettingsModel, campaign_id: int, variation_id: int, context: ContextModel
+    settings: SettingsModel, campaign_id: int, variation_id: int, context: ContextModel, feature_key: str
 ):
     from ..vwo_client import VWOClient
     # Get base properties for the event
@@ -43,6 +49,16 @@ def create_and_send_impression_for_variation_shown(
         context,
     )
 
+    campaign_key_with_feaure_key = get_campaign_key_from_campaign_id(settings, campaign_id)
+    variation_name = get_variation_name_from_campaign_id_and_variation_id(settings, campaign_id, variation_id)
+    campaign_type = get_campaign_type_from_campaign_id(settings, campaign_id)
+    campaign_key = None
+    if feature_key == campaign_key_with_feaure_key:
+        campaign_key = Constants.IMPACT_ANALYSIS
+    else:
+        feature_key_with_underscore = feature_key + "_"
+        campaign_key = campaign_key_with_feaure_key.split(feature_key_with_underscore)[1]
+
     vwo_instance = VWOClient.get_instance()
 
     # Check if batch events are enabled
@@ -51,4 +67,9 @@ def create_and_send_impression_for_variation_shown(
         vwo_instance.batch_event_queue.enqueue(payload)
     else:
         # Send the event immediately if batch events are not enabled
-        send_post_api_request(properties, payload, context.get_id())
+        send_post_api_request(properties, payload, context.get_id(), feature_info={
+            "campaign_key": campaign_key,
+            "variation_name": variation_name,
+            "campaign_type": campaign_type,
+            "feature_key": feature_key,
+        })

@@ -1,34 +1,49 @@
 {
-    "INIT_OPTIONS_ERROR": "[ERROR]: VWO-SDK {date} Options should be of type object",
-    "INIT_OPTIONS_SDK_KEY_ERROR": "[ERROR]: VWO-SDK {date} Please provide the sdkKey in the options and should be a of type string",
-    "INIT_OPTIONS_ACCOUNT_ID_ERROR": "[ERROR]: VWO-SDK {date} Please provide VWO account ID in the options and should be a of type string|number",
+    "INVALID_OPTIONS": "Options should be of type object",
+    "INVALID_SDK_KEY_IN_OPTIONS": "SDK Key is required in the options and should be of type:string",
+    "INVALID_ACCOUNT_ID_IN_OPTIONS": "Account ID is required in the options and should be of type:string|number",
   
-    "INIT_OPTIONS_INVALID": "Invalid key:{key} passed in options. Should be of type:{correctType} and greater than equal to 1000",
+    "INVALID_POLLING_CONFIGURATION": "Invalid key:{key} passed in options. Should be of type:{correctType} and greater than equal to 1000",
   
-    "SETTINGS_FETCH_ERROR": "Settings could not be fetched. Error:{err}",
-    "SETTINGS_SCHEMA_INVALID": "Settings are not valid. Failed schema validation",
+    "ERROR_FETCHING_SETTINGS": "Settings could not be fetched. Error:{err}",
+    "INVALID_SETTINGS_SCHEMA": "Settings are not valid. Failed schema validation",
   
-    "POLLING_FETCH_SETTINGS_FAILED": "Error while fetching VWO settings with polling",
+    "ERROR_FETCHING_SETTINGS_WITH_POLLING": "Settings could not be fetched with polling. Error:{err}",
+    "UPDATING_CLIENT_INSTANCE_FAILED_WHEN_WEBHOOK_TRIGGERED": "Failed to fetch settings. VWO client instance couldn't be updated. API:{apiName} called having isViaWebhook:{isViaWebhook}. Error: {err}",
   
-    "API_THROW_ERROR": "API - {apiName} failed to execute. Trace:{err}",
-    "API_INVALID_PARAM": "Key:{key} passed to API:{apiName} is not of valid type. Got type:{type}, should be:{correctType}",
-    "API_SETTING_INVALID": "Settings are not valid. Contact VWO Support",
-    "API_CONTEXT_INVALID": "Context should be an object and must contain a mandatory key - id, which is User ID",
+    "EXECUTION_FAILED": "API - {apiName} failed to execute. Error:{err}",
+    "INVALID_PARAM": "Key:{key} passed to API:{apiName} is not of valid type. Got type:{type}, should be:{correctType}",
+    "INVALID_CONTEXT_PASSED": "Context should be of type:object and must contain a mandatory key: id, which is User ID",
   
     "FEATURE_NOT_FOUND": "Feature not found for the key:{featureKey}",
+    "FEATURE_NOT_FOUND_WITH_ID": "Feature not found for the id:{featureId}",
     "EVENT_NOT_FOUND": "Event:{eventName} not found in any of the features' metrics",
   
-    "STORED_DATA_ERROR": "Error in getting data from storage. Error:{err}",
-    "STORING_DATA_ERROR": "Key:{featureKey} is not valid. Not able to store data into storage",
+    "ERROR_READING_STORED_DATA_IN_STORAGE": "Error reading data from storage. Error:{err}",
+    "ERROR_STORING_DATA_IN_STORAGE": "Key:{featureKey} is not valid. Unable to store data into storage",
   
-    "GATEWAY_URL_ERROR": "Please provide a valid URL for VWO Gateway Service while initializing the SDK",
+    "INVALID_GATEWAY_URL": "Invalid URL for VWO Gateway Service while initializing the SDK",
   
     "NETWORK_CALL_FAILED": "Error occurred while sending {method} request. Error:{err}",
     "BATCH_FLUSH_FAILED": "Failed to send batch events. Retrying next time.",
-    "BATCH_FLUSH_ERROR": "Error occurred while sending batch events. Error:{error}",
+    "ERROR_FLUSHING_BATCH_EVENTS": "Error occurred while sending batch events. Error:{error}",
 
-    "NETWORK_CALL_RETRY_ATTEMPT": "Request failed for {endPoint}, Error: {err}. Retrying in {delay} seconds, attempt {attempt} of {maxRetries}",
+    "ERROR_SETTING_SEGMENTATION_CONTEXT": "Error in setting contextual data for segmentation. Error: {err}",
+    "USER_AGENT_VALIDATION_ERROR": "Failed to validate user agent. Error: {err}",
+    "INVALID_IP_ADDRESS_IN_CONTEXT_FOR_PRE_SEGMENTATION": "ipAddress is required in context to evaluate location pre-segmentation",
+    "INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION": "userAgent is required in context to evaluate user-agent pre-segmentation",
+    "INVALID_ATTRIBUTE_LIST_FORMAT": "Invalid inList operand format",
+    "ERROR_FETCHING_DATA_FROM_GATEWAY": "Error while fetching data from gateway. Error: {err}",
+    "MISSING_GATEWAY_TO_SEND_STANDARD_ATTRIBUTES": "To pass user agent related details as standard attributes, please set gateway as well in init method",
+
+    "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES": "Network call for {extraData} failed after {attempts} retry attempt(s). Got Error: {err}",
+
+    "ATTEMPTING_RETRY_FOR_FAILED_NETWORK_CALL": "Request failed for {endPoint}, Error: {err}. Retrying in {delay} seconds, attempt {attempt} of {maxRetries}",
     "NETWORK_CALL_RETRY_FAILED": "Max retries reached. Request failed for {endPoint}, Error: {err}",
 
-    "SDK_INIT_EVENT_FAILED": "Error occurred while sending SDK init event. Error:{err}"
+    "INVALID_BATCH_EVENTS_CONFIG": "Invalid batch events config. Should be an object - events_per_request and request_time_interval should be of type:number and > 0",
+
+    "SDK_INIT_EVENT_FAILED": "Error occurred while sending SDK init event. Error:{err}",
+
+    "ERROR_SENDING_DEBUG_EVENT": "Error occurred while sending debugger event. Error:{err}"
   }

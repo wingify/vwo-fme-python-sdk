@@ -54,13 +54,11 @@ class TrackApi:
             self.create_and_send_impression_for_track(
                 settings, event_name, context, event_properties
             )
-            hook_manager.set({"event_name": event_name, "api": ApiEnum.TRACK.value})
+            hook_manager.set({"event_name": event_name, "api": ApiEnum.TRACK_EVENT.value})
             hook_manager.execute(hook_manager.get())
             return {event_name: True}
 
-        LogManager.get_instance().error(
-            error_messages.get("EVENT_NOT_FOUND").format(eventName=event_name)
-        )
+        LogManager.get_instance().error_log("EVENT_NOT_FOUND", data={"eventName": event_name}, debug_data={"an": ApiEnum.TRACK_EVENT.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
         return {event_name: False}
 
     def create_and_send_impression_for_track(
@@ -86,11 +84,9 @@ class TrackApi:
         # Construct payload data for tracking the goal
         payload = get_track_goal_payload_data(
             settings,
-            context.get_id(),
+            context,
             event_name,
             event_properties,
-            visitor_user_agent=context.get_user_agent(),
-            ip_address=context.get_ip_address(),
         )
 
         from vwo.vwo_client import VWOClient

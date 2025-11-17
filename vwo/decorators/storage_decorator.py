@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional
 from ..services.storage_service import StorageService
 from ..packages.logger.core.log_manager import LogManager
 from ..utils.log_message_util import error_messages
+from ..enums.api_enum import ApiEnum
 
 
 class StorageDecorator:
@@ -50,21 +51,11 @@ class StorageDecorator:
         context = data.get("context")
 
         if not feature_key:
-            LogManager.get_instance().error(
-                error_messages.get(
-                    error_messages.get("STORED_DATA_ERROR").format(key="featureKey")
-                )
-            )
+            LogManager.get_instance().error_log("ERROR_STORING_DATA_IN_STORAGE",data={"key": "featureKey"}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
             return None  # Invalid feature key, return None
 
         if not context or not context.get_id():
-            LogManager.get_instance().error(
-                error_messages.get(
-                    error_messages.get("STORED_DATA_ERROR").format(
-                        key="Context or Context.id"
-                    )
-                )
-            )
+            LogManager.get_instance().error_log("ERROR_STORING_DATA_IN_STORAGE",data={"key": "Context or Context.id"}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
             return None  # Invalid user ID, return None
 
         if (
@@ -72,23 +63,11 @@ class StorageDecorator:
             and not data.get("experimentKey")
             and not data.get("rolloutVariationId")
         ):
-            LogManager.get_instance().error(
-                error_messages.get(
-                    error_messages.get("STORED_DATA_ERROR").format(
-                        key="Context or Context.id"
-                    )
-                )
-            )
+            LogManager.get_instance().error_log("ERROR_STORING_DATA_IN_STORAGE",data={"key": "rolloutKey or experimentKey or rolloutVariationId"}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
             return None  # Invalid rollout variation, return None
 
         if data.get("experimentKey") and not data.get("experimentVariationId"):
-            LogManager.get_instance().error(
-                error_messages.get(
-                    error_messages.get("STORED_DATA_ERROR").format(
-                        key="Variation:(rolloutKey, experimentKey or rolloutVariationId)"
-                    )
-                )
-            )
+            LogManager.get_instance().error_log("ERROR_STORING_DATA_IN_STORAGE",data={"key": "Variation:(rolloutKey, experimentKey or rolloutVariationId)"}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
             return None  # Invalid experiment variation, return None
 
         success = storage_service.set_data_in_storage(
@@ -101,7 +80,8 @@ class StorageDecorator:
                 "experimentId": data.get("experimentId"),
                 "experimentKey": data.get("experimentKey"),
                 "experimentVariationId": data.get("experimentVariationId"),
-            }
+            },
+            context
         )
 
         if success:

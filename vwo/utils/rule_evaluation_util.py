@@ -82,6 +82,7 @@ def evaluate_rule(
             campaign.get_id(),
             whitelisted_object["variation"].get_id(),
             context,
+            feature.get_key(),
         )
 
     # Return the results of the evaluation

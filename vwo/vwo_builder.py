@@ -31,7 +31,7 @@ from .utils.settings_util import set_settings_and_add_campaigns_to_rules
 from .packages.storage.storage import Storage
 from .constants.Constants import Constants
 from .utils.usage_stats_util import UsageStatsUtil
-
+from .enums.api_enum import ApiEnum
 
 class VWOBuilder:
     def __init__(self, options):
@@ -97,8 +97,12 @@ class VWOBuilder:
             else:
                 return self.fetch_settings(force)
         except Exception as err:
-            LogManager.get_instance().error(
-                "Failed to fetch settings. Error: " + str(err)
+            LogManager.get_instance().error_log(
+                "Error fetching settings",
+                {"err": str(err)},
+                debug_data={
+                    "an": Constants.POLLING if force else ApiEnum.INIT.value
+                }
             )
             return {}
 
@@ -123,20 +127,6 @@ class VWOBuilder:
         )
         return self
 
-    def get_random_user_id(self):
-        apiName = "getRandomUserId"
-        try:
-            LogManager.get_instance().debug(
-                debug_messages.get("API_CALLED").format(apiName=apiName)
-            )
-            return str(random.uuid4())
-        except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=apiName, err=str(err)
-                )
-            )
-
     def init_polling(self):
         poll_interval = self.options.get("poll_interval")
         if poll_interval and isinstance(poll_interval, int) and poll_interval >= 1000:
@@ -145,11 +135,7 @@ class VWOBuilder:
             self.check_and_poll()
         elif poll_interval:
             # only log error if poll_interval is present in options
-            LogManager.get_instance().error(
-                error_messages.get("INIT_OPTIONS_INVALID").format(
-                    key="poll_interval", correctType="int >= 1000"
-                )
-            )
+            LogManager.get_instance().error_log("INVALID_POLLING_CONFIGURATION", data={"key": "poll_interval", "correctType": "int >= 1000"}, debug_data={"an": ApiEnum.INIT.value})
         return self
 
     def init_batching(self):
@@ -182,22 +168,20 @@ class VWOBuilder:
 
                 # Check if both are invalid
                 if not is_events_per_request_valid and not is_request_time_interval_valid:
-                    LogManager.get_instance().error(
-                        "Values mismatch from the expectation of both parameters. Batching not initialized."
-                    )
+                    LogManager.get_instance().error_log("INVALID_BATCH_EVENTS_CONFIG", debug_data={"an": ApiEnum.INIT.value})
                     return self
 
                 # Handle invalid events_per_request
                 if not is_events_per_request_valid:
-                    LogManager.get_instance().error(
-                        "Events_per_request values is invalid (should be greater than 0 and less than 5000). Using default value of events_per_request parameter : 100."
+                    LogManager.get_instance().error_log(
+                        "Events_per_request values is invalid (should be greater than 0 and less than 5000). Using default value of events_per_request parameter : 100.", should_send_log_to_vwo=False
                     )
                     events_per_request = 100
 
                 # Handle invalid request_time_interval
                 if not is_request_time_interval_valid:
-                    LogManager.get_instance().error(
-                        "Request_time_interval values is invalid (should be greater than 0). Using default value of request_time_interval parameter : 600 seconds."
+                    LogManager.get_instance().error_log(
+                        "Request_time_interval values is invalid (should be greater than 0). Using default value of request_time_interval parameter : 600 seconds.", should_send_log_to_vwo=False
                     )
                     request_time_interval = 600
 
@@ -283,9 +267,7 @@ class VWOBuilder:
                         info_messages.get("POLLING_NO_CHANGE_IN_SETTINGS")
                     )
             except Exception as e:
-                LogManager.get_instance().error(
-                    error_messages.get("POLLING_FETCH_SETTINGS_FAILED")
-                )
+                LogManager.get_instance().error_log("ERROR_FETCHING_SETTINGS_WITH_POLLING", data={"err": str(e)}, debug_data={"an": Constants.POLLING})
             finally:
                 # Reschedule the poll function to be called again after the interval
                 threading.Timer(

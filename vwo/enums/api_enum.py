@@ -17,5 +17,9 @@ from enum import Enum
 
 
 class ApiEnum(Enum):
+    INIT = "init"
     GET_FLAG = "getFlag"
-    TRACK = "track"
+    TRACK_EVENT = "trackEvent"
+    SET_ATTRIBUTE = "setAttribute"
+    UPDATE_SETTINGS = "updateSettings"
+    FLUSH_EVENTS = "flushEvents"

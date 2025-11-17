@@ -28,7 +28,7 @@ from .api.set_attribute_api import SetAttributeApi
 from typing import Dict, Any
 from .utils.data_type_util import is_string, is_object, is_boolean
 from .services.settings_manager import SettingsManager
-
+from .enums.api_enum import ApiEnum
 
 class VWOClient:
     _settings: SettingsModel = None
@@ -88,7 +88,7 @@ class VWOClient:
             # Validate featureKey is a string
             if not isinstance(feature_key, str):
                 LogManager.get_instance().error(
-                    error_messages.get("API_INVALID_PARAM").format(
+                    error_messages.get("INVALID_PARAM").format(
                         apiName=api_name,
                         key=feature_key,
                         type=type(feature_key).__name__,
@@ -101,14 +101,14 @@ class VWOClient:
             settings_manager = SettingsManager.get_instance()
             if not settings_manager or not settings_manager.is_settings_valid(self.original_settings):
                 LogManager.get_instance().error(
-                    error_messages.get("API_SETTING_INVALID")
+                    error_messages.get("INVALID_SETTINGS_SCHEMA")
                 )
                 raise ValueError("Invalid Settings")
 
             # Validate user ID is present in context
             if not context or "id" not in context:
                 LogManager.get_instance().error(
-                    error_messages.get("API_CONTEXT_INVALID")
+                    error_messages.get("INVALID_CONTEXT_PASSED")
                 )
                 raise ValueError("Invalid context")
 
@@ -123,19 +123,11 @@ class VWOClient:
             return data
 
         except (TypeError, ValueError) as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=api_name, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value})
             return get_flag_response
 
         except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=api_name, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value})
             return get_flag_response
 
     def track_event(
@@ -161,7 +153,7 @@ class VWOClient:
             # Validate featureKey is a string
             if not is_string(event_name):
                 LogManager.get_instance().error(
-                    error_messages.get("API_INVALID_PARAM").format(
+                    error_messages.get("INVALID_PARAM").format(
                         apiName=api_name,
                         key="event_name",
                         type=type(event_name).__name__,
@@ -172,7 +164,7 @@ class VWOClient:
 
             if not is_object(event_properties):
                 LogManager.get_instance().error(
-                    error_messages.get("API_INVALID_PARAM").format(
+                    error_messages.get("INVALID_PARAM").format(
                         apiName=api_name,
                         key="event_properties",
                         type=type(event_properties).__name__,
@@ -185,14 +177,14 @@ class VWOClient:
             settings_manager = SettingsManager.get_instance()
             if not settings_manager or not settings_manager.is_settings_valid(self.original_settings):
                 LogManager.get_instance().error(
-                    error_messages.get("API_SETTING_INVALID")
+                    error_messages.get("INVALID_SETTINGS_SCHEMA")
                 )
                 raise ValueError("Invalid Settings")
 
             # Validate user ID is present in context
             if not context or "id" not in context:
                 LogManager.get_instance().error(
-                    error_messages.get("API_CONTEXT_INVALID")
+                    error_messages.get("INVALID_CONTEXT_PASSED")
                 )
                 raise ValueError("Invalid context")
 
@@ -211,19 +203,11 @@ class VWOClient:
             return data
 
         except (TypeError, ValueError) as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=api_name, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.TRACK_EVENT.value})
             return {event_name: False}
 
         except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=api_name, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.TRACK_EVENT.value})
             return {event_name: False}
 
     def set_attribute(
@@ -251,9 +235,9 @@ class VWOClient:
             # Determine which calling pattern is being used
             if context is not None:
                 # Single attribute pattern: (key, value, context)
-                if not is_string(key_or_map):
+                if not is_string(key_or_map) or key_or_map == '':
                     LogManager.get_instance().error(
-                        error_messages.get("API_INVALID_PARAM").format(
+                        error_messages.get("INVALID_PARAM").format(
                             apiName=api_name,
                             key="key",
                             type=type(key_or_map).__name__,
@@ -262,9 +246,9 @@ class VWOClient:
                     )
                     raise TypeError("TypeError: key should be a string")
 
-                if not isinstance(value_or_context, (str, int, bool, float)):
+                if not isinstance(value_or_context, (str, int, bool, float)) or value_or_context == '':
                     LogManager.get_instance().error(
-                        error_messages.get("API_INVALID_PARAM").format(
+                        error_messages.get("INVALID_PARAM").format(
                             apiName=api_name,
                             key="value",
                             type=type(value_or_context).__name__,
@@ -281,7 +265,7 @@ class VWOClient:
                 # Multiple attributes pattern: (attribute_map, context)
                 if not is_object(key_or_map) or not key_or_map:
                     LogManager.get_instance().error(
-                        error_messages.get("API_INVALID_PARAM").format(
+                        error_messages.get("INVALID_PARAM").format(
                             apiName=api_name,
                             key="attribute_map",
                             type=type(key_or_map).__name__,
@@ -296,7 +280,7 @@ class VWOClient:
                 for key, value in key_or_map.items():
                     if not is_string(key):
                         LogManager.get_instance().error(
-                            error_messages.get("API_INVALID_PARAM").format(
+                            error_messages.get("INVALID_PARAM").format(
                                 apiName=api_name,
                                 key="key",
                                 type=type(key).__name__,
@@ -306,7 +290,7 @@ class VWOClient:
                         raise TypeError("TypeError: key should be a string")
                     if not isinstance(value, (str, int, bool, float)):
                         LogManager.get_instance().error(
-                            error_messages.get("API_INVALID_PARAM").format(
+                            error_messages.get("INVALID_PARAM").format(
                                 apiName=api_name,
                                 key=f"value for key '{key}'",
                                 type=type(value).__name__,
@@ -324,13 +308,13 @@ class VWOClient:
             settings_manager = SettingsManager.get_instance()
             if not settings_manager or not settings_manager.is_settings_valid(self.original_settings):
                 LogManager.get_instance().error(
-                    error_messages.get("API_SETTING_INVALID")
+                    error_messages.get("INVALID_SETTINGS_SCHEMA")
                 )
                 raise ValueError("Invalid Settings")
 
             if not user_context or "id" not in user_context:
                 LogManager.get_instance().error(
-                    error_messages.get("API_CONTEXT_INVALID")
+                    error_messages.get("INVALID_CONTEXT_PASSED")
                 )
                 raise ValueError("Invalid context")
 
@@ -343,19 +327,11 @@ class VWOClient:
             return
 
         except (TypeError, ValueError) as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=api_name, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.SET_ATTRIBUTE.value})
             return
 
         except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=api_name, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.SET_ATTRIBUTE.value})
             return
 
     def update_settings(self, settings: Dict = None, is_via_webhook=True):
@@ -377,14 +353,15 @@ class VWOClient:
             if settings_to_update is None or settings_to_update == {}:
                 # fetch the latest settings
                 settings_to_update = SettingsManager.get_instance().fetch_settings(
-                    is_via_webhook
+                    is_via_webhook,
+                    api_name
                 )
 
             # validate the settings
             settings_manager = SettingsManager.get_instance()
             if not settings_manager or not settings_manager.is_settings_valid(settings_to_update):
                 LogManager.get_instance().error(
-                    error_messages.get("API_SETTING_INVALID")
+                    error_messages.get("INVALID_SETTINGS_SCHEMA")
                 )
                 raise ValueError("TypeError: Invalid Settings schema")
 
@@ -398,11 +375,7 @@ class VWOClient:
             return
 
         except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("SETTINGS_FETCH_FAILED").format(
-                    apiName=api_name, isViaWebhook=is_via_webhook, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("UPDATING_CLIENT_INSTANCE_FAILED_WHEN_WEBHOOK_TRIGGERED", data={"apiName": api_name, "isViaWebhook": is_via_webhook, "err": str(err)}, debug_data={"an": ApiEnum.UPDATE_SETTINGS.value})
             return
     
     
@@ -426,15 +399,11 @@ class VWOClient:
                 flush_result = self.batch_event_queue.flush_and_clear_timer()
                 return flush_result
             else:
-                LogManager.get_instance().error(
+                LogManager.get_instance().debug(
                     f"Cannot flush events. Batch event queue is empty for accountId: {self.options.get('account_id')}"
                 )
                 return False
 
         except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("API_THROW_ERROR").format(
-                    apiName=api_name, err=str(err)
-                )
-            )
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.FLUSH_EVENTS.value})
             return False

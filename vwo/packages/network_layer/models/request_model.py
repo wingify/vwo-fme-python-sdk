@@ -38,6 +38,7 @@ class RequestModel:
         self.scheme = scheme
         self.port = port
         self.timeout = timeout / 1000  # Convert milliseconds to seconds
+        self.last_error = None
 
     def get_method(self) -> str:
         return self.method
@@ -98,6 +99,12 @@ class RequestModel:
 
     def get_user_id(self) -> str:
         return self.user_id
+
+    def set_last_error(self, last_error: str):
+        self.last_error = last_error
+
+    def get_last_error(self) -> str:
+        return self.last_error
 
     def get_options(self) -> Dict[str, Any]:
         query_params = "&".join([f"{key}={value}" for key, value in self.query.items()])

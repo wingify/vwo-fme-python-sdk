@@ -458,3 +458,35 @@ def _handle_rollout_campaign(campaign: CampaignModel) -> None:
                 endRange=end_range,
             )
         )
+
+def get_campaign_key_from_campaign_id(settings: SettingsModel, campaign_id: int) -> str:
+    """
+    Retrieves the campaign key associated with a given campaign ID.
+
+    Searches through the campaigns in the settings to find the campaign by its ID,
+    and returns the key of that campaign.
+    """
+    campaign = next((c for c in settings.get_campaigns() if c.get_id() == campaign_id), None)
+    return campaign.get_key() if campaign else ""
+
+def get_variation_name_from_campaign_id_and_variation_id(
+    settings: SettingsModel, campaign_id: int, variation_id: int) -> str:
+    """
+    Retrieves the variation name associated with a given campaign ID and variation ID.
+
+    Searches through the campaigns in the settings to find the campaign by its ID,
+    and returns the name of the variation that matches the given variation ID.
+    """
+    campaign = next((c for c in settings.get_campaigns() if c.get_id() == campaign_id), None)
+    variation = next((v for v in campaign.get_variations() if v.get_id() == variation_id), None)
+    return variation.get_name() if variation else ""
+
+def get_campaign_type_from_campaign_id(settings: SettingsModel, campaign_id: int) -> str:
+    """
+    Retrieves the type of a campaign associated with a given campaign ID.
+
+    Searches through the campaigns in the settings to find the campaign by its ID,
+    and returns the type of that campaign.
+    """
+    campaign = next((c for c in settings.get_campaigns() if c.get_id() == campaign_id), None)
+    return campaign.get_type() if campaign else ""

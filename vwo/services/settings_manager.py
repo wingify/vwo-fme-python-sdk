@@ -15,6 +15,8 @@
 
 from typing import Any, Dict
 import random
+
+from vwo.packages.logger.enums.log_level_enum import LogLevelEnum
 from ..packages.network_layer.manager.network_manager import NetworkManager
 from ..packages.network_layer.models.request_model import RequestModel
 from ..constants.Constants import Constants
@@ -25,6 +27,9 @@ import json
 import requests
 import jsonschema
 import time
+from ..enums.api_enum import ApiEnum
+from ..enums.debug_category_enum import DebugCategoryEnum
+from ..utils.debugger_service_util import send_debug_event_to_vwo
 
 
 class SettingsManager:
@@ -86,9 +91,9 @@ class SettingsManager:
     def get_sdk_key(self):
         return self.sdk_key
 
-    def fetch_settings_and_cache_in_storage(self, update=False):
+    def fetch_settings_and_cache_in_storage(self, is_via_webhook=False):
         try:
-            settings = self.fetch_settings()
+            settings = self.fetch_settings(is_via_webhook)
             # Simulate storing settings in a cache (memory, file, etc.)
             # For demonstration, we'll skip actual caching
             return settings
@@ -107,7 +112,7 @@ class SettingsManager:
         }
         return path
 
-    def fetch_settings(self, is_via_webhook=False):
+    def fetch_settings(self, is_via_webhook=False, api_name=ApiEnum.INIT.value):
         if not self.sdk_key or not self.account_id:
             raise ValueError(
                 "sdk_key is required for fetching account settings. Aborting!"
@@ -130,7 +135,7 @@ class SettingsManager:
         )
         # Start timer for settings fetch
         settings_fetch_start_time = time.time() * 1000  # Convert to milliseconds
-
+        response = None
         try:
             request = RequestModel(
                 self.hostname,
@@ -146,19 +151,50 @@ class SettingsManager:
             response = network_instance.get(request)
             response_data = response.get_data()
 
-            if response.status_code != 200:
-                raise Exception(f"Failed to fetch settings: {response_data}")
+            if response.get_total_attempts() > 0 or response.status_code == 400:
+                lt = LogLevelEnum.INFO.value
+                debug_category = DebugCategoryEnum.RETRY.value
+                msg_t = Constants.NETWORK_CALL_SUCCESS_WITH_RETRIES
+                msg = info_messages.get(msg_t).format(extraData=endpoint, attempts=response.get_total_attempts(), err=response.get_error())
+
+                if response.status_code != 200:
+                    lt = LogLevelEnum.ERROR.value
+                    debug_category = DebugCategoryEnum.NETWORK.value
+                    msg_t = Constants.NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES
+                    msg = error_messages.get(msg_t).format(extraData=endpoint, attempts=response.get_total_attempts(), err=response.get_error())
+                
+                debug_event_props = {
+                    "cg": debug_category,
+                    "lt": lt,
+                    "msg_t": msg_t,
+                    "msg": msg,
+                    "an": ApiEnum.UPDATE_SETTINGS.value if is_via_webhook else api_name
+                }
+                send_debug_event_to_vwo(debug_event_props)
 
             # Calculate settings fetch time
             self.settings_fetch_time = int((time.time() * 1000) - settings_fetch_start_time)
             return response_data
 
         except Exception as err:
+            debug_event_props = {
+                "cg": DebugCategoryEnum.NETWORK.value,
+                "lt": LogLevelEnum.ERROR.value,
+                "msg_t": Constants.NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES,
+                "msg": error_messages.get(msg_t).format(extraData=endpoint, attempts=0, err=str(err)),
+                "an": ApiEnum.UPDATE_SETTINGS.value if is_via_webhook else api_name
+            }
+            send_debug_event_to_vwo(debug_event_props)
             raise err
 
     def get_settings(self, force_fetch=False):
+        """
+        Get the settings from the cache or fetch them from the server.
+        :param force_fetch: Whether to force fetch the settings from the server.
+        :return: The settings.
+        """
         if force_fetch:
-            return self.fetch_settings_and_cache_in_storage()
+            return self.fetch_settings_and_cache_in_storage(True)
         else:
             # Simulate fetching settings from a cache
             # For demonstration, we'll skip actual caching
@@ -170,8 +206,8 @@ class SettingsManager:
                 )
                 return fetched_settings
             else:
-                LogManager.get_instance().info(
-                    error_messages.get("SETTINGS_SCHEMA_INVALID")
+                LogManager.get_instance().error(
+                    error_messages.get("INVALID_SETTINGS_SCHEMA")
                 )
                 return {}
 

@@ -44,11 +44,9 @@ class SetAttributeApi:
         # Construct payload data for tracking the goal
         payload = get_attribute_payload_data(
             settings,
-            context.get_id(),
+            context,
             EventEnum.VWO_SYNC_VISITOR_PROP.value,
-            attribute_map,
-            visitor_user_agent=context.get_user_agent(),
-            ip_address=context.get_ip_address(),
+            attribute_map
         )
 
         from vwo.vwo_client import VWOClient

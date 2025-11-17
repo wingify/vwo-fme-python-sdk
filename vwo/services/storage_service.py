@@ -20,6 +20,7 @@ from ..packages.storage.storage import Storage
 from ..utils.data_type_util import is_null, is_undefined
 from ..packages.logger.core.log_manager import LogManager
 from ..utils.log_message_util import error_messages
+from ..enums.api_enum import ApiEnum
 
 
 class StorageService:
@@ -40,12 +41,10 @@ class StorageService:
                 return {"status": StorageEnum.NO_DATA_FOUND.value}
             return data
         except Exception as err:
-            LogManager.get_instance().error(
-                error_messages.get("STORED_DATA_ERROR").format(err)
-            )
+            LogManager.get_instance().error_log("ERROR_READING_STORED_DATA_IN_STORAGE", data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
             return {"status": StorageEnum.NO_DATA_FOUND.value}
 
-    def set_data_in_storage(self, data: Dict[Any, Any]) -> bool:
+    def set_data_in_storage(self, data: Dict[Any, Any], context: ContextModel) -> bool:
         storage_instance = Storage.get_instance().get_connector()
 
         if is_null(storage_instance) or is_undefined(storage_instance):
@@ -55,5 +54,5 @@ class StorageService:
             storage_instance.set(data)
             return True
         except Exception as err:
-            LogManager.get_instance().error(f"Error storing data: {err}")
+            LogManager.get_instance().error_log("ERROR_STORING_DATA_IN_STORAGE", data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
             return False

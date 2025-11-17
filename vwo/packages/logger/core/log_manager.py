@@ -23,7 +23,9 @@ import datetime
 from typing import Dict, Any, Union
 from ....enums.event_enum import EventEnum
 from ....constants.Constants import Constants
-
+from ....enums.debug_category_enum import DebugCategoryEnum
+from ....utils.log_message_util import error_messages
+from ....utils.debugger_service_util import send_debug_event_to_vwo
 
 
 class LogManager(Logger):
@@ -100,8 +102,19 @@ class LogManager(Logger):
         self.transport_manager.log(LogLevelEnum.WARN, message)
 
     def error(self, message: str) -> None:
-        from ....utils.log_message_util import send_log_to_vwo
-
-        # Log the error using the transport manager
         self.transport_manager.log(LogLevelEnum.ERROR, message)
-        send_log_to_vwo(message, LogLevelEnum.ERROR)
+
+    def error_log(self, template: str, data: Dict[str, Any] = {}, debug_data: Dict[str, Any] = {}, should_send_log_to_vwo: bool = True) -> None:
+        try:
+            message = error_messages.get(template).format(**data)
+            self.error(message)
+            if (should_send_log_to_vwo):
+                debug_event_props = {}
+                debug_event_props.update(debug_data)
+                debug_event_props["msg_t"] = template
+                debug_event_props["msg"] = message
+                debug_event_props["lt"] = LogLevelEnum.ERROR.value
+                debug_event_props["cg"] = DebugCategoryEnum.ERROR.value
+                send_debug_event_to_vwo(debug_event_props)
+        except Exception as e:
+            print(f"[VWO SDK]: Error logging message: {e}")

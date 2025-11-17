@@ -34,6 +34,7 @@ class FeatureModel:
         name: str,
         rules_linked_campaign: List[CampaignModel] = [],
         is_gateway_service_required: bool = False,
+        isDebuggerEnabled: bool = False,
     ):
         self._id = id
         self._rules = rules
@@ -45,6 +46,7 @@ class FeatureModel:
         self._name = name
         self._rules_linked_campaign = rules_linked_campaign
         self._is_gateway_service_required = is_gateway_service_required
+        self._is_debugger_enabled = isDebuggerEnabled
 
     def get_id(self) -> int:
         return self._id
@@ -85,3 +87,9 @@ class FeatureModel:
         self, is_gateway_service_required: bool
     ) -> None:
         self._is_gateway_service_required = is_gateway_service_required
+    
+    def get_is_debugger_enabled(self) -> bool:
+        return self._is_debugger_enabled
+    
+    def set_is_debugger_enabled(self, is_debugger_enabled: bool) -> None:
+        self._is_debugger_enabled = is_debugger_enabled

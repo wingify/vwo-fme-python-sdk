@@ -17,7 +17,6 @@ from typing import Any, Dict
 from ..packages.network_layer.manager.network_manager import NetworkManager
 from ..services.settings_manager import SettingsManager
 from ..packages.logger.core.log_manager import LogManager
-from ..utils.log_message_util import error_messages
 from ..packages.network_layer.models.request_model import RequestModel
 from ..services.url_service import UrlService
 from urllib.parse import urlencode
@@ -25,14 +24,16 @@ import json
 import re
 from ..models.settings.settings_model import SettingsModel
 from ..enums.campaign_type_enum import CampaignTypeEnum
+from ..enums.api_enum import ApiEnum
+from ..models.user.context_model import ContextModel
 
 
-def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str) -> Any:
+def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str, context: ContextModel) -> Any:
     network_instance = NetworkManager.get_instance()
 
     # Check if the base URL is correctly set
     if not SettingsManager.get_instance().is_gateway_service_provided:
-        LogManager.get_instance().error(error_messages.get("GATEWAY_URL_ERROR"))
+        LogManager.get_instance().error_log("INVALID_GATEWAY_URL", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
         return False
 
     try:
@@ -52,7 +53,7 @@ def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str) -> Any
         # Return the data from the response
         return response.get_data() if response else False
     except Exception as e:
-        LogManager.get_instance().error(str(e))
+        LogManager.get_instance().error_log("ERROR_FETCHING_DATA_FROM_GATEWAY", data={"err": str(e)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
         return False
 
 

@@ -24,6 +24,7 @@ from ....services.storage_service import StorageService
 from ....decorators.storage_decorator import StorageDecorator
 import re
 from typing import Dict, List, Any
+from ....enums.api_enum import ApiEnum
 
 
 class SegmentEvaluator:
@@ -47,7 +48,7 @@ class SegmentEvaluator:
             return self.some(sub_dsl, properties)
         elif operator == SegmentOperatorValueEnum.CUSTOM_VARIABLE.value:
             return SegmentOperandEvaluator().evaluate_custom_variable_dsl(
-                sub_dsl, properties
+                sub_dsl, properties, self.context
             )
         elif operator == SegmentOperatorValueEnum.USER.value:
             return SegmentOperandEvaluator().evaluate_user_dsl(sub_dsl, properties)
@@ -116,9 +117,7 @@ class SegmentEvaluator:
                                 return not result
                             return result
                         else:
-                            LogManager.get_instance().error(
-                                f"Feature not found with featureIdKey: {feature_id_key}"
-                            )
+                            LogManager.get_instance().error_log("FEATURE_NOT_FOUND_WITH_ID",data={"featureId": feature_id_key}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": self.context.get_vwo_uuid(), "sId": self.context.get_vwo_session_id()})
                             return None
 
             if is_ua_parser and key_count == len(dsl_nodes):
@@ -126,9 +125,7 @@ class SegmentEvaluator:
                     ua_parser_result = self.check_user_agent_parser(ua_parser_map)
                     return ua_parser_result
                 except Exception as err:
-                    LogManager.get_instance().error(
-                        f"Failed to validate User Agent. Error: {err}"
-                    )
+                    LogManager.get_instance().error_log("USER_AGENT_VALIDATION_ERROR",data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": self.context.get_vwo_uuid(), "sId": self.context.get_vwo_session_id()})
 
             if self.is_segmentation_valid(dsl, custom_variables):
                 return True
@@ -172,9 +169,7 @@ class SegmentEvaluator:
 
     def check_location_pre_segmentation(self, location_map: Dict[str, Any]):
         if self.context.get_ip_address() is None:
-            LogManager.get_instance().info(
-                "To evaluate location pre Segment, please pass ip_address in context object"
-            )
+            LogManager.get_instance().error_log("INVALID_IP_ADDRESS_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": self.context.get_vwo_uuid(), "sId": self.context.get_vwo_session_id()})
             return False
         if not self.context.get_vwo() or self.context.get_vwo().get_location() is None:
             return False
@@ -182,9 +177,7 @@ class SegmentEvaluator:
 
     def check_user_agent_parser(self, ua_parser_map: Dict[str, List[str]]):
         if not self.context.get_user_agent():
-            LogManager.get_instance().info(
-                "To evaluate user agent related segments, please pass user_agent in context object"
-            )
+            LogManager.get_instance().error_log("INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": self.context.get_vwo_uuid(), "sId": self.context.get_vwo_session_id()})
             return False
         if not self.context.get_vwo() or self.context.get_vwo().get_ua_info() is None:
             return False
