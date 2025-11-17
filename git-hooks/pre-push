@@ -3,13 +3,13 @@
 set -e
  
 echo "RUNNING PRE-PUSH SCRIPT"
-python setup.py test
+python -m pytest tests
 if [ $? -eq 1 ]
 then
     echo "Some tests failed for python2" >&2
     exit 1
 else
-    python3 setup.py test
+    python3 -m pytest tests
     if [ $? -eq 1 ]
     then
         echo "Some tests failed for python3" >&2
