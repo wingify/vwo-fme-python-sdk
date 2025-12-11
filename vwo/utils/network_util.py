@@ -138,8 +138,6 @@ def _get_event_base_payload(
             "msgId": f"{uuid_value}-{get_current_unix_timestamp_in_millis()}",
             "visId": uuid_value,
             "sessionId": get_current_unix_timestamp(),
-            "visitor_ua": visitor_user_agent,
-            "visitor_ip": ip_address,
             "event": {
                 "props": props,
                 "name": event_name,
@@ -147,6 +145,12 @@ def _get_event_base_payload(
             },
         }
     }
+
+    # if visitor_user_agent and ip_address is not null then add to the properties
+    if visitor_user_agent is not None:
+        properties["d"]["visitor_ua"] = visitor_user_agent
+    if ip_address is not None:
+        properties["d"]["visitor_ip"] = ip_address
 
     if not is_usage_stats_event:
         # set visitor props for standard sdk events
@@ -299,10 +303,12 @@ def send_post_api_request(
         if event_name == EventEnum.VWO_VARIATION_SHOWN.value:
             api_name = ApiEnum.GET_FLAG.value
             # if campaign type is rollout or personalize
-            if feature_info.get("campaign_type") in (CampaignTypeEnum.ROLLOUT.value, CampaignTypeEnum.PERSONALIZE.value):
+            if feature_info is not None and feature_info.get("campaign_type") in (CampaignTypeEnum.ROLLOUT.value, CampaignTypeEnum.PERSONALIZE.value):
                 extra_data_for_message = f"feature: {feature_info.get('feature_key')}, rule: {feature_info.get('variation_name')}"
-            else:
+            elif feature_info is not None:
                 extra_data_for_message = f"feature: {feature_info.get('feature_key')}, rule: {feature_info.get('campaign_key')} and variation: {feature_info.get('variation_name')}"
+            else:
+                extra_data_for_message = f"event: {event_name}"
         elif event_name == EventEnum.VWO_SYNC_VISITOR_PROP.value:
             api_name = ApiEnum.SET_ATTRIBUTE.value
             extra_data_for_message = api_name
@@ -418,12 +424,17 @@ def send_post_batch_request(
 
         # After sending the request, check the response
         if response.status_code == 200:
+            LogManager.get_instance().info(
+                info_messages.get('BATCH_FLUSH_SUCCESS').format(
+                    eventCount=len(payload)
+                )
+            )
             # On success, call the flush callback if defined
             if flush_callback:
                 flush_callback(None, payload)  # No error, events sent successfully
             return True
         else:
-            # On failure, call the flush callback with error
+            LogManager.get_instance().error_log("NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES", data={"extraData": "event: " + UrlEnum.BATCH_EVENTS.value, "attempts": response.get_total_attempts(), "err": response.get_error()}, debug_data={"an": ApiEnum.FLUSH_EVENTS.value})
             if flush_callback:
                 flush_callback(
                     f"Failed with status code: {response.status_code}", payload

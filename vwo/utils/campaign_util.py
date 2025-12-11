@@ -53,7 +53,7 @@ def set_variation_allocation(campaign: CampaignModel) -> None:
             LogManager.get_instance().info(
                 info_messages.get("VARIATION_RANGE_ALLOCATION").format(
                     variationKey=variation.get_name(),
-                    campaignKey=campaign.get_rule_key(),
+                    campaignKey=campaign.get_key(),
                     variationWeight=variation.get_weight(),
                     startRange=variation.get_start_range_variation(),
                     endRange=variation.get_end_range_variation(),
@@ -452,7 +452,7 @@ def _handle_rollout_campaign(campaign: CampaignModel) -> None:
         LogManager.get_instance().info(
             info_messages.get("VARIATION_RANGE_ALLOCATION").format(
                 variationKey=variation.get_name(),
-                campaignKey=campaign.get_rule_key(),
+                campaignKey=campaign.get_key(),
                 variationWeight=variation.get_weight(),
                 startRange=1,
                 endRange=end_range,

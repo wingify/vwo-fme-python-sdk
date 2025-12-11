@@ -19,10 +19,10 @@ from ..models.campaign.feature_model import FeatureModel
 from ..models.user.context_model import ContextModel
 from ..utils.data_type_util import is_object
 from ..utils.decision_util import check_whitelisting_and_pre_seg
-from ..utils.impression_util import create_and_send_impression_for_variation_shown
 from ..services.storage_service import StorageService
+from ..utils.network_util import get_track_user_payload_data
 from typing import Dict
-
+from ..enums.event_enum import EventEnum
 
 def evaluate_rule(
     settings: SettingsModel,
@@ -49,6 +49,9 @@ def evaluate_rule(
     :param decision: The decision object that will be updated based on the evaluation.
     :return: A dictionary containing the result of the pre-segmentation and the whitelisted object, if any.
     """
+    # Initialize payload to None
+    payload = None
+
     # Perform whitelisting and pre-segmentation checks
     pre_segmentation_result, whitelisted_object = check_whitelisting_and_pre_seg(
         settings,
@@ -76,14 +79,13 @@ def evaluate_rule(
             }
         )
 
-        # Send an impression for the variation shown
-        create_and_send_impression_for_variation_shown(
+        payload = get_track_user_payload_data(
             settings,
+            EventEnum.VWO_VARIATION_SHOWN.value,
             campaign.get_id(),
             whitelisted_object["variation"].get_id(),
             context,
-            feature.get_key(),
         )
 
     # Return the results of the evaluation
-    return pre_segmentation_result, whitelisted_object, decision
+    return pre_segmentation_result, whitelisted_object, decision, payload

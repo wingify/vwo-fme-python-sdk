@@ -33,7 +33,10 @@ from ..packages.segmentation_evaluator.core.segmentation_manager import (
 )
 from ..utils.rule_evaluation_util import evaluate_rule
 from ..utils.decision_util import evaluate_traffic_and_get_variation
-from ..utils.impression_util import create_and_send_impression_for_variation_shown
+from ..utils.impression_util import (
+    send_impression_for_variation_shown_batch,
+    send_impression_for_variation_shown,
+)
 from ..models.user.get_flag import GetFlag
 from ..services.storage_service import StorageService
 from ..decorators.storage_decorator import StorageDecorator
@@ -42,6 +45,9 @@ from ..enums.debug_category_enum import DebugCategoryEnum
 from ..packages.logger.enums.log_level_enum import LogLevelEnum
 from ..constants.Constants import Constants
 from ..utils.debugger_service_util import send_debug_event_to_vwo
+from ..utils.network_util import get_track_user_payload_data
+from ..enums.event_enum import EventEnum
+from ..services.settings_manager import SettingsManager
 
 
 class GetFlagApi:
@@ -87,6 +93,7 @@ class GetFlagApi:
         stored_data = StorageDecorator().get_feature_from_storage(
             feature_key, context, storage_service
         )
+        batchPayload = []
 
         if stored_data and stored_data.get("experimentVariationId"):
             if "experimentKey" in stored_data:
@@ -153,23 +160,35 @@ class GetFlagApi:
             rollout_rules_to_evaluate: List[CampaignModel] = []
 
             for rule in roll_out_rules:
-                pre_segmentation_result, whitelisted_object, updated_decision = (
-                    evaluate_rule(
-                        settings,
-                        feature,
-                        rule,
-                        context,
-                        self._evaluated_feature_map,
-                        {},
-                        storage_service,
-                        decision,
-                    )
+                (
+                    pre_segmentation_result,
+                    whitelisted_object,
+                    updated_decision,
+                    payload,
+                ) = evaluate_rule(
+                    settings,
+                    feature,
+                    rule,
+                    context,
+                    self._evaluated_feature_map,
+                    {},
+                    storage_service,
+                    decision,
                 )
-
                 decision.update(updated_decision)
 
                 if pre_segmentation_result:
                     rollout_rules_to_evaluate.append(rule)
+
+                    if (
+                        SettingsManager.get_instance().is_gateway_service_provided
+                        and payload is not None
+                        and len(payload) > 0
+                    ):
+                        send_impression_for_variation_shown(payload, context)
+                    else:
+                        if payload is not None and len(payload) > 0:
+                            batchPayload.append(payload)
 
                     self._evaluated_feature_map[feature_key] = {
                         "rolloutId": rule.get_id(),
@@ -194,13 +213,23 @@ class GetFlagApi:
                     self._update_integrations_decision_object(
                         rollout_rules_to_evaluate[0], variation, decision
                     )
-                    create_and_send_impression_for_variation_shown(
+
+                    payload = get_track_user_payload_data(
                         settings,
+                        EventEnum.VWO_VARIATION_SHOWN.value,
                         rollout_rules_to_evaluate[0].get_id(),
                         variation.get_id(),
                         context,
-                        feature_key,
                     )
+                    if (
+                        SettingsManager.get_instance().is_gateway_service_provided
+                        and payload is not None
+                        and len(payload) > 0
+                    ):
+                        send_impression_for_variation_shown(payload, context)
+                    else:
+                        if payload is not None and len(payload) > 0:
+                            batchPayload.append(payload)
 
         if not roll_out_rules:
             LogManager.get_instance().debug(
@@ -215,17 +244,20 @@ class GetFlagApi:
             meg_group_winner_campaigns = {}
 
             for rule in experiment_rules:
-                pre_segmentation_result, whitelisted_object, updated_decision = (
-                    evaluate_rule(
-                        settings,
-                        feature,
-                        rule,
-                        context,
-                        self._evaluated_feature_map,
-                        meg_group_winner_campaigns,
-                        storage_service,
-                        decision,
-                    )
+                (
+                    pre_segmentation_result,
+                    whitelisted_object,
+                    updated_decision,
+                    payload,
+                ) = evaluate_rule(
+                    settings,
+                    feature,
+                    rule,
+                    context,
+                    self._evaluated_feature_map,
+                    meg_group_winner_campaigns,
+                    storage_service,
+                    decision,
                 )
 
                 decision.update(updated_decision)
@@ -234,6 +266,16 @@ class GetFlagApi:
                     if whitelisted_object is None:
                         experiment_rules_to_evaluate.append(rule)
                     else:
+                        if (
+                            SettingsManager.get_instance().is_gateway_service_provided
+                            and payload is not None
+                            and len(payload) > 0
+                        ):
+                            send_impression_for_variation_shown(payload, context)
+                        else:
+                            if payload is not None and len(payload) > 0:
+                                batchPayload.append(payload)
+
                         self._get_flag_response.set_is_enabled(True)
                         self._get_flag_response.set_variables(
                             whitelisted_object["variation"].get_variables()
@@ -263,13 +305,23 @@ class GetFlagApi:
                     self._update_integrations_decision_object(
                         experiment_rules_to_evaluate[0], variation, decision
                     )
-                    create_and_send_impression_for_variation_shown(
+
+                    payload = get_track_user_payload_data(
                         settings,
+                        EventEnum.VWO_VARIATION_SHOWN.value,
                         experiment_rules_to_evaluate[0].get_id(),
                         variation.get_id(),
                         context,
-                        feature_key,
                     )
+                    if (
+                        SettingsManager.get_instance().is_gateway_service_provided
+                        and payload is not None
+                        and len(payload) > 0
+                    ):
+                        send_impression_for_variation_shown(payload, context)
+                    else:
+                        if payload is not None and len(payload) > 0:
+                            batchPayload.append(payload)
 
         if self._get_flag_response.is_enabled():
             StorageDecorator().set_data_in_storage(
@@ -310,14 +362,26 @@ class GetFlagApi:
                 )
             )
 
-            create_and_send_impression_for_variation_shown(
+            payload = get_track_user_payload_data(
                 settings,
+                EventEnum.VWO_VARIATION_SHOWN.value,
                 feature.get_impact_campaign().get_campaign_id(),
-                (
-                    2 if self._get_flag_response.is_enabled() else 1
-                ),  # 2 is for Variation (flag enabled), 1 is for Control (flag disabled)
-                context,
-                feature_key,
+                (2 if self._get_flag_response.is_enabled() else 1),
+                context
+            )
+            if (
+                SettingsManager.get_instance().is_gateway_service_provided
+                and payload is not None
+                and len(payload) > 0
+            ):
+                send_impression_for_variation_shown(payload, context)
+            else:
+                if payload is not None and len(payload) > 0:
+                    batchPayload.append(payload)
+
+        if not SettingsManager.get_instance().is_gateway_service_provided:
+            send_impression_for_variation_shown_batch(
+                batchPayload, settings.get_account_id(), settings.get_sdk_key()
             )
 
         return self._get_flag_response

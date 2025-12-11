@@ -13,51 +13,31 @@
 # limitations under the License.
 
 
-from ..models.settings.settings_model import SettingsModel
 from ..models.user.context_model import ContextModel
 from ..utils.network_util import (
     get_events_base_properties,
-    get_track_user_payload_data,
     send_post_api_request,
+    send_post_batch_request,
 )
 from ..enums.event_enum import EventEnum
-from ..utils.campaign_util import (
-    get_campaign_key_from_campaign_id,
-    get_variation_name_from_campaign_id_and_variation_id,
-    get_campaign_type_from_campaign_id,
-)
-from ..constants.Constants import Constants
+from ..packages.network_layer.manager.network_manager import NetworkManager
 
 
 # The function that creates and sends an impression for a variation shown event
-def create_and_send_impression_for_variation_shown(
-    settings: SettingsModel, campaign_id: int, variation_id: int, context: ContextModel, feature_key: str
-):
+def send_impression_for_variation_shown(payload: dict, context: ContextModel):
+    """
+    Sends an impression for a variation shown event.
+    :param payload: The payload containing the event data
+    :param context: The context of the user
+    """
     from ..vwo_client import VWOClient
+
     # Get base properties for the event
     properties = get_events_base_properties(
         EventEnum.VWO_VARIATION_SHOWN.value,
         visitor_user_agent=context.get_user_agent(),
         ip_address=context.get_ip_address(),
     )
-    # Construct payload data for tracking the user
-    payload = get_track_user_payload_data(
-        settings,
-        EventEnum.VWO_VARIATION_SHOWN.value,
-        campaign_id,
-        variation_id,
-        context,
-    )
-
-    campaign_key_with_feaure_key = get_campaign_key_from_campaign_id(settings, campaign_id)
-    variation_name = get_variation_name_from_campaign_id_and_variation_id(settings, campaign_id, variation_id)
-    campaign_type = get_campaign_type_from_campaign_id(settings, campaign_id)
-    campaign_key = None
-    if feature_key == campaign_key_with_feaure_key:
-        campaign_key = Constants.IMPACT_ANALYSIS
-    else:
-        feature_key_with_underscore = feature_key + "_"
-        campaign_key = campaign_key_with_feaure_key.split(feature_key_with_underscore)[1]
 
     vwo_instance = VWOClient.get_instance()
 
@@ -67,9 +47,37 @@ def create_and_send_impression_for_variation_shown(
         vwo_instance.batch_event_queue.enqueue(payload)
     else:
         # Send the event immediately if batch events are not enabled
-        send_post_api_request(properties, payload, context.get_id(), feature_info={
-            "campaign_key": campaign_key,
-            "variation_name": variation_name,
-            "campaign_type": campaign_type,
-            "feature_key": feature_key,
-        })
+        send_post_api_request(properties, payload, context.get_id())
+
+def send_impression_for_variation_shown_batch(
+    batch_payload: dict, account_id: int, sdk_key: str
+):
+    """
+    Sends an impression for a variation shown event in batch.
+    :param batch_payload: The batch payload containing all events from getFlag for a single user
+    :param account_id: The account ID
+    :param sdk_key: The SDK key
+    """
+    from ..vwo_client import VWOClient
+
+    vwo_instance = VWOClient.get_instance()
+    if vwo_instance.batch_event_queue is not None:
+        # batch_payload - contains all events from getFlag for a single user
+        # add each event to the batch queue
+        for payload in batch_payload:
+            vwo_instance.batch_event_queue.enqueue(payload)
+    else:
+        # Send the batch events immediately if batch events are not enabled
+        network_instance = NetworkManager.get_instance()
+
+        # Create a method to send the request
+        def send_batch_request():
+            send_post_batch_request(batch_payload, account_id, sdk_key)
+
+        # check if threading is enabled
+        if network_instance.should_use_threading:
+            # execute the request in a background thread
+            network_instance.execute_in_background(send_batch_request)
+        else:
+            # execute the request immediately
+            send_batch_request()
