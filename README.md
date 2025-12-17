@@ -65,6 +65,7 @@ To customize the SDK further, additional parameters can be passed to the `init()
 | `integrations`               | Callback function for integrating with third-party analytics services.                                                                                      | No           | Function | See [Integrations](#integrations) section |
 | `batch_event_data`             | Configuration for batch event processing to optimize network requests                                                                                       | No           | Dictionary   | See [Batch Events](#batch-events) section |
 | `threading`                  | Toggle threading for better (enabled by default) performance.                                                                               | No           | Dictionary     | See [Threading](#threading) section |
+| `is_aliasing_enabled`         | Enable user aliasing functionality. Requires gateway service to be configured.                                                                              | No           | Boolean  | see [UserAliasing](#user-aliasing) section                        |
 
 ### User Context
 
@@ -199,6 +200,51 @@ options = {
     }
 }
 vwo_client = init(options)
+```
+
+### User Aliasing
+
+User aliasing allows you to create consistent user experiences across different user identifiers. This is useful when users can be identified by multiple IDs (e.g., anonymous ID, authenticated ID, email), and you want to maintain consistent feature flag decisions across these identifiers.
+
+#### Prerequisites
+
+User aliasing requires:
+
+1. **Gateway Service**: Must be configured and running. See [Gateway](#gateway) section for more details.
+2. **Aliasing Enabled**: Must be set to `True` in initialization options.
+
+#### Configuration
+
+To enable user aliasing, configure both the gateway service and the aliasing flag:
+
+```python
+from vwo import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # VWO Account ID
+    # set gateway service
+    'gateway_service': {
+        'url': 'http://custom.gateway.com'
+    },
+    # enable aliasing
+    'is_aliasing_enabled': True,
+}
+
+vwo_client = init(options)
+```
+
+#### Setting User Alias
+
+Use the `set_alias()` method to create an alias relationship between a user ID and an alias ID:
+
+```python
+# Method 1: Using user ID and alias ID directly
+is_alias_set = vwo_client.set_alias('user-123', 'alias-456')
+
+# Method 2: Using context dict and alias ID
+context = {'id': 'user-123'}
+is_alias_set = vwo_client.set_alias(context, 'alias-456')
 ```
 
 ### Storage

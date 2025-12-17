@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2025-12-16
+
+### Added
+- Add support for user aliasing (will work after gateway has been setup)
+
+  ```python
+  from vwo import init
+
+  options = {
+      'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+      'account_id': '123456', # VWO Account ID
+      # set gateway service
+      'gateway_service': {
+          'url': 'http://custom.gateway.com'
+      },
+      # enable aliasing
+      'is_aliasing_enabled': True,
+  }
+
+  vwo_client = init(options)
+  ```
+
+  You can also call `set_alias` for a given `user_id` and `alias_id`
+  
+  ```python
+  is_alias_set = vwo_client.set_alias('user-id-1', 'alias-id-1')
+  ```
+
+  Now if you call the `get_flag` again for id - `alias-id-1`, the `user-id-1` will be used for evaluation.
+
 ## [1.15.0] - 2025-11-20
 
 ### Added

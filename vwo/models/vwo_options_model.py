@@ -36,6 +36,7 @@ class VWOOptionsModel:
         self.vwoBuilder = options.get("vwoBuilder", None)
         self.is_usage_stats_disabled = options.get("is_usage_stats_disabled", False)
         self._vwo_meta = options.get("_vwo_meta", None)
+        self.isAliasingEnabled = options.get("isAliasingEnabled", False)
 
         # Initialize BatchEventData
         batch_event_data = options.get('batch_event_data', None)
@@ -159,3 +160,19 @@ class VWOOptionsModel:
         :return: The VWO meta data as a dictionary.
         """
         return self._vwo_meta
+    
+    def get_is_aliasing_enabled(self) -> bool:
+        """
+        Get the aliasing enabled flag.
+
+        :return: The aliasing enabled flag as a boolean.
+        """
+        return self.isAliasingEnabled
+    
+    def set_is_aliasing_enabled(self, is_aliasing_enabled: bool) -> None:
+        """
+        Set the aliasing enabled flag.
+
+        :param is_aliasing_enabled: The new aliasing enabled flag as a boolean.
+        """
+        self.isAliasingEnabled = is_aliasing_enabled

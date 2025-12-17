@@ -23,3 +23,4 @@ class ApiEnum(Enum):
     SET_ATTRIBUTE = "setAttribute"
     UPDATE_SETTINGS = "updateSettings"
     FLUSH_EVENTS = "flushEvents"
+    SET_ALIAS = "setAlias"

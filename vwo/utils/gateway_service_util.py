@@ -29,6 +29,14 @@ from ..models.user.context_model import ContextModel
 
 
 def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str, context: ContextModel) -> Any:
+    """
+    Get the data from the gateway service.
+
+    :param query_params: The query parameters to send to the gateway service.
+    :param endpoint: The endpoint to send the request to.
+    :param context: The context to send to the gateway service.
+    :return: The data from the gateway service.
+    """
     network_instance = NetworkManager.get_instance()
 
     # Check if the base URL is correctly set
@@ -56,8 +64,50 @@ def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str, contex
         LogManager.get_instance().error_log("ERROR_FETCHING_DATA_FROM_GATEWAY", data={"err": str(e)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
         return False
 
+def post_to_gateway_service(query_params: Dict[str, Any], payload: Dict[str, Any], endpoint: str) -> Any:
+    """
+    Post the data to the gateway service.
+
+    :param query_params: The query parameters to send to the gateway service.
+    :param payload: The payload to send to the gateway service.
+    :param endpoint: The endpoint to send the request to.
+    :return: The data to the gateway service.
+    """
+    network_instance = NetworkManager.get_instance()
+
+    # Check if the base URL is correctly set
+    if not SettingsManager.get_instance().is_gateway_service_provided:
+        LogManager.get_instance().error_log("INVALID_GATEWAY_URL", debug_data={"an": ApiEnum.GET_FLAG.value})
+        return False
+
+    try:
+        # Create a new request model instance with the provided parameters
+        request = RequestModel(
+            url=UrlService.get_base_url(),
+            method="POST",
+            path=endpoint,
+            query=query_params,
+            body=payload,
+            scheme=SettingsManager.get_instance().protocol,
+            port=SettingsManager.get_instance().port,
+        )
+
+        # Perform the network GET request synchronously
+        response = network_instance.post(request)
+
+        # Return the data from the response
+        return response.get_data() if response else False
+    except Exception as e:
+        LogManager.get_instance().error_log("ERROR_SENDING_DATA_TO_GATEWAY", data={"err": str(e)}, debug_data={"an": ApiEnum.GET_FLAG.value})
+        return False
 
 def get_query_params(query_params: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Get the query parameters for the gateway service.
+
+    :param query_params: The query parameters to send to the gateway service.
+    :return: The query parameters for the gateway service.
+    """
     encoded_params = {
         key: urlencode({key: str(value)})[len(key) + 1 :]
         for key, value in query_params.items()
@@ -66,6 +116,11 @@ def get_query_params(query_params: Dict[str, Any]) -> Dict[str, str]:
 
 
 def add_is_gateway_service_required_flag(settings: SettingsModel) -> None:
+    """
+    Add the is gateway service required flag to the settings.
+
+    :param settings: The settings to add the is gateway service required flag to.
+    """
     # Regex pattern to match the specified fields
     main_pattern = re.compile(
         r"\b(country|region|city|os|device_type|browser_string|ua|os_version|browser_version)\b", re.IGNORECASE

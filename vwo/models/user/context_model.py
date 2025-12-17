@@ -36,6 +36,10 @@ class ContextModel:
     def get_id(self) -> str:
         return str(self.id) if self.id is not None else None
 
+    def set_id(self, id: str) -> None:
+        self.id = id
+        self._vwo_uuid = get_uuid(self.id, str(SettingsManager.get_instance().get_account_id()))
+
     def get_user_agent(self) -> str:
         return self.user_agent
 

@@ -68,7 +68,14 @@ def init(options: Dict[str, Any]) -> Optional["VWOClient"]:
             None,
         )
         return None
-
+    
+    if options.get("is_aliasing_enabled", False) and (not options.get("gateway_service", None) or not options.get("gateway_service", None).get("url")):
+        print(
+            "Gateway service URL is required when aliasing is enabled. Please provide the gateway_service in the options.",
+            None,
+        )
+        return None
+    
     try:
         instance = VWO.set_instance(options)
         

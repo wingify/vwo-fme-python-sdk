@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     sdk_meta = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.15.0"
+        "version": "1.16.0"
     }
 
     # Constants
@@ -72,3 +72,7 @@ class Constants:
     NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES = "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES"
     NETWORK_CALL_SUCCESS_WITH_RETRIES = "NETWORK_CALL_SUCCESS_WITH_RETRIES"
     IMPACT_ANALYSIS = "IMPACT_ANALYSIS"
+
+    # Aliasing constants
+    KEY_USER_ID = "userId"
+    KEY_ALIAS_ID = "aliasId"

@@ -34,6 +34,7 @@
     "INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION": "userAgent is required in context to evaluate user-agent pre-segmentation",
     "INVALID_ATTRIBUTE_LIST_FORMAT": "Invalid inList operand format",
     "ERROR_FETCHING_DATA_FROM_GATEWAY": "Error while fetching data from gateway. Error: {err}",
+    "ERROR_SENDING_DATA_TO_GATEWAY": "Error while sending data to gateway. Error: {err}",
     "MISSING_GATEWAY_TO_SEND_STANDARD_ATTRIBUTES": "To pass user agent related details as standard attributes, please set gateway as well in init method",
 
     "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES": "Network call for {extraData} failed after {attempts} retry attempt(s). Got Error: {err}",
@@ -45,5 +46,7 @@
 
     "SDK_INIT_EVENT_FAILED": "Error occurred while sending SDK init event. Error:{err}",
 
-    "ERROR_SENDING_DEBUG_EVENT": "Error occurred while sending debugger event. Error:{err}"
+    "ERROR_SENDING_DEBUG_EVENT": "Error occurred while sending debugger event. Error:{err}",
+    "ERROR_SETTING_ALIAS": "Error while setting alias on gateway service. Error: {err}",
+    "ERROR_GETTING_ALIAS": "Error while getting alias from gateway service. Error: {err}"
   }

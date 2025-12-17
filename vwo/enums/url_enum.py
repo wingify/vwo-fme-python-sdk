@@ -24,3 +24,5 @@ class UrlEnum(Enum):
     ATTRIBUTE_CHECK = '/check-attribute'
     GET_USER_DATA = '/get-user-details'
     BATCH_EVENTS = '/server-side/batch-events-v2'
+    SET_ALIAS = '/user-alias/setUserAlias'
+    GET_ALIAS = '/user-alias/getAliasUserId'

@@ -29,6 +29,8 @@ from typing import Dict, Any
 from .utils.data_type_util import is_string, is_object, is_boolean
 from .services.settings_manager import SettingsManager
 from .enums.api_enum import ApiEnum
+from .utils.aliasing_util import get_alias_user_id
+from .utils.aliasing_util import set_alias as set_user_alias_util
 
 class VWOClient:
     _settings: SettingsModel = None
@@ -114,6 +116,9 @@ class VWOClient:
 
             context_model = ContextModel(context)
 
+            if self.options.get("is_aliasing_enabled"):
+                context_model.set_id(get_alias_user_id(context_model))
+
             # Fetch the feature flag value using FlagApi
             flag_api = GetFlagApi()
             data = flag_api.get(
@@ -189,6 +194,9 @@ class VWOClient:
                 raise ValueError("Invalid context")
 
             context_model = ContextModel(context)
+
+            if self.options.get("is_aliasing_enabled"):
+                context_model.set_id(get_alias_user_id(context_model))
 
             # Fetch the feature flag value using FlagApi
             trackApi = TrackApi()
@@ -320,6 +328,9 @@ class VWOClient:
 
             context_model = ContextModel(user_context)
 
+            if self.options.get("is_aliasing_enabled"):
+                context_model.set_id(get_alias_user_id(context_model))
+
             set_attribute_api = SetAttributeApi()
             set_attribute_api.set_attribute(
                 self._settings, attribute_map, context_model
@@ -406,4 +417,51 @@ class VWOClient:
 
         except Exception as err:
             LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.FLUSH_EVENTS.value})
+            return False
+    
+    def set_alias(self, user_id_or_context: Any, alias_id: str) -> bool:
+        """
+        Set an alias for a given user id using the gateway service.
+
+        :param user_id_or_context: User id or context to be aliased
+        :param alias_id: Alias id to be set for the user id
+        :return: True if the alias was set successfully, else False
+        """
+        api_name = "setAlias"
+        try:
+            LogManager.get_instance().debug(
+                debug_messages.get("API_CALLED").format(apiName=api_name)
+            )
+
+            # check if aliasing is enabled
+            if not self.options.get("is_aliasing_enabled"):
+                raise ValueError("Aliasing is not enabled")
+
+            # check if gateway service is provided
+            settings_manager = SettingsManager.get_instance()
+            if not settings_manager or not settings_manager.is_gateway_service_provided:
+                raise ValueError("Gateway service is not provided")
+
+            user_id = user_id_or_context if isinstance(user_id_or_context, str) else user_id_or_context.get("id")
+
+            # check if user id is provided
+            if not isinstance(user_id, str) or not user_id or not user_id.strip():
+                raise TypeError("User ID is required")
+
+            # check if alias id is provided
+            if not isinstance(alias_id, str) or not alias_id or not alias_id.strip():
+                raise TypeError("Alias ID is required")
+
+            # remove whitespaces from alias id and trim user id
+            alias_id_clean = "".join(alias_id.strip().split())
+            user_id_clean = user_id.strip()
+
+            # check if user id and alias id are the same
+            if user_id_clean == alias_id_clean:
+                raise ValueError("User ID and Alias ID cannot be the same")
+
+            # set alias on gateway service
+            return set_user_alias_util(user_id_clean, alias_id_clean)
+        except Exception as err:
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.SET_ALIAS.value})
             return False
