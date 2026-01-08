@@ -30,37 +30,6 @@ class UrlService:
             UrlService.collection_prefix = None
 
     @staticmethod
-    def get_base_url():
-        """
-        Retrieves the base URL.
-        If the gateway service is provided, it returns that;
-        otherwise, it constructs the URL using base_url and collection_prefix.
-
-        :return: The base URL.
-        """
-        from .settings_manager import SettingsManager
-
-        settings_manager = SettingsManager.get_instance()
-        base_url = settings_manager.hostname
-
-        if settings_manager.is_gateway_service_provided:
-            return base_url
-
-        if hasattr(UrlService, "collection_prefix") and UrlService.collection_prefix:
-            return f"{base_url}/{UrlService.collection_prefix}"
-
-        return base_url
-    
-    @staticmethod
-    def get_base_url_with_collection_prefix(base_url: str):
-        """
-        Retrieves the base URL with collection prefix.
-        """
-        if hasattr(UrlService, "collection_prefix") and UrlService.collection_prefix:
-            return f"{base_url}/{UrlService.collection_prefix}"
-        return base_url
-
-    @staticmethod
     def _is_valid_string(value):
         """
         Validates if the provided value is a valid string.
@@ -69,3 +38,12 @@ class UrlService:
         :return: True if valid string, False otherwise.
         """
         return isinstance(value, str) and bool(value.strip())
+
+    @staticmethod
+    def get_endpoint_with_collection_prefix(endpoint: str):
+        """
+        Retrieves the endpoint with collection prefix.
+        """
+        if hasattr(UrlService, "collection_prefix") and UrlService.collection_prefix:
+            return f"/{UrlService.collection_prefix}{endpoint}"
+        return endpoint

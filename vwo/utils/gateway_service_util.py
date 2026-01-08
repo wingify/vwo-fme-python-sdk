@@ -47,9 +47,9 @@ def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str, contex
     try:
         # Create a new request model instance with the provided parameters
         request = RequestModel(
-            url=UrlService.get_base_url(),
+            url=SettingsManager.get_instance().hostname,
             method="GET",
-            path=endpoint,
+            path=UrlService.get_endpoint_with_collection_prefix(endpoint=endpoint),
             query=query_params,
             scheme=SettingsManager.get_instance().protocol,
             port=SettingsManager.get_instance().port,
@@ -83,9 +83,9 @@ def post_to_gateway_service(query_params: Dict[str, Any], payload: Dict[str, Any
     try:
         # Create a new request model instance with the provided parameters
         request = RequestModel(
-            url=UrlService.get_base_url(),
+            url=SettingsManager.get_instance().hostname,
             method="POST",
-            path=endpoint,
+            path=UrlService.get_endpoint_with_collection_prefix(endpoint=endpoint),
             query=query_params,
             body=payload,
             scheme=SettingsManager.get_instance().protocol,

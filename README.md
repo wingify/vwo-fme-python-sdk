@@ -60,6 +60,7 @@ To customize the SDK further, additional parameters can be passed to the `init()
 | `sdk_key`                     | SDK key corresponding to the specific environment to initialize the VWO SDK Client. You can get this key from VWO Application.                              | Yes          | str   | `'32-alpha-numeric-sdk-key'`    |
 | `poll_interval`               | Time interval for fetching updates from VWO servers (in milliseconds).                                                                                      | No           | int   | `60_000`                         |
 | `gateway_service`             | Configuration for integrating VWO Gateway Service. Service.                                                                                   | No           | Dictionary   | see [Gateway](#gateway) section |
+| `proxy_url`                  | Custom proxy URL for redirecting all SDK network requests through a proxy server.                                                                                | No           | str   | see [Proxy Url](#proxy-url) section     |
 | `storage`                    | Custom storage connector for persisting user decisions and campaign data. data.                                                                                   | No           | Dictionary   | See [Storage](#storage) section |
 | `logger`                     | Toggle log levels for more insights or for debugging purposes. You can also customize your own transport in order to have better control over log messages. | No           | Dictionary   | See [Logger](#logger) section   |
 | `integrations`               | Callback function for integrating with third-party analytics services.                                                                                      | No           | Function | See [Integrations](#integrations) section |
@@ -246,6 +247,25 @@ is_alias_set = vwo_client.set_alias('user-123', 'alias-456')
 context = {'id': 'user-123'}
 is_alias_set = vwo_client.set_alias(context, 'alias-456')
 ```
+
+### Proxy URL
+
+The `proxy_url` parameter allows you to redirect all SDK network calls through a custom proxy server. This feature enables you to route all SDK network requests (settings, tracking, etc.) through your own proxy server, providing better control over network traffic and security.
+
+#### How to Use Proxy URL
+
+The proxy URL can be configured by passing the `proxy_url` parameter in the `init` configuration.
+
+```python
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # VWO Account ID
+    'proxy_url': 'http://custom.proxy.com'
+}
+
+vwo_client = init(options)
+```
+**Note:** If both `gateway_service` and `proxy_url` are provided, the SDK will give preference to the `gateway_service` for all network requests.
 
 ### Storage
 

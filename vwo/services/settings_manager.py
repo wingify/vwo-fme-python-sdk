@@ -43,6 +43,27 @@ class SettingsManager:
         self.is_gateway_service_provided = False
         self.settings_fetch_time = None  # time taken to fetch the settings
         self.is_settings_valid_on_init = False
+        self.is_proxy_url_provided = False
+        self.proxy_url = None
+        self.hostname = Constants.HOST_NAME
+        self.protocol = Constants.HTTPS_PROTOCOL
+        self.port = None
+
+        if ("proxy_url" in options and options["proxy_url"] is not None ) and ("gateway_service" in options and "url" in options["gateway_service"]):
+            LogManager.get_instance().info(
+                info_messages.get("PROXY_AND_GATEWAY_SERVICE_PROVIDED").format()
+            )
+            self.is_gateway_service_provided = True
+
+
+        if ("proxy_url" in options and options["proxy_url"] is not None ) and not self.is_gateway_service_provided:
+            self.is_proxy_url_provided = True
+            parsed_url = requests.utils.urlparse(options["proxy_url"])
+
+            self.hostname = parsed_url.hostname
+            self.protocol = parsed_url.scheme
+            if parsed_url.port:
+                self.port = parsed_url.port
 
         if "gateway_service" in options and "url" in options["gateway_service"]:
             self.is_gateway_service_provided = True
@@ -71,10 +92,6 @@ class SettingsManager:
                 self.port = parsed_url.port
             elif "port" in options["gateway_service"]:
                 self.port = options["gateway_service"]["port"]
-        else:
-            self.hostname = Constants.HOST_NAME
-            self.protocol = "https"
-            self.port = None
 
         LogManager.get_instance().debug(
             debug_messages.get("SERVICE_INITIALIZED").format(service="Settings Manager")

@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2025-01-08
+
+### Added
+
+- Added support for redirecting all network calls through a custom proxy URL. This feature allows users to route all SDK network requests (settings, tracking, etc.) through their own proxy server.
+
+```python
+options = {
+  'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+  'account_id': '123456', # VWO Account ID
+  'proxy_url': 'https://custom.proxy.com'
+}
+
+vwo_client = init(options)
+```
+
+**Note:** If both `gateway_service` and `proxy_url` are provided, the SDK will give preference to the `gateway_service` for all network requests.
+
+
 ## [1.16.0] - 2025-12-16
 
 ### Added
@@ -27,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ```
 
   You can also call `set_alias` for a given `user_id` and `alias_id`
-  
+
   ```python
   is_alias_set = vwo_client.set_alias('user-id-1', 'alias-id-1')
   ```

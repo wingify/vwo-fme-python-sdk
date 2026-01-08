@@ -23,7 +23,6 @@ from ....models.campaign.feature_model import FeatureModel
 from ....models.user.context_model import ContextModel
 from ....utils.gateway_service_util import get_query_params, get_from_gateway_service
 from ....constants.Constants import Constants
-from ....services.url_service import UrlService
 from ....enums.api_enum import ApiEnum
 
 
@@ -82,8 +81,8 @@ class SegmentationManager:
 
         # Call gateway service if required for segmentation OR if gateway service is provided and user agent is available
         should_call_gateway_service = (
-            (feature.get_is_gateway_service_required() and Constants.HOST_NAME not in UrlService.get_base_url()) or
-            (Constants.HOST_NAME not in UrlService.get_base_url() and 
+            (feature.get_is_gateway_service_required() and Constants.HOST_NAME not in SettingsManager.get_instance().hostname) or
+            (Constants.HOST_NAME not in SettingsManager.get_instance().hostname and 
              (context.get_user_agent() or context.get_ip_address()))
         )
         

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import time
-import random
 import requests
 from ..models.request_model import RequestModel
 from ..models.response_model import ResponseModel
@@ -74,21 +73,19 @@ class NetworkClient:
             ) as e:
                 response_model.set_error(str(e))
                 response_model.set_total_attempts(attempt)
-
+                url_without_query_params = options["url"].split("?")[0]
                 if attempt == self.max_retries:
                     LogManager.get_instance().error(
                         error_messages.get("NETWORK_CALL_RETRY_FAILED").format(
-                            endPoint=options["url"], err=str(e)
+                            endPoint=url_without_query_params, err=str(e)
                         )
                     )
                     return response_model
 
-                sleep_time = self.initial_wait_time * (2 ** (attempt)) + (
-                    0.5 * random.random()
-                )
+                sleep_time = self.initial_wait_time * (2 ** (attempt))
                 LogManager.get_instance().error(
                     error_messages.get("ATTEMPTING_RETRY_FOR_FAILED_NETWORK_CALL").format(
-                        endPoint=options["url"],
+                        endPoint=url_without_query_params,
                         err=str(e),
                         delay=round(sleep_time, 2),
                         attempt=attempt + 1,
@@ -144,23 +141,22 @@ class NetworkClient:
             ) as e:
                 response_model.set_error(str(e))
                 response_model.set_total_attempts(attempt)
+                url_without_query_params = options["url"].split("?")[0]
                 if EventEnum.VWO_LOG_EVENT.value in options["url"]:
                     return response_model
 
                 if attempt == self.max_retries:
                     LogManager.get_instance().error(
                         error_messages.get("NETWORK_CALL_RETRY_FAILED").format(
-                            endPoint=options["url"], err=str(e)
+                            endPoint=url_without_query_params, err=str(e)
                         )
                     )
                     return response_model
 
-                sleep_time = self.initial_wait_time * (2 ** (attempt)) + (
-                    0.5 * random.random()
-                )
+                sleep_time = self.initial_wait_time * (2 ** (attempt))
                 LogManager.get_instance().error(
                     error_messages.get("ATTEMPTING_RETRY_FOR_FAILED_NETWORK_CALL").format(
-                        endPoint=options["url"],
+                        endPoint=url_without_query_params,
                         err=str(e),
                         delay=round(sleep_time, 2),
                         attempt=attempt + 1,

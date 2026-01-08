@@ -37,6 +37,7 @@ class VWOOptionsModel:
         self.is_usage_stats_disabled = options.get("is_usage_stats_disabled", False)
         self._vwo_meta = options.get("_vwo_meta", None)
         self.isAliasingEnabled = options.get("isAliasingEnabled", False)
+        self.proxy_url = options.get("proxy_url", None)
 
         # Initialize BatchEventData
         batch_event_data = options.get('batch_event_data', None)
@@ -176,3 +177,11 @@ class VWOOptionsModel:
         :param is_aliasing_enabled: The new aliasing enabled flag as a boolean.
         """
         self.isAliasingEnabled = is_aliasing_enabled
+
+    def get_proxy_url(self) -> str:
+        """
+        Get the proxy URL.
+
+        :return: The proxy URL as a string.
+        """
+        return self.proxy_url

@@ -90,10 +90,7 @@ def get_events_base_properties(
         "visitor_ua": visitor_user_agent,
         "visitor_ip": ip_address,
         "sn": Constants.SDK_NAME,
-        "sv": Constants.SDK_VERSION,
-        "url": Constants.HTTPS_PROTOCOL
-        + UrlService.get_base_url()
-        + UrlEnum.EVENTS.value,
+        "sv": Constants.SDK_VERSION
     }
 
     if not is_usage_stats_event:
@@ -318,9 +315,9 @@ def send_post_api_request(
         
         # Create the request model
         request = RequestModel(
-            UrlService.get_base_url(),
+            SettingsManager.get_instance().hostname,
             "POST",
-            UrlEnum.EVENTS.value,
+            UrlService.get_endpoint_with_collection_prefix(endpoint=UrlEnum.EVENTS.value),
             properties,
             payload,
             headers,
@@ -404,9 +401,9 @@ def send_post_batch_request(
 
         # Create the RequestModel with necessary data
         request_model = RequestModel(
-            UrlService.get_base_url(),
+            SettingsManager.get_instance().hostname,
             "POST",
-            UrlEnum.BATCH_EVENTS.value,
+            UrlService.get_endpoint_with_collection_prefix(endpoint=UrlEnum.BATCH_EVENTS.value),
             query,
             batch_payload,
             {
@@ -545,27 +542,15 @@ def send_event(
     properties: Dict[str, Any], payload: Dict[str, Any], event_name: str
 ) -> Dict[str, Any]:
     try:
-        # if event_name is not VWO_LOG_EVENT, then set base url to constants.hostname
-        if (
-            event_name == EventEnum.VWO_LOG_EVENT.value
-            or event_name == EventEnum.VWO_USAGE_STATS.value
-            or event_name == EventEnum.VWO_DEBUGGER_EVENT.value
-        ):
-            base_url = Constants.HOST_NAME
-            protocol = Constants.HTTPS_PROTOCOL
-            port = 443
-            base_url = UrlService.get_base_url_with_collection_prefix(base_url)
-        else:
-            base_url = UrlService.get_base_url()
-            protocol = SettingsManager.get_instance().protocol
-            port = SettingsManager.get_instance().port
-        
+        base_url = SettingsManager.get_instance().hostname
+        protocol = SettingsManager.get_instance().protocol
+        port = SettingsManager.get_instance().port
         
         # Create the request model
         request = RequestModel(
             base_url,
             "POST",
-            UrlEnum.EVENTS.value,
+            UrlService.get_endpoint_with_collection_prefix(endpoint=UrlEnum.EVENTS.value),
             properties,
             payload,
             None,

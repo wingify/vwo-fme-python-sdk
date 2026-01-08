@@ -248,7 +248,7 @@ class VWOBuilder:
     def check_and_poll(self):
         def poll():
             try:
-                latest_settings = self.get_settings(True)
+                latest_settings = self.get_settings()
                 if latest_settings and json.dumps(
                     latest_settings, sort_keys=True
                 ) != json.dumps(self.original_settings, sort_keys=True):
