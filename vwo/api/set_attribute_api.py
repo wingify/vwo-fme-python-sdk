@@ -27,6 +27,7 @@ from ..utils.network_util import (
 from ..enums.event_enum import EventEnum
 
 
+
 class SetAttributeApi:
     def set_attribute(
         self, settings: SettingsModel, attribute_map: Dict, context: ContextModel
@@ -43,13 +44,11 @@ class SetAttributeApi:
         )
         # Construct payload data for tracking the goal
         payload = get_attribute_payload_data(
-            settings,
-            context,
-            EventEnum.VWO_SYNC_VISITOR_PROP.value,
-            attribute_map
+            settings, context, EventEnum.VWO_SYNC_VISITOR_PROP.value, attribute_map
         )
 
         from vwo.vwo_client import VWOClient
+
         vwo_instance = VWOClient.get_instance()
 
         # Check if batch events are enabled

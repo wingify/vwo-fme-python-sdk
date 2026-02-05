@@ -58,7 +58,7 @@ class TrackApi:
             hook_manager.execute(hook_manager.get())
             return {event_name: True}
 
-        LogManager.get_instance().error_log("EVENT_NOT_FOUND", data={"eventName": event_name}, debug_data={"an": ApiEnum.TRACK_EVENT.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+        LogManager.get_instance().error_log("EVENT_NOT_FOUND", data={"eventName": event_name}, debug_data={"an": ApiEnum.TRACK_EVENT.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
         return {event_name: False}
 
     def create_and_send_impression_for_track(
@@ -83,13 +83,11 @@ class TrackApi:
         )
         # Construct payload data for tracking the goal
         payload = get_track_goal_payload_data(
-            settings,
-            context,
-            event_name,
-            event_properties,
+            settings, context, event_name, event_properties
         )
 
         from vwo.vwo_client import VWOClient
+
         vwo_instance = VWOClient.get_instance()
 
         # Check if batch events are enabled

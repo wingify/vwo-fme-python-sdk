@@ -41,7 +41,7 @@ def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str, contex
 
     # Check if the base URL is correctly set
     if not SettingsManager.get_instance().is_gateway_service_provided:
-        LogManager.get_instance().error_log("INVALID_GATEWAY_URL", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+        LogManager.get_instance().error_log("INVALID_GATEWAY_URL", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
         return False
 
     try:
@@ -61,7 +61,7 @@ def get_from_gateway_service(query_params: Dict[str, Any], endpoint: str, contex
         # Return the data from the response
         return response.get_data() if response else False
     except Exception as e:
-        LogManager.get_instance().error_log("ERROR_FETCHING_DATA_FROM_GATEWAY", data={"err": str(e)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+        LogManager.get_instance().error_log("ERROR_FETCHING_DATA_FROM_GATEWAY", data={"err": str(e)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
         return False
 
 def post_to_gateway_service(query_params: Dict[str, Any], payload: Dict[str, Any], endpoint: str) -> Any:

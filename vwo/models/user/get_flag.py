@@ -21,6 +21,7 @@ class GetFlag:
     def __init__(self):
         self._is_enabled = False
         self._variables = []
+        self._session_id = None
 
     def is_enabled(self) -> bool:
         return self._is_enabled
@@ -43,3 +44,9 @@ class GetFlag:
             if variable.get_key() == variable_key:
                 return variable.get_value()
         return default_value
+
+    def get_session_id(self) -> int:
+        return self._session_id
+
+    def set_session_id(self, session_id: int) -> None:
+        self._session_id = session_id

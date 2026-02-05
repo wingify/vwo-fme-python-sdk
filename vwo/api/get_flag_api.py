@@ -48,6 +48,9 @@ from ..utils.debugger_service_util import send_debug_event_to_vwo
 from ..utils.network_util import get_track_user_payload_data
 from ..enums.event_enum import EventEnum
 from ..services.settings_manager import SettingsManager
+from ..utils.function_util import (
+    get_current_unix_timestamp,
+)
 
 
 class GetFlagApi:
@@ -86,7 +89,7 @@ class GetFlagApi:
             "an": ApiEnum.GET_FLAG.value,
             "fk": feature_key,
             "uuid": context.get_vwo_uuid(),
-            "sId": context.get_vwo_session_id(),
+            "sId": context.get_session_id(),
         }
 
         storage_service = StorageService()
@@ -147,6 +150,11 @@ class GetFlagApi:
             LogManager.get_instance().error_log("FEATURE_NOT_FOUND", data={"featureKey": feature_key}, debug_data = debug_event_props)
             self._get_flag_response.set_is_enabled(False)
             return self._get_flag_response
+        
+        if context.get_session_id() is None:
+            context.set_session_id(get_current_unix_timestamp())
+
+        self._get_flag_response.set_session_id(context.get_session_id())
 
         SegmentationManager.get_instance().set_contextual_data(
             settings, feature, context

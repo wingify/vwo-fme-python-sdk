@@ -19,6 +19,8 @@ from vwo.vwo_builder import VWOBuilder
 from vwo.vwo_client import VWOClient
 from vwo.enums.url_enum import UrlEnum
 from vwo.utils.event_util import send_sdk_init_event, send_sdk_usage_stats_event
+from vwo.utils.uuid_util import get_uuid as uuid_util_get_uuid
+from vwo.utils.data_type_util import is_string
 
 
 class VWO:
@@ -102,4 +104,32 @@ def init(options: Dict[str, Any]) -> Optional["VWOClient"]:
         return instance
     except Exception as e:
         print("VWO initialization failed. Error:", e)
+        return None
+
+def getUUID(user_id: str, account_id: str) -> Optional[str]:
+    """
+    Generate a deterministic UUID for a given user and account combination.
+
+    :param user_id: The user's ID (must be a non-empty string).
+    :param account_id: The account ID (must be a non-empty string).
+    :return: UUID without dashes in uppercase, or None on invalid input or error.
+    """
+    api_name = "getUUID"
+    
+    try:
+        # Validate user_id
+        if not is_string(user_id) or user_id == '':
+            print(f"userId passed to {api_name} API is not of valid type.")
+            return None
+        
+        # Validate account_id
+        if not is_string(account_id) or account_id == '':
+            print(f"accountId passed to {api_name} API is not of valid type.")
+            return None
+        
+        # Call the UUID utility function
+        return uuid_util_get_uuid(user_id, account_id)
+        
+    except Exception as error:
+        print(f"API - {api_name} failed to execute. Trace: {error}")
         return None

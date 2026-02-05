@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .vwo import init
+from .vwo import init, getUUID
 from .packages.storage.connector import StorageConnector
 from .packages.logger.enums.log_level_enum import LogLevelEnum

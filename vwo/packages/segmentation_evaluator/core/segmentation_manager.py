@@ -102,7 +102,7 @@ class SegmentationManager:
                 _vwo = get_from_gateway_service(params, UrlEnum.GET_USER_DATA.value, context)
                 context.set_vwo(ContextVWOModel(_vwo))
             except Exception as err:
-                LogManager.get_instance().error_log("ERROR_SETTING_SEGMENTATION_CONTEXT",data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+                LogManager.get_instance().error_log("ERROR_SETTING_SEGMENTATION_CONTEXT",data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
 
     def validate_segmentation(self, dsl, properties):
         """

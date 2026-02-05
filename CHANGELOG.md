@@ -1,8 +1,53 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.18.0] - 2026-02-05
+
+### Added
+
+- Added session management capabilities to enable integration with VWO's web client testing campaigns. The SDK now automatically generates and manages session IDs to connect server-side feature flag decisions with client-side user sessions.
+
+  Example usage:
+
+  ```python
+  from vwo import init
+
+  options = {
+      'sdk_key': '32-alpha-numeric-sdk-key',
+      'account_id': '123456',
+  }
+
+  vwo_client = init(options)
+
+  # Session ID is automatically generated if not provided
+  context = {'id': 'user-123'}
+  flag = vwo_client.get_flag('feature-key', context)
+
+  # Access the session ID to pass to web client for session recording
+  session_id = flag.get_session_id()
+  print(f"Session ID for web client: {session_id}")
+  ```
+
+  You can also explicitly set a session ID to match a web client session:
+
+  ```python
+  from vwo import init
+
+  vwo_client = init(options)
+
+  context = {
+    'id': 'user-123',
+    'session_id': 1697123456  # Custom session ID matching web client
+  }
+
+  flag = vwo_client.get_flag('feature-key', context)
+  ```
+
+  This enhancement enables seamless integration between server-side feature flag decisions and client-side session recording, allowing for comprehensive user behavior analysis across both server and client environments.
 
 ## [1.17.0] - 2025-01-08
 

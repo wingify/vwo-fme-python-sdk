@@ -41,7 +41,7 @@ class StorageService:
                 return {"status": StorageEnum.NO_DATA_FOUND.value}
             return data
         except Exception as err:
-            LogManager.get_instance().error_log("ERROR_READING_STORED_DATA_IN_STORAGE", data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+            LogManager.get_instance().error_log("ERROR_READING_STORED_DATA_IN_STORAGE", data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
             return {"status": StorageEnum.NO_DATA_FOUND.value}
 
     def set_data_in_storage(self, data: Dict[Any, Any], context: ContextModel) -> bool:
@@ -54,5 +54,5 @@ class StorageService:
             storage_instance.set(data)
             return True
         except Exception as err:
-            LogManager.get_instance().error_log("ERROR_STORING_DATA_IN_STORAGE", data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+            LogManager.get_instance().error_log("ERROR_STORING_DATA_IN_STORAGE", data={"err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
             return False

@@ -50,6 +50,51 @@ vwo_client.track_event('event_name', user_context, event_properties)
 vwo_client.set_attribute('attribute_key', 'attribute_value', user_context)
  ```
 
+## Utility Functions
+
+### getUUID
+
+The `getUUID` function generates a deterministic UUID for a given user and account combination. This utility function can be used without initializing the SDK, making it useful for generating consistent UUIDs across different parts of your application.
+
+#### Function Signature
+
+```python
+vwo.getUUID(user_id: str, account_id: str) -> Optional[str]
+```
+
+#### Parameters
+
+| **Parameter** | **Description**                                    | **Required** | **Type** |
+| ------------- | -------------------------------------------------- | ------------ | -------- |
+| `user_id`     | The user's unique identifier.                      | Yes          | str      |
+| `account_id`  | The VWO account ID associated with the user.        | Yes          | str      |
+
+#### Return Value
+
+- Returns a UUID string without dashes in uppercase format (e.g., `"A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6"`)
+- Returns `None` if either parameter is not a valid non-empty string
+
+#### Example
+
+```python
+import vwo
+
+# Generate UUID for a user
+userId = 'user-123'
+accountId = '123456'
+
+uuid = vwo.getUUID(userId, accountId)
+
+print('Generated UUID:', uuid)
+# Output: Generated UUID: CC25A368ADA0542699EAD62489811105
+```
+
+#### Use Cases
+
+- Generate consistent UUIDs for users across different services
+- Create deterministic identifiers for analytics and tracking
+- Generate UUIDs without requiring SDK initialization
+
 ## Advanced Configuration Options
 
 To customize the SDK further, additional parameters can be passed to the `init()` API. Here’s a table describing each option:
@@ -82,6 +127,7 @@ The following table explains all the parameters in the `context` dictionary:
 | `custom_variables` | Custom attributes for targeting.                                           | No           | Dict |
 | `user_agent`       | User agent string for identifying the user's browser and operating system. | No           | str   |
 | `ip_address`       | IP address of the user.                                                    | No           | str   |
+| `session_id`       | Session ID for connecting server-side decisions with client-side sessions. | No           | int   |
 
 #### Example
 
@@ -93,9 +139,63 @@ context = {
         'location': 'US'
     },
     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-    'ip_address': '1.1.1.1'
+    'ip_address': '1.1.1.1',
+    'session_id': 1697123456  # Optional: Custom session ID for web client integration
 }
 ```
+
+## Session Management
+
+The SDK provides automatic session management capabilities to enable seamless integration with VWO's web client testing campaigns. Session IDs are automatically generated and managed to connect server-side feature flag decisions with client-side user sessions.
+
+### Automatic Session ID Generation
+
+Session IDs are automatically generated using Unix timestamps when not explicitly provided in the context. This ensures consistent session tracking across all feature flag evaluations and event tracking.
+
+### Session ID Access
+
+You can access and manage session IDs through the following methods:
+
+- **Get Session ID from Flag**: Use `get_flag.get_session_id()` to retrieve the session ID used for a specific feature flag evaluation
+- **Set Custom Session ID**: Set `session_id` in your context dictionary to use a custom session ID (useful for matching web client sessions)
+
+### Example Usage
+
+```python
+from vwo import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key',
+    'account_id': '123456'
+}
+
+vwo_client = init(options)
+
+# Session ID is automatically generated if not provided
+context = {'id': 'user-123'}
+flag = vwo_client.get_flag('feature-key', context)
+
+# Access the session ID to pass to web client for session recording
+session_id = flag.get_session_id()
+print(f"Session ID for web client: {session_id}")
+```
+
+You can also explicitly set a session ID to match a web client session:
+
+```python
+from vwo import init
+
+vwo_client = init(options)
+
+context_with_session = {
+    'id': 'user-123',
+    'session_id': 1697123456  # Custom session ID matching web client
+}
+
+flag = vwo_client.get_flag('feature-key', context_with_session)
+```
+
+This enhancement enables seamless integration between server-side feature flag decisions and client-side session recording, allowing for comprehensive user behavior analysis across both server and client environments.
 
 ### Basic Feature Flagging
 

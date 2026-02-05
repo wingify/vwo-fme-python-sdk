@@ -49,7 +49,7 @@ class SegmentOperandEvaluator:
             list_id_regex = r"inlist\([^)]*\)"
             match = re.search(list_id_regex, operand)
             if not match or len(match.groups()) < 1:
-                LogManager.get_instance().error_log("INVALID_ATTRIBUTE_LIST_FORMAT", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+                LogManager.get_instance().error_log("INVALID_ATTRIBUTE_LIST_FORMAT", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
                 return False
 
             tag_value = properties[operand_key]
@@ -70,7 +70,7 @@ class SegmentOperandEvaluator:
                     return False
                 return res
             except Exception as error:
-                LogManager.get_instance().error_log("ERROR_FETCHING_DATA_FROM_GATEWAY", data={"err": str(error)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+                LogManager.get_instance().error_log("ERROR_FETCHING_DATA_FROM_GATEWAY", data={"err": str(error)}, debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
                 return False
         else:
             tag_value = properties[operand_key]
@@ -105,7 +105,7 @@ class SegmentOperandEvaluator:
         """
         operand = dsl_operand_value
         if not context.get_user_agent():
-            LogManager.get_instance().error_log("INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+            LogManager.get_instance().error_log("INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
             return False
 
         tag_value = context.get_user_agent()
@@ -430,7 +430,7 @@ class SegmentOperandEvaluator:
         :param operand_type: The type of operand.
         """
         if operand_type == SegmentOperatorValueEnum.IP.value:
-            LogManager.get_instance().error_log("INVALID_IP_ADDRESS_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_vwo_session_id()})
+            LogManager.get_instance().error_log("INVALID_IP_ADDRESS_IN_CONTEXT_FOR_PRE_SEGMENTATION", debug_data={"an": ApiEnum.GET_FLAG.value, "uuid": context.get_vwo_uuid(), "sId": context.get_session_id()})
         elif operand_type == SegmentOperatorValueEnum.BROWSER_VERSION.value:
             LogManager.get_instance().info(
                 "To evaluate browser version segmentation, please provide userAgent in context"
