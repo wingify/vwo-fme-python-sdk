@@ -18,16 +18,17 @@ from typing import List, Any, Dict
 
 
 class GetFlag:
-    def __init__(self):
-        self._is_enabled = False
-        self._variables = []
-        self._session_id = None
+    def __init__(self, is_enabled: bool, variables: List[VariableModel], session_id: int, uuid: str):
+        self._uuid = uuid
+        self._is_enabled = is_enabled
+        self._variables = variables
+        self._session_id = session_id
+
+    def get_uuid(self) -> str:
+        return self._uuid
 
     def is_enabled(self) -> bool:
         return self._is_enabled
-
-    def set_is_enabled(self, is_enabled: bool) -> None:
-        self._is_enabled = is_enabled
 
     def get_variables(self) -> List[Dict[str, Any]]:
         # convert variables to Dict
@@ -35,9 +36,6 @@ class GetFlag:
         for variable in self._variables:
             variables.append(variable.to_dict())
         return variables
-
-    def set_variables(self, variables: List[VariableModel]) -> None:
-        self._variables = variables
 
     def get_variable(self, variable_key: str, default_value: Any = None) -> str:
         for variable in self._variables:
@@ -47,6 +45,3 @@ class GetFlag:
 
     def get_session_id(self) -> int:
         return self._session_id
-
-    def set_session_id(self, session_id: int) -> None:
-        self._session_id = session_id

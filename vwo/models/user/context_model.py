@@ -33,7 +33,12 @@ class ContextModel:
         self.session_id = context.get("session_id", None)
         if self.session_id is None:
             self.session_id = get_current_unix_timestamp()
-        self._vwo_uuid = get_uuid(self.id, str(SettingsManager.get_instance().get_account_id()))
+        
+        # if uuid is provided in the context, use it, otherwise generate a new one
+        if context.get("uuid") is not None:
+            self._vwo_uuid = context.get("uuid")
+        else:
+            self._vwo_uuid = get_uuid(self.id, str(SettingsManager.get_instance().get_account_id()))
 
     def get_id(self) -> str:
         return str(self.id) if self.id is not None else None

@@ -31,6 +31,8 @@ from .services.settings_manager import SettingsManager
 from .enums.api_enum import ApiEnum
 from .utils.aliasing_util import get_alias_user_id
 from .utils.aliasing_util import set_alias as set_user_alias_util
+from .utils.uuid_util import is_web_uuid, get_uuid
+from .utils.function_util import get_current_unix_timestamp
 
 class VWOClient:
     _settings: SettingsModel = None
@@ -78,14 +80,21 @@ class VWOClient:
         :return: The feature flag value.
         """
         api_name = "getFlag"
-        get_flag_response = GetFlag()
-
+        uuid = None
         try:
-            hook_manager = HooksManager(self.options)
-
             LogManager.get_instance().debug(
                 debug_messages.get("API_CALLED").format(apiName=api_name)
             )
+            # get uuid from context
+            uuid = self._get_uuid_from_context(context, api_name)
+        except Exception as err:
+            LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.GET_FLAG.value})
+            return GetFlag(is_enabled=False, variables=[], session_id=context.get("session_id", get_current_unix_timestamp()), uuid=uuid)
+
+        get_flag_response = GetFlag(is_enabled=False, variables=[], session_id=context.get("session_id", get_current_unix_timestamp()), uuid=uuid)
+
+        try:
+            hook_manager = HooksManager(self.options)
 
             # Validate featureKey is a string
             if not isinstance(feature_key, str):
@@ -114,7 +123,9 @@ class VWOClient:
                 )
                 raise ValueError("Invalid context")
 
-            context_model = ContextModel(context)
+            context_copy = context.copy()
+            context_copy["uuid"] = uuid
+            context_model = ContextModel(context_copy)
 
             if self.options.get("is_aliasing_enabled"):
                 context_model.set_id(get_alias_user_id(context_model))
@@ -192,8 +203,10 @@ class VWOClient:
                     error_messages.get("INVALID_CONTEXT_PASSED")
                 )
                 raise ValueError("Invalid context")
-
-            context_model = ContextModel(context)
+            
+            context_copy = context.copy()
+            context_copy["uuid"] = self._get_uuid_from_context(context, api_name)
+            context_model = ContextModel(context_copy)
 
             if self.options.get("is_aliasing_enabled"):
                 context_model.set_id(get_alias_user_id(context_model))
@@ -325,8 +338,10 @@ class VWOClient:
                     error_messages.get("INVALID_CONTEXT_PASSED")
                 )
                 raise ValueError("Invalid context")
-
-            context_model = ContextModel(user_context)
+            
+            context_copy = user_context.copy()
+            context_copy["uuid"] = self._get_uuid_from_context(user_context, api_name)
+            context_model = ContextModel(context_copy)
 
             if self.options.get("is_aliasing_enabled"):
                 context_model.set_id(get_alias_user_id(context_model))
@@ -465,3 +480,27 @@ class VWOClient:
         except Exception as err:
             LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.SET_ALIAS.value})
             return False
+    
+    def _get_uuid_from_context(self, context: Dict, api_name: str) -> str:
+        """
+        Gets the UUID from the context.
+        :param context: The context to get the UUID from.
+        :param api_name: The name of the API calling this method.
+        :return: The UUID from the context.
+        """
+        if self._settings.get_is_web_connectivity_enabled():
+            # if web connectivity is enabled, check if context id is a valid web UUID
+            if is_web_uuid(context.get("id")):
+                # if it is a valid web UUID, return it
+                LogManager.get_instance().debug(debug_messages.get("WEB_UUID_FOUND").format(apiName=api_name, uuid=context.get("id")))
+                return context.get("id")
+
+            # if use_id_for_web is true and context id is not a valid web UUID, throw error
+            if context.get("use_id_for_web") is True:
+                raise ValueError("UUID passed in context is not a valid UUID")
+
+            # if use_id_for_web is false, fallback to server‑side UUID derivation
+            return get_uuid(context.get("id"), str(SettingsManager.get_instance().get_account_id()))
+
+        # if web connectivity is disabled, fallback to server‑side UUID derivation
+        return get_uuid(context.get("id"), str(SettingsManager.get_instance().get_account_id()))

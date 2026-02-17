@@ -14,7 +14,7 @@
 
 
 import uuid
-
+import re
 
 def get_random_uuid(sdk_key: str) -> str:
     """
@@ -65,3 +65,17 @@ def generate_uuid(name: str, namespace: uuid.UUID) -> str:
 
     generated_uuid = uuid.uuid5(namespace, name)
     return str(generated_uuid)
+
+def is_web_uuid(id: str) -> bool:
+    """
+    Checks whether the given ID string matches the expected VWO web UUID format.
+
+    A valid web UUID for VWO starts with either 'D' or 'J' followed by exactly 32 hexadecimal characters (case-insensitive).
+    The function returns True if the string matches this pattern, and False otherwise.
+
+    :param id: The ID string to validate.
+    :return: True if the ID is a valid VWO web UUID, False otherwise.
+    """
+    if not isinstance(id, str):
+        return False
+    return re.match(r'^[DJ][0-9A-Fa-f]{32}$', id) is not None

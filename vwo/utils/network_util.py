@@ -106,7 +106,6 @@ def get_events_base_properties(
 def _get_event_base_payload(
     settings: SettingsModel,
     user_id: str,
-    session_id: str,
     event_name: str,
     visitor_user_agent: str = "",
     ip_address: str = "",
@@ -135,9 +134,7 @@ def _get_event_base_payload(
         "d": {
             "msgId": f"{uuid_value}-{get_current_unix_timestamp_in_millis()}",
             "visId": uuid_value,
-            "sessionId": (
-                session_id if session_id is not None else get_current_unix_timestamp()
-            ),
+            "sessionId": get_current_unix_timestamp(),
             "event": {
                 "props": props,
                 "name": event_name,
@@ -180,7 +177,6 @@ def get_track_user_payload_data(
     properties = _get_event_base_payload(
         settings,
         user_id,
-        context.get_session_id(),
         event_name,
         visitor_user_agent,
         ip_address,
@@ -188,6 +184,11 @@ def get_track_user_payload_data(
 
     if context.get_session_id() is not None and context.get_session_id() != 0:
         properties["d"]["sessionId"] = context.get_session_id()
+
+    # if uuid is provided in the context, use it, otherwise generate a new one
+    if context.get_vwo_uuid() is not None and context.get_vwo_uuid() != "":
+        properties["d"]["msgId"] = f"{context.get_vwo_uuid()}-{get_current_unix_timestamp_in_millis()}"
+        properties["d"]["visId"] = context.get_vwo_uuid()
 
     properties["d"]["event"]["props"]["id"] = campaign_id
     properties["d"]["event"]["props"]["variation"] = str(variation_id)
@@ -224,11 +225,16 @@ def get_track_goal_payload_data(
     event_properties: Dict[str, Any],
 ) -> Dict[str, Any]:
     properties = _get_event_base_payload(
-        settings, context.get_id(), context.get_session_id(), event_name, context.get_user_agent(), context.get_ip_address()
+        settings, context.get_id(), event_name, context.get_user_agent(), context.get_ip_address()
         )
 
     if context.get_session_id() is not None and context.get_session_id() != 0:
         properties["d"]["sessionId"] = context.get_session_id()
+
+    # if uuid is provided in the context, use it, otherwise generate a new one
+    if context.get_vwo_uuid() is not None and context.get_vwo_uuid() != "":
+        properties["d"]["msgId"] = f"{context.get_vwo_uuid()}-{get_current_unix_timestamp_in_millis()}"
+        properties["d"]["visId"] = context.get_vwo_uuid()
 
     properties["d"]["event"]["props"]["isCustomEvent"] = True
     properties["d"]["event"]["props"]["variation"] = 1  # Temporary value for variation
@@ -260,6 +266,11 @@ def get_attribute_payload_data(
 
     if context.get_session_id() is not None and context.get_session_id() != 0:
         properties["d"]["sessionId"] = context.get_session_id()
+
+    # if uuid is provided in the context, use it, otherwise generate a new one
+    if context.get_vwo_uuid() is not None and context.get_vwo_uuid() != "":
+        properties["d"]["msgId"] = f"{context.get_vwo_uuid()}-{get_current_unix_timestamp_in_millis()}"
+        properties["d"]["visId"] = context.get_vwo_uuid()
 
     properties["d"]["event"]["props"]["isCustomEvent"] = True
     properties["d"]["event"]["props"][
@@ -461,7 +472,7 @@ def get_messaging_event_payload(
     # Get user ID and properties
     settings = SettingsManager.get_instance()
     user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
-    properties = _get_event_base_payload(None, user_id, get_current_unix_timestamp(), event_name, None, None)
+    properties = _get_event_base_payload(None, user_id, event_name, None, None)
 
     # Set the environment key and product
     properties["d"]["event"]["props"]["vwo_envKey"] = settings.get_sdk_key()
@@ -501,7 +512,7 @@ def get_sdk_init_event_payload(
     # Get user ID and properties
     settings = SettingsManager.get_instance()
     user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
-    properties = _get_event_base_payload(None, user_id, get_current_unix_timestamp(), event_name, None, None)
+    properties = _get_event_base_payload(None, user_id, event_name, None, None)
 
     # Set the required fields as specified
     properties["d"]["event"]["props"][
@@ -536,7 +547,7 @@ def get_sdk_usage_stats_event_payload(
     settings = SettingsManager.get_instance()
     user_id = f"{settings.get_account_id()}_{settings.get_sdk_key()}"
     properties = _get_event_base_payload(
-        None, user_id, get_current_unix_timestamp(), event_name, None, None, True, usage_stats_account_id
+        None, user_id, event_name, None, None, True, usage_stats_account_id
     )
 
     # Set the required fields as specified

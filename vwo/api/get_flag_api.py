@@ -58,7 +58,6 @@ class GetFlagApi:
         self._should_check_for_experiment_rules = False
         self._passed_rules_information: Dict[str, Any] = {}
         self._evaluated_feature_map: Dict[str, Any] = {}
-        self._get_flag_response = GetFlag()
 
     def get(
         self,
@@ -77,6 +76,8 @@ class GetFlagApi:
         """
 
         feature = get_feature_from_key(settings, feature_key)
+        is_enabled = False
+        variables = []
         decision = {
             "featureName": feature.get_name() if feature else None,
             "featureId": feature.get_id() if feature else None,
@@ -115,9 +116,7 @@ class GetFlagApi:
                             experimentKey=stored_data["experimentKey"],
                         )
                     )
-                    self._get_flag_response.set_is_enabled(True)
-                    self._get_flag_response.set_variables(variation.get_variables())
-                    return self._get_flag_response
+                    return GetFlag(is_enabled=True, variables=variation.get_variables(), session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
         elif (
             stored_data
             and stored_data.get("rolloutKey")
@@ -135,8 +134,9 @@ class GetFlagApi:
                         experimentKey=stored_data["rolloutKey"],
                     )
                 )
-                self._get_flag_response.set_is_enabled(True)
-                self._get_flag_response.set_variables(variation.get_variables())
+                is_enabled = True
+                variables = variation.get_variables()
+
                 self._should_check_for_experiment_rules = True
                 feature_info = {
                     "rolloutId": stored_data["rolloutId"],
@@ -148,13 +148,11 @@ class GetFlagApi:
 
         if feature is None:
             LogManager.get_instance().error_log("FEATURE_NOT_FOUND", data={"featureKey": feature_key}, debug_data = debug_event_props)
-            self._get_flag_response.set_is_enabled(False)
-            return self._get_flag_response
+            is_enabled = False
+            return GetFlag(is_enabled=is_enabled, variables=variables, session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
         
         if context.get_session_id() is None:
             context.set_session_id(get_current_unix_timestamp())
-
-        self._get_flag_response.set_session_id(context.get_session_id())
 
         SegmentationManager.get_instance().set_contextual_data(
             settings, feature, context
@@ -164,7 +162,7 @@ class GetFlagApi:
             feature, CampaignTypeEnum.ROLLOUT.value
         )
 
-        if roll_out_rules and not self._get_flag_response.is_enabled():
+        if roll_out_rules and not is_enabled:
             rollout_rules_to_evaluate: List[CampaignModel] = []
 
             for rule in roll_out_rules:
@@ -215,8 +213,8 @@ class GetFlagApi:
                 )
 
                 if isinstance(variation, VariationModel) and not None:
-                    self._get_flag_response.set_is_enabled(True)
-                    self._get_flag_response.set_variables(variation.get_variables())
+                    is_enabled = True
+                    variables = variation.get_variables()
                     self._should_check_for_experiment_rules = True
                     self._update_integrations_decision_object(
                         rollout_rules_to_evaluate[0], variation, decision
@@ -283,12 +281,9 @@ class GetFlagApi:
                         else:
                             if payload is not None and len(payload) > 0:
                                 batchPayload.append(payload)
-
-                        self._get_flag_response.set_is_enabled(True)
-                        self._get_flag_response.set_variables(
-                            whitelisted_object["variation"].get_variables()
-                        )
-
+                        
+                        is_enabled = True
+                        variables = whitelisted_object["variation"].get_variables()
                         self._passed_rules_information.update(
                             {
                                 "experimentId": rule.get_id(),
@@ -307,8 +302,8 @@ class GetFlagApi:
                 )
 
                 if isinstance(variation, VariationModel) and not None:
-                    self._get_flag_response.set_is_enabled(True)
-                    self._get_flag_response.set_variables(variation.get_variables())
+                    is_enabled = True
+                    variables = variation.get_variables()
 
                     self._update_integrations_decision_object(
                         experiment_rules_to_evaluate[0], variation, decision
@@ -331,7 +326,7 @@ class GetFlagApi:
                         if payload is not None and len(payload) > 0:
                             batchPayload.append(payload)
 
-        if self._get_flag_response.is_enabled():
+        if is_enabled:
             StorageDecorator().set_data_in_storage(
                 {
                     "featureKey": feature_key,
@@ -363,9 +358,7 @@ class GetFlagApi:
                     userId=context.get_id(),
                     featureKey=feature_key,
                     status=(
-                        "enabled"
-                        if self._get_flag_response.is_enabled()
-                        else "disabled"
+                        "enabled" if is_enabled else "disabled"
                     ),
                 )
             )
@@ -374,7 +367,7 @@ class GetFlagApi:
                 settings,
                 EventEnum.VWO_VARIATION_SHOWN.value,
                 feature.get_impact_campaign().get_campaign_id(),
-                (2 if self._get_flag_response.is_enabled() else 1),
+                (2 if is_enabled else 1),
                 context
             )
             if (
@@ -392,7 +385,7 @@ class GetFlagApi:
                 batchPayload, settings.get_account_id(), settings.get_sdk_key()
             )
 
-        return self._get_flag_response
+        return GetFlag(is_enabled=is_enabled, variables=variables, session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
 
     def _update_integrations_decision_object(
         self,

@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] - 2026-02-17
+
+- Added support to use the context `id` as the visitor UUID instead of auto-generating one. You can read the visitor UUID from the flag result via `flag.get_uuid()` (e.g. to pass to the web client).
+
+Example usage:
+
+```python
+from vwo import init
+
+# Initialize the SDK
+vwo_client = init({
+    "account_id": "123456",
+    "sdk_key": "32-alpha-numeric-sdk-key",
+})
+
+# Default: SDK generates a UUID from id and account
+context_with_generated_uuid = {"id": "user-123"}
+flag1 = vwo_client.get_flag("feature-key", context_with_generated_uuid)
+
+# Use your own UUID (e.g. from web client) by passing a valid web UUID as id
+context_with_custom_uuid = {
+    "id": "D7E2EAA667909A2DB8A6371FF0975C2A5",  # your existing UUID
+}
+flag2 = vwo_client.get_flag("feature-key", context_with_custom_uuid)
+
+# Get the UUID from the flag result (e.g. to pass to web client)
+uuid = flag1.get_uuid()
+print("Visitor UUID:", uuid)
+```
+
 ## [1.18.0] - 2026-02-05
 
 ### Added

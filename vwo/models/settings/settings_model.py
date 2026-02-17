@@ -33,6 +33,7 @@ class SettingsModel:
         self._version = data["version"]
         self._collection_prefix = data.get("collectionPrefix", None)
         self._poll_interval = data.get("pollInterval", Constants.POLLING_INTERVAL)
+        self._is_web_connectivity_enabled = data.get("isWebConnectivityEnabled", True)
 
     # Getter methods for accessing private attributes
     def get_features(self) -> List[FeatureModel]:
@@ -89,3 +90,6 @@ class SettingsModel:
 
     def get_poll_interval(self) -> int:
         return self._poll_interval
+
+    def get_is_web_connectivity_enabled(self) -> bool:
+        return self._is_web_connectivity_enabled
