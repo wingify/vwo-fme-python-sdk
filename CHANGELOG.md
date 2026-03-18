@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] - 2026-03-03
+
+### Added
+
+- Added support for `customBucketingSeed` in context to specify the seed for bucketing.
+
+```python
+options = {
+  'sdk_key': '32-alpha-numeric-sdk-key',
+  'account_id': '123456',
+}
+
+vwo_client = init(options)
+
+# Pass customBucketingSeed in context
+user_context = {
+    'id': 'unique_user_id',
+    'bucketingSeed': 'group_id_123'
+}
+
+get_flag = vwo_client.get_flag('feature_key', user_context)
+```
 ## [1.19.0] - 2026-02-17
 
 - Added support to use the context `id` as the visitor UUID instead of auto-generating one. You can read the visitor UUID from the flag result via `flag.get_uuid()` (e.g. to pass to the web client).

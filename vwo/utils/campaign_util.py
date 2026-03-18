@@ -24,6 +24,7 @@ from ..packages.logger.core.log_manager import LogManager
 from .log_message_util import info_messages
 from typing import Optional, Dict, List
 import math
+from ..models.user.context_model import ContextModel
 
 
 def set_variation_allocation(campaign: CampaignModel) -> None:
@@ -490,3 +491,21 @@ def get_campaign_type_from_campaign_id(settings: SettingsModel, campaign_id: int
     """
     campaign = next((c for c in settings.get_campaigns() if c.get_id() == campaign_id), None)
     return campaign.get_type() if campaign else ""
+
+
+def get_bucketing_id_for_user(context: ContextModel) -> str:
+    """
+    Resolves the bucketing ID for a user based on the custom bucketing seed configuration.
+
+    Args:
+        context (ContextModel): The user context containing ID and custom seed.
+
+    Returns:
+        str: The resolved bucketing ID (either custom seed or user ID).
+    """
+
+    user_id = context.get_id()
+    bucketing_seed = context.get_bucketing_seed()
+    
+    bucketing_id = bucketing_seed if bucketing_seed else user_id
+    return bucketing_id

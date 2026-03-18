@@ -25,6 +25,7 @@ from ..packages.segmentation_evaluator.core.segmentation_manager import (
     SegmentationManager,
 )
 from ..utils.data_type_util import is_object
+from ..models.vwo_options_model import VWOOptionsModel
 from typing import List
 
 
@@ -32,18 +33,23 @@ class CampaignDecisionService:
     def __init__(self):
         self._decision_maker = DecisionMaker()
 
-    def is_user_part_of_campaign(self, user_id: str, campaign: CampaignModel) -> bool:
+    def is_user_part_of_campaign(self, context: ContextModel, campaign: CampaignModel) -> bool:
         """
         Calculate if this user should become part of the campaign or not.
 
-        :param user_id: the unique ID assigned to a user
+        :param context: the context model containing user ID and custom bucketing seed
         :param campaign: campaign model for getting the value of traffic allotted to the campaign
         :return: True if User is a part of Campaign, False otherwise
         """
+        from ..utils.campaign_util import get_bucketing_id_for_user
+
+        user_id = context.get_id()
         if not campaign or not user_id:
             return False
 
-        is_rollout_or_personalize = campaign.get_type() in [
+        bucketing_id = get_bucketing_id_for_user(context)
+
+        is_rollout_or_personalize = campaign.get_type() in [    
             CampaignTypeEnum.ROLLOUT.value,
             CampaignTypeEnum.PERSONALIZE.value,
         ]
@@ -57,8 +63,8 @@ class CampaignDecisionService:
             salt = campaign.get_salt()
             traffic_allocation = campaign.get_percent_traffic()
 
-        # Generate bucket key using salt if available, otherwise use campaign ID
-        bucket_key = f"{salt}_{user_id}" if salt else f"{campaign.get_id()}_{user_id}"
+        # Generate bucket key using bucketing_id (custom seed or user_id)
+        bucket_key = f"{salt}_{bucketing_id}" if salt else f"{campaign.get_id()}_{bucketing_id}"
 
         value_assigned_to_user = self._decision_maker.get_bucket_value_for_user(
             bucket_key
@@ -69,7 +75,7 @@ class CampaignDecisionService:
 
         LogManager.get_instance().info(
             info_messages.get("USER_PART_OF_CAMPAIGN").format(
-                userId=user_id,
+                userId=f"{user_id} (Seed: {bucketing_id})" if (bucketing_id != user_id) else user_id,
                 notPart="" if is_user_part else "not",
                 campaignKey=(
                     campaign.get_rule_key()
@@ -120,26 +126,32 @@ class CampaignDecisionService:
         return None
 
     def bucket_user_to_variation(
-        self, user_id: str, account_id: str, campaign: CampaignModel
+        self, context: ContextModel, account_id: str, campaign: CampaignModel
     ) -> VariationModel:
         """
         Validates the User ID and generates Variation into which the User is bucketed in.
 
-        :param user_id: the unique ID assigned to User
+        :param context: the context model containing user ID and custom bucketing seed
         :param account_id: the unique ID assigned to Account
         :param campaign: the Campaign of which User is a part of
         :return: VariationModel into which user is bucketed in or None if not
         """
-        if not campaign or not user_id:
+        from ..utils.campaign_util import get_bucketing_id_for_user
+
+        user_id = context.get_id()
+
+        bucketing_id = get_bucketing_id_for_user(context)
+
+        if not campaign or not bucketing_id:
             return None
 
         multiplier = 1 if campaign.get_percent_traffic() else None
         percent_traffic = campaign.get_percent_traffic()
         salt = campaign.get_salt()
         if salt:
-            bucket_key = f"{salt}_{account_id}_{user_id}"
+            bucket_key = f"{salt}_{account_id}_{bucketing_id}"
         else:
-            bucket_key = f"{campaign.get_id()}_{account_id}_{user_id}"
+            bucket_key = f"{campaign.get_id()}_{account_id}_{bucketing_id}"
         hash_value = self._decision_maker.generate_hash_value(bucket_key)
         bucket_value = self._decision_maker.generate_bucket_value(
             hash_value, Constants.MAX_TRAFFIC_VALUE, multiplier
@@ -147,7 +159,7 @@ class CampaignDecisionService:
 
         LogManager.get_instance().debug(
             debug_messages.get("USER_BUCKET_TO_VARIATION").format(
-                userId=user_id,
+                userId=f"{user_id} (Seed: {bucketing_id})" if (bucketing_id != user_id) else user_id,
                 campaignKey=(
                     campaign.get_rule_key()
                     if campaign.get_type() == CampaignTypeEnum.AB.value
@@ -229,17 +241,17 @@ class CampaignDecisionService:
             return True
 
     def get_variation_alloted(
-        self, user_id: str, account_id: str, campaign: CampaignModel
+        self, context: ContextModel, account_id: str, campaign: CampaignModel
     ) -> VariationModel:
         """
         Determines the variation allocated to the user for a given campaign.
 
-        :param user_id: the unique ID assigned to User
+        :param context: the context model containing user ID and custom bucketing seed
         :param account_id: the unique ID assigned to Account
         :param campaign: the Campaign of which User is a part of
         :return: The allocated VariationModel or None if not allocated
         """
-        is_user_part = self.is_user_part_of_campaign(user_id, campaign)
+        is_user_part = self.is_user_part_of_campaign(context, campaign)
 
         if campaign.get_type() in [
             CampaignTypeEnum.ROLLOUT.value,
@@ -251,6 +263,6 @@ class CampaignDecisionService:
                 return None
         else:
             if is_user_part:
-                return self.bucket_user_to_variation(user_id, account_id, campaign)
+                return self.bucket_user_to_variation(context, account_id, campaign)
             else:
                 return None

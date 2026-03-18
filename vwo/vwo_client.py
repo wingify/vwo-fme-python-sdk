@@ -125,6 +125,14 @@ class VWOClient:
 
             context_copy = context.copy()
             context_copy["uuid"] = uuid
+            if "bucketingSeed" in context:
+                bucketing_seed = context.get("bucketingSeed")
+                if not isinstance(bucketing_seed, str) or not bucketing_seed.strip():
+                    LogManager.get_instance().error(
+                        error_messages.get("INVALID_BUCKETING_SEED")
+                    )
+                    del context_copy["bucketingSeed"]
+
             context_model = ContextModel(context_copy)
 
             if self.options.get("is_aliasing_enabled"):

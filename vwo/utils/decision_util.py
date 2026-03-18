@@ -20,6 +20,7 @@ from ..models.settings.settings_model import SettingsModel
 from ..models.campaign.campaign_model import CampaignModel
 from ..models.campaign.feature_model import FeatureModel
 from ..models.user.context_model import ContextModel
+from ..models.vwo_options_model import VWOOptionsModel
 from ..packages.logger.core.log_manager import LogManager
 from ..services.campaign_decision_service import CampaignDecisionService
 from ..utils.log_message_util import info_messages
@@ -29,6 +30,7 @@ from ..utils.campaign_util import (
     scale_variation_weights,
     assign_range_values,
     get_bucketing_seed,
+    get_bucketing_id_for_user,
 )
 from ..utils.data_type_util import is_object
 from ..utils.function_util import clone_object
@@ -216,18 +218,21 @@ def check_whitelisting_and_pre_seg(
 
 
 def evaluate_traffic_and_get_variation(
-    settings: SettingsModel, campaign: CampaignModel, user_id: str
+    settings: SettingsModel, campaign: CampaignModel, context: ContextModel
 ):
     """
     Evaluate the traffic and get the variation for the user.
 
     :param settings: SettingsModel object containing configuration.
     :param campaign: CampaignModel object representing the campaign.
-    :param user_id: User ID.
+    :param context: ContextModel object containing user context.
     :return: VariationModel object if a variation is allocated, None otherwise.
     """
+    user_id = context.get_id()
+    bucketing_id = get_bucketing_id_for_user(context)
+
     variation = CampaignDecisionService().get_variation_alloted(
-        user_id, settings.get_account_id(), campaign
+        context, settings.get_account_id(), campaign
     )
 
     if not variation:
@@ -238,7 +243,7 @@ def evaluate_traffic_and_get_variation(
                     if campaign.get_type() == CampaignTypeEnum.AB.value
                     else campaign.get_name() + "_" + campaign.get_rule_key()
                 ),
-                userId=user_id,
+                userId=f"{user_id} (Seed: {bucketing_id})" if (bucketing_id != user_id) else user_id,
                 status="did not get any variation",
             )
         )
@@ -251,7 +256,7 @@ def evaluate_traffic_and_get_variation(
                 if campaign.get_type() == CampaignTypeEnum.AB.value
                 else campaign.get_name() + "_" + campaign.get_rule_key()
             ),
-            userId=user_id,
+            userId=f"{user_id} (Seed: {bucketing_id})" if (bucketing_id != user_id) else user_id,
             status=f"got variation: {variation.get_name()}",
         )
     )
@@ -330,6 +335,9 @@ def _evaluate_whitelisting(campaign: CampaignModel, context: ContextModel):
                 targeted_variations.append(clone_object(variation))
 
     if len(targeted_variations) > 1:
+        # Resolve bucketing ID for whitelisting
+        bucketing_id = get_bucketing_id_for_user(context)
+
         scale_variation_weights(targeted_variations)
         current_allocation = 0
         for i, variation in enumerate(targeted_variations):
@@ -339,7 +347,7 @@ def _evaluate_whitelisting(campaign: CampaignModel, context: ContextModel):
         whitelisted_variation = CampaignDecisionService().get_variation(
             targeted_variations,
             DecisionMaker().calculate_bucket_value(
-                get_bucketing_seed(context.get_id(), campaign, None)
+                get_bucketing_seed(bucketing_id, campaign, None)
             ),
         )
     else:
