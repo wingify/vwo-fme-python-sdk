@@ -22,6 +22,7 @@ from ..models.campaign.variation_model import VariationModel
 from ..models.user.context_model import ContextModel
 from ..packages.logger.core.log_manager import LogManager
 from ..services.campaign_decision_service import CampaignDecisionService
+from ..models.vwo_options_model import VWOOptionsModel
 from ..utils.log_message_util import info_messages
 from ..utils.campaign_util import (
     get_bucketing_seed,
@@ -30,6 +31,7 @@ from ..utils.campaign_util import (
     get_feature_keys_from_campaign_ids,
     set_campaign_allocation,
     get_variation_from_campaign_key,
+    get_bucketing_id_for_user,
 )
 from ..utils.function_util import (
     clone_object,
@@ -155,7 +157,7 @@ def _is_rollout_rule_for_feature_passed(
             )
             if pre_segmentation_result:
                 variation = evaluate_traffic_and_get_variation(
-                    settings, rule, context.get_id()
+                    settings, rule, context
                 )
                 if isinstance(variation, VariationModel) and not None:
                     evaluated_feature_map[feature.get_key()] = {
@@ -225,7 +227,7 @@ def _get_eligible_campaigns(
             if CampaignDecisionService().get_pre_segmentation_decision(
                 campaign, context
             ) and CampaignDecisionService().is_user_part_of_campaign(
-                context.get_id(), campaign
+                context, campaign
             ):
                 LogManager.get_instance().info(
                     info_messages.get("MEG_CAMPAIGN_ELIGIBLE").format(
@@ -349,10 +351,14 @@ def _normalize_weights_and_find_winning_campaign(
 
     set_campaign_allocation(variation_models)
 
+    # Resolve bucketing ID for MEG random algorithm
+
+    bucketing_id = get_bucketing_id_for_user(context)
+
     winner_campaign = CampaignDecisionService().get_variation(
         variation_models,
         DecisionMaker().calculate_bucket_value(
-            get_bucketing_seed(context.get_id(), None, group_id)
+            get_bucketing_seed(bucketing_id, None, group_id)
         ),
     )
 
@@ -367,7 +373,7 @@ def _normalize_weights_and_find_winning_campaign(
                     + winner_campaign.get_rule_key()
                 ),
                 groupId=group_id,
-                userId=context.get_id(),
+                userId=f"{context.get_id()} (Seed: {bucketing_id})" if (bucketing_id != context.get_id()) else context.get_id(),
                 algo="using random algorithm",
             )
         )
@@ -453,10 +459,14 @@ def _get_campaign_using_advanced_algo(
 
         set_campaign_allocation(participating_campaign_list)
 
+        # Resolve bucketing ID for MEG advanced algorithm
+
+        bucketing_id = get_bucketing_id_for_user(context)
+
         winner_campaign = CampaignDecisionService().get_variation(
             participating_campaign_list,
             DecisionMaker().calculate_bucket_value(
-                get_bucketing_seed(context.get_id(), None, group_id)
+                get_bucketing_seed(bucketing_id, None, group_id)
             ),
         )
 
@@ -471,7 +481,7 @@ def _get_campaign_using_advanced_algo(
                     + winner_campaign.get_rule_key()
                 ),
                 groupId=group_id,
-                userId=context.get_id(),
+                userId=f"{context.get_id()} (Seed: {bucketing_id})" if (bucketing_id != context.get_id()) else context.get_id(),
                 algo="using advanced algorithm",
             )
         )

@@ -30,6 +30,7 @@ class ContextModel:
         )
         self._vwo = ContextVWOModel(context.get("_vwo")) if "_vwo" in context else None
         self.post_segmentation_variables = context.get("post_segmentation_variables", [])
+        self.bucketingSeed = context.get("bucketingSeed")
         self.session_id = context.get("session_id", None)
         if self.session_id is None:
             self.session_id = get_current_unix_timestamp()
@@ -91,3 +92,6 @@ class ContextModel:
 
     def set_session_id(self, session_id: int) -> None:
         self.session_id = session_id
+    
+    def get_bucketing_seed(self) -> str:
+        return self.bucketingSeed

@@ -209,7 +209,7 @@ class GetFlagApi:
 
             if rollout_rules_to_evaluate.__len__() > 0:
                 variation = evaluate_traffic_and_get_variation(
-                    settings, rollout_rules_to_evaluate[0], context.get_id()
+                    settings, rollout_rules_to_evaluate[0], context
                 )
 
                 if isinstance(variation, VariationModel) and not None:
@@ -298,7 +298,7 @@ class GetFlagApi:
 
             if experiment_rules_to_evaluate.__len__() > 0:
                 variation = evaluate_traffic_and_get_variation(
-                    settings, experiment_rules_to_evaluate[0], context.get_id()
+                    settings, experiment_rules_to_evaluate[0], context
                 )
 
                 if isinstance(variation, VariationModel) and not None:

@@ -633,6 +633,33 @@ You can also manually flush events using the `flush_events()` method:
 vwo_client.flush_events()
 ```
 
+
+### Custom Bucketing Seed
+
+This option allows you to override the default bucketing behavior (which uses `userId`) and specify a custom seed for bucketing users into variations. This is useful when you want to ensure consistent variation assignments across different user IDs (e.g., maintaining the same experience for a group of users).
+
+To use this feature, provide the `bucketingSeed` in the user context.
+
+```python
+from vwo import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # VWO Account ID
+}
+
+vwo_client = init(options)
+
+# Pass bucketingSeed in context
+user_context = {
+    'id': 'unique_user_id',
+    'bucketingSeed': 'group_id_123' # This value will be used for bucketing
+}
+
+# The user will be bucketed based on 'group_id_123' instead of 'unique_user_id'
+get_flag = vwo_client.get_flag('feature_key', user_context)
+```
+
 ## Local development
 
 ```bash

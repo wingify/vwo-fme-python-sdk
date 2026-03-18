@@ -14,6 +14,7 @@
     "EXECUTION_FAILED": "API - {apiName} failed to execute. Error:{err}",
     "INVALID_PARAM": "Key:{key} passed to API:{apiName} is not of valid type. Got type:{type}, should be:{correctType}",
     "INVALID_CONTEXT_PASSED": "Context should be of type:object and must contain a mandatory key: id, which is User ID",
+    "INVALID_BUCKETING_SEED": "Invalid bucketingSeed passed, since it can only be a valid string. Removing it from context so that userId is used for decisioning.",
   
     "FEATURE_NOT_FOUND": "Feature not found for the key:{featureKey}",
     "FEATURE_NOT_FOUND_WITH_ID": "Feature not found for the id:{featureId}",
