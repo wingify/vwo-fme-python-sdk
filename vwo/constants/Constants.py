@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     sdk_meta = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.20.0"
+        "version": "1.20.1"
     }
 
     # Constants

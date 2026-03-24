@@ -65,7 +65,7 @@ def send_sdk_usage_stats_event(usage_stats_account_id: int) -> None:
     vwo_instance = VWOClient.get_instance()
 
     # Check if batch events are enabled
-    if vwo_instance.batch_event_queue is not None and vwo_instance.batch_event_queue.is_enabled():
+    if vwo_instance.batch_event_queue is not None:
         # Enqueue the event to the batch queue
         vwo_instance.batch_event_queue.enqueue(payload)
     else:

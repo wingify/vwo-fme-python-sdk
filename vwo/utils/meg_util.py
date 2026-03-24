@@ -143,7 +143,7 @@ def _is_rollout_rule_for_feature_passed(
     )
     if roll_out_rules:
         for rule in roll_out_rules:
-            pre_segmentation_result, whitelisted_object, updated_decision = (
+            pre_segmentation_result, whitelisted_object, updated_decision, payload = (
                 evaluate_rule(
                     settings,
                     feature,
