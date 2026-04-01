@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,12 +79,15 @@ class SegmentationManager:
         if not context.get_user_agent() and not context.get_ip_address():
             return
 
+        # Check if any holdout requires gateway service
+        holdouts = settings.get_holdouts() or []
+        is_gateway_service_required_for_holdouts = len(list(filter(lambda holdout: holdout.get_is_gateway_service_required(), holdouts))) > 0
         # Call gateway service if required for segmentation OR if gateway service is provided and user agent is available
         should_call_gateway_service = (
             (feature.get_is_gateway_service_required() and Constants.HOST_NAME not in SettingsManager.get_instance().hostname) or
             (Constants.HOST_NAME not in SettingsManager.get_instance().hostname and 
              (context.get_user_agent() or context.get_ip_address()))
-        )
+        ) or is_gateway_service_required_for_holdouts
         
         if should_call_gateway_service and context.get_vwo() is None:
             query_params = {}

@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from ..models.campaign.variation_model import VariationModel
 from ..models.user.context_model import ContextModel
 from ..packages.logger.core.log_manager import LogManager
 from ..services.campaign_decision_service import CampaignDecisionService
+from ..utils.log_message_util import info_messages, debug_messages
 from ..models.vwo_options_model import VWOOptionsModel
 from ..utils.log_message_util import info_messages
 from ..utils.campaign_util import (
@@ -45,6 +46,7 @@ from ..constants.Constants import Constants
 from ..utils.model_utils import convert_campaign_to_variation_model
 from ..services.storage_service import StorageService
 from ..decorators.storage_decorator import StorageDecorator
+from ..utils.holdout_util import get_matched_holdouts
 
 
 def evaluate_groups(
@@ -70,32 +72,75 @@ def evaluate_groups(
         if feature_key in feature_to_skip:
             continue
 
-        # Evaluate the feature rollout rules
-        is_rollout_rule_passed = _is_rollout_rule_for_feature_passed(
-            settings,
-            featureToEvaluate,
-            evaluated_feature_map,
-            feature_to_skip,
-            storage_service,
-            context,
+        stored_data = StorageDecorator().get_feature_from_storage(
+            feature_key, context, storage_service
         )
+        
 
-        if is_rollout_rule_passed:
-            for temp_feature in settings.get_features():
-                if temp_feature.get_key() == feature_key:
-                    for rule in temp_feature.get_rules_linked_campaign():
-                        if (
-                            str(rule.get_id()) in group_campaign_ids
-                            or f"{rule.get_id()}_{rule.get_variations()[0].get_id()}"
-                            in group_campaign_ids
-                        ):
-                            if feature_key not in campaign_map:
-                                campaign_map[feature_key] = []
-                            if not any(
-                                item.get_rule_key() == rule.get_rule_key()
-                                for item in campaign_map[feature_key]
+        stored_is_in_holdout_id = (stored_data.get("isInHoldoutId") or stored_data.get("holdoutGroupId")) if stored_data else None
+        if stored_is_in_holdout_id and (len(stored_is_in_holdout_id) > 0 if isinstance(stored_is_in_holdout_id, list) else True):
+            feature_to_skip.append(feature_key)
+            LogManager.get_instance().debug(
+                debug_messages.get("PART_OF_HOLDOUT_IN_MEG").format(
+                    featureKey=feature_key,
+                    holdoutId=stored_is_in_holdout_id,
+                    userId=context.get_id(),
+                )
+            )
+            continue
+        holdout_result = get_matched_holdouts(settings, featureToEvaluate, context, stored_data) or {}
+        matched_holdouts = holdout_result.get("matchedHoldouts", [])
+        not_matched_holdouts = holdout_result.get("notMatchedHoldouts", [])
+        holdout_payloads = holdout_result.get("holdoutPayloads", [])
+
+        if matched_holdouts and len(matched_holdouts) > 0:
+            feature_to_skip.append(feature_key)
+
+            qualified_holdout_ids = [holdout.get_id() for holdout in matched_holdouts]
+
+            StorageDecorator().set_data_in_storage(
+                {
+                    "featureKey": feature_key,
+                    "context": context,
+                    "isInHoldoutId": [holdout.get_id() for holdout in matched_holdouts],
+                    "context": context,
+                },
+                storage_service,
+            )
+            LogManager.get_instance().debug(
+                debug_messages.get("PART_OF_HOLDOUT_IN_MEG").format(
+                    featureKey=feature_key,
+                    holdoutId=qualified_holdout_ids,
+                    userId=context.get_id(),
+                )
+            )
+        else:
+            # Evaluate the feature rollout rules
+            is_rollout_rule_passed = _is_rollout_rule_for_feature_passed(
+                settings,
+                featureToEvaluate,
+                evaluated_feature_map,
+                feature_to_skip,
+                storage_service,
+                context,
+            )
+
+            if is_rollout_rule_passed:
+                for temp_feature in settings.get_features():
+                    if temp_feature.get_key() == feature_key:
+                        for rule in temp_feature.get_rules_linked_campaign():
+                            if (
+                                str(rule.get_id()) in group_campaign_ids
+                                or f"{rule.get_id()}_{rule.get_variations()[0].get_id()}"
+                                in group_campaign_ids
                             ):
-                                campaign_map[feature_key].append(rule)
+                                if feature_key not in campaign_map:
+                                    campaign_map[feature_key] = []
+                                if not any(
+                                    item.get_rule_key() == rule.get_rule_key()
+                                    for item in campaign_map[feature_key]
+                                ):
+                                    campaign_map[feature_key].append(rule)
 
     eligible_campaigns, eligible_campaigns_with_storage = _get_eligible_campaigns(
         settings, campaign_map, context, storage_service

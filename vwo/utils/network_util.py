@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -636,3 +636,45 @@ def get_debugger_event_payload(event_props: Dict[str, Any]) -> Dict[str, Any]:
     payload["d"]["event"]["props"]["vwoMeta"]["sv"] = Constants.SDK_VERSION
     payload["d"]["event"]["props"]["vwoMeta"]["eventId"] = get_random_uuid(sdk_key)
     return payload
+
+
+def create_holdout_payload(
+    settings: SettingsModel,
+    event_name: str,
+    holdout_id: int,
+    variation_id: int,
+    context: ContextModel,
+    feature_id: int,
+) -> Dict[str, Any]:
+    """
+    Creates payload for holdout variation shown event.
+    Similar to get_track_user_payload_data but specifically for holdouts.
+
+    Args:
+        settings: The settings model containing configuration.
+        event_name: The event name.
+        holdout_id: The holdout ID (used as campaignId/id).
+        variation_id: The variation ID (1 if IN holdout, 2 if NOT IN holdout).
+        context: The user context model containing user-specific data.
+        feature_id: The feature ID.
+
+    Returns:
+        The holdout payload data.
+    """
+    user_id = context.get_id()
+
+    properties = _get_event_base_payload(
+        settings=settings,
+        user_id=user_id,
+        event_name=event_name,
+        visitor_user_agent=context.get_user_agent(),
+        ip_address=context.get_ip_address(),
+    )
+
+    properties["d"]["event"]["props"]["id"] = holdout_id
+    properties["d"]["event"]["props"]["variation"] = variation_id
+    properties["d"]["event"]["props"]["isFirst"] = 1
+    properties["d"]["event"]["props"]["fId"] = feature_id
+
+    return properties
+

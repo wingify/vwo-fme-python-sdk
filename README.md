@@ -693,4 +693,4 @@ Our [Code of Conduct](https://github.com/wingify/vwo-fme-python-sdk/blob/master/
 
 [Apache License, Version 2.0](https://github.com/wingify/vwo-fme-python-sdk/blob/master/LICENSE)
 
-Copyright 2024-2025 Wingify Software Pvt. Ltd.
+Copyright 2024-2026 Wingify Software Pvt. Ltd.

@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -156,3 +156,18 @@ def add_is_gateway_service_required_flag(settings: SettingsModel) -> None:
                 if matches or custom_matches:
                     feature.set_is_gateway_service_required(True)
                     break
+
+    for holdout in settings.get_holdouts():
+        segments = holdout.get_segments()
+        if segments:
+            json_segments = json.dumps(segments)
+            matches = main_pattern.findall(json_segments)
+
+            if '"custom_variable"' in json_segments:
+                custom_matches = custom_variable_pattern.findall(json_segments)
+            else:
+                custom_matches = []
+
+            if matches or custom_matches:
+                holdout.set_is_gateway_service_required(True)
+                break

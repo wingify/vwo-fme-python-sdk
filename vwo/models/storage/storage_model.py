@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ class Storage:
         self._experiment_id = data.get("experimentId", None)
         self._experiment_key = data.get("experimentKey", None)
         self._experiment_variation_id = data.get("experimentVariationId", None)
-
+        self._is_in_holdout_id = data.get("isInHoldoutId", None)
+        self._not_in_holdout_id = data.get("notInHoldoutId", None)
     # Getter methods for accessing private attributes
     def get_feature_key(self) -> str:
         return self._feature_key

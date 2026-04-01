@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from ..models.user.context_model import ContextModel
 from ..services.hooks_manager import HooksManager
 from ..packages.logger.core.log_manager import LogManager
 from typing import Dict, Any
-from ..utils.function_util import does_event_belong_to_any_feature
+from ..utils.function_util import does_event_belong_to_any_feature, does_event_belong_to_any_holdout
 from ..models.settings.settings_model import SettingsModel
 from ..models.user.context_model import ContextModel
 from ..utils.network_util import (
@@ -50,7 +50,7 @@ class TrackApi:
         :param context: The context of the user.
         :param hook_manager: The hook manager to execute hooks.
         """
-        if does_event_belong_to_any_feature(event_name, settings):
+        if does_event_belong_to_any_feature(event_name, settings) or does_event_belong_to_any_holdout(event_name, settings):
             self.create_and_send_impression_for_track(
                 settings, event_name, context, event_properties
             )

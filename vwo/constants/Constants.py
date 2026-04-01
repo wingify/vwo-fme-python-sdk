@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     sdk_meta = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.20.1"
+        "version": "1.21.0"
     }
 
     # Constants
@@ -67,7 +67,6 @@ class Constants:
     # Debugger constants
     V2_SETTINGS = "v2-settings"
     POLLING = "polling"
-    BROWSER_STORAGE = "browserStorage"
     FLAG_DECISION_GIVEN = "FLAG_DECISION_GIVEN"
     NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES = "NETWORK_CALL_FAILURE_AFTER_MAX_RETRIES"
     NETWORK_CALL_SUCCESS_WITH_RETRIES = "NETWORK_CALL_SUCCESS_WITH_RETRIES"
@@ -76,3 +75,7 @@ class Constants:
     # Aliasing constants
     KEY_USER_ID = "userId"
     KEY_ALIAS_ID = "aliasId"
+
+    # Holdout variation constants
+    VARIATION_IS_PART_OF_HOLDOUT = 1
+    VARIATION_NOT_PART_OF_HOLDOUT = 2

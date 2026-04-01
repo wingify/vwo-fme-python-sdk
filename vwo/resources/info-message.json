@@ -37,5 +37,10 @@
 
   "NETWORK_CALL_SUCCESS_WITH_RETRIES": "Network call for {extraData} succeeded after {attempts} retry attempt(s). Previous attempts failed with error: {err}",
   "PROXY_AND_GATEWAY_SERVICE_PROVIDED": "Both proxy URL and gateway service are provided. Gateway service will be used and proxy URL will be ignored",
-  "SETTINGS_UPDATED": "Settings fetched and updated successfully on the current VWO client instance when API: {apiName} got called having isViaWebhook param as {isViaWebhook}"
+  "SETTINGS_UPDATED": "Settings fetched and updated successfully on the current VWO client instance when API: {apiName} got called having isViaWebhook param as {isViaWebhook}",
+  "STORED_HOLDOUT_DECISION_FOUND": "User: {userId} already part of holdout with ID:{holdoutId} for feature: {featureKey}",
+  "HOLDOUT_SHOULD_EXCLUDE_USER": "User: {userId} ({bucketValue}%) is in Holdout: {holdoutGroupName} with targeted traffic percent: {percentTraffic}% for feature : {featureKey}",
+  "USER_IN_HOLDOUT_GROUP": "User: {userId} is in holdout group: {holdoutGroupName} for feature {featureKey}. Feature not evaluated",
+  "USER_NOT_EXCLUDED_DUE_TO_HOLDOUT": "User ID:{userId} is not excluded from feature:{featureKey} due to any holdout groups",
+  "HOLDOUT_SEGMENTATION_SKIP": "No segments found for holdout: {holdoutId} and user ID: {userId}. Hence skipping segmentation"
 }

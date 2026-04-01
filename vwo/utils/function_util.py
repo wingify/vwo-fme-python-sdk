@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import random
 from ..models.campaign.campaign_model import CampaignModel
 from ..models.campaign.feature_model import FeatureModel
 from ..models.campaign.campaign_model import CampaignModel
-from ..models.campaign.feature_model import FeatureModel
+from ..models.campaign.holdout_model import HoldoutModel
 from ..models.settings.settings_model import SettingsModel
 from ..enums.campaign_type_enum import CampaignTypeEnum
 import copy
@@ -92,6 +92,36 @@ def does_event_belong_to_any_feature(event_name: str, settings: SettingsModel) -
     return any(
         any(metric.get_identifier() == event_name for metric in feature.get_metrics())
         for feature in settings.get_features()
+    )
+
+
+def does_event_belong_to_any_holdout(
+    event_name: str, settings: SettingsModel
+) -> bool:
+    """
+    Checks if an event exists within any holdout's metrics.
+
+    Args:
+        event_name: The name of the event to check.
+        settings: The settings containing holdouts.
+
+    Returns:
+        True if the event exists in any holdout's metrics, otherwise False.
+    """
+    if not settings:
+        return False
+
+    get_holdouts = getattr(settings, "get_holdouts", None)
+    if not callable(get_holdouts):
+        return False
+
+    holdouts: List[HoldoutModel] = get_holdouts() or []
+    if not holdouts:
+        return False
+
+    return any(
+        any(metric.get_identifier() == event_name for metric in holdout.get_metrics())
+        for holdout in holdouts
     )
 
 

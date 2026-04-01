@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from ..campaign.feature_model import FeatureModel
 from ...utils.model_utils import _parse_campaign, _parse_feature
 import json
 from ...constants.Constants import Constants
+from ..campaign.holdout_model import HoldoutModel
 
 
 class SettingsModel:
@@ -34,6 +35,7 @@ class SettingsModel:
         self._collection_prefix = data.get("collectionPrefix", None)
         self._poll_interval = data.get("pollInterval", Constants.POLLING_INTERVAL)
         self._is_web_connectivity_enabled = data.get("isWebConnectivityEnabled", True)
+        self._holdouts = [HoldoutModel(h) for h in data.get("holdouts", [])]
 
     # Getter methods for accessing private attributes
     def get_features(self) -> List[FeatureModel]:
@@ -93,3 +95,9 @@ class SettingsModel:
 
     def get_is_web_connectivity_enabled(self) -> bool:
         return self._is_web_connectivity_enabled
+
+    def set_holdouts(self, value: List[HoldoutModel]):
+        self._holdouts = value
+
+    def get_holdouts(self) -> List[HoldoutModel]:
+        return self._holdouts if isinstance(self._holdouts, list) else []

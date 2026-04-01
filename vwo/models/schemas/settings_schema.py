@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ from .campaign_group_schema import CAMPAIGN_GROUP_SCHEMA
 from .campaign_schema import CAMPAIGN_SCHEMA
 from .feature_schema import FEATURE_SCHEMA
 from .group_schema import GROUP_SCHEMA
+from .holdout_schema import HOLDOUT_SCHEMA
 
 SETTINGS_FILE_SCHEMA = {
     "type": "object",
@@ -32,6 +33,12 @@ SETTINGS_FILE_SCHEMA = {
             "if": {"type": "array"},
             "then": {"items": FEATURE_SCHEMA},
             "else": EMPTY_OBJECT,
+        },
+        "holdouts": {
+            "oneOf": [
+                {"type": "array", "items": HOLDOUT_SCHEMA},
+                EMPTY_OBJECT,
+            ]
         },
         "campaignGroups": CAMPAIGN_GROUP_SCHEMA,
         "groups": GROUP_SCHEMA,

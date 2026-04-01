@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -80,6 +80,8 @@ class StorageDecorator:
                 "experimentId": data.get("experimentId"),
                 "experimentKey": data.get("experimentKey"),
                 "experimentVariationId": data.get("experimentVariationId"),
+                "isInHoldoutId": data.get("isInHoldoutId"),
+                "notInHoldoutId": data.get("notInHoldoutId"),
             },
             context
         )

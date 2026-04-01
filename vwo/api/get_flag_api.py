@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Wingify Software Pvt. Ltd.
+# Copyright 2024-2026 Wingify Software Pvt. Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ from ..services.settings_manager import SettingsManager
 from ..utils.function_util import (
     get_current_unix_timestamp,
 )
+from ..utils.holdout_util import get_matched_holdouts, get_applicable_holdouts, send_network_calls_for_not_in_holdouts
 
 
 class GetFlagApi:
@@ -78,12 +79,25 @@ class GetFlagApi:
         feature = get_feature_from_key(settings, feature_key)
         is_enabled = False
         variables = []
+        notInHoldoutIds: List[Any] = [];
+        # Holdout-related keys as constants
+        IS_IN_HOLDOUT_ID_KEY = "isInHoldoutId"
+        HOLDOUT_GROUP_ID_KEY = "holdoutGroupId"
+        NOT_IN_HOLDOUT_ID_KEY = "notInHoldoutId"
+        MATCHED_HOLDOUTS_KEY = "matchedHoldouts"
+        NOT_MATCHED_HOLDOUTS_KEY = "notMatchedHoldouts"
+        HOLDOUT_PAYLOADS_KEY = "holdoutPayloads"
+
         decision = {
             "featureName": feature.get_name() if feature else None,
             "featureId": feature.get_id() if feature else None,
             "featureKey": feature.get_key() if feature else None,
             "userId": context.get_id() if context else None,
             "api": ApiEnum.GET_FLAG.value,
+            "holdoutIDs": [],
+            "isPartOfHoldout": False,
+            "isHoldoutPresent": False,
+            "isUserPartOfCampaign": False,
         }
 
         debug_event_props = {
@@ -99,6 +113,68 @@ class GetFlagApi:
         )
         batchPayload = []
 
+
+        # Check for holdout group persistence in storage and settings
+        stored_is_in_holdout_id: List[Any] = (
+            stored_data.get(IS_IN_HOLDOUT_ID_KEY)
+            or stored_data.get(HOLDOUT_GROUP_ID_KEY)
+            or []
+        ) if stored_data else []
+        stored_not_in_holdout_id: List[Any] = (
+            stored_data.get(NOT_IN_HOLDOUT_ID_KEY) or []
+        ) if stored_data else []
+        if len(stored_is_in_holdout_id) > 0 or len(stored_not_in_holdout_id) > 0:
+            # get all applicable holdouts for the feature from the latest settings
+            applicable_holdouts = get_applicable_holdouts(settings, feature.get_id())
+
+            if len(applicable_holdouts) > 0:
+                for holdout in applicable_holdouts:
+                    holdout_id = holdout.get_id()
+                    # Check if stored_is_in_holdout_id contains the holdout_id
+                    if holdout_id in stored_is_in_holdout_id:
+                        LogManager.get_instance().info(
+                            info_messages.get("STORED_HOLDOUT_DECISION_FOUND").format(
+                                featureKey=feature_key,
+                                userId=context.get_id(),
+                                holdoutId=holdout_id,
+                            )
+                        )
+                        # Evaluate the new holdouts in the settings file and prepare impressions
+                        holdout_result = get_matched_holdouts(settings, feature, context, stored_data)
+                        
+                        matched_holdouts = holdout_result.get(MATCHED_HOLDOUTS_KEY, [])
+                        not_matched_holdouts = holdout_result.get(NOT_MATCHED_HOLDOUTS_KEY, [])
+                        holdout_payloads = holdout_result.get(HOLDOUT_PAYLOADS_KEY, [])
+                        # updatedHoldoutIds = storedIsInHoldoutId + [id for matched_holdouts]
+                        updated_holdout_ids = (
+                            stored_is_in_holdout_id
+                        ) + [h.get_id() for h in matched_holdouts]
+                        updated_not_in_holdout_ids = (
+                            stored_not_in_holdout_id
+                        ) + [h.get_id() for h in not_matched_holdouts]
+
+                        # Store the updated holdout ids in storage
+                        StorageDecorator().set_data_in_storage(
+                            {
+                                "featureKey": feature_key,
+                                "context": context,
+                                IS_IN_HOLDOUT_ID_KEY: updated_holdout_ids,
+                                NOT_IN_HOLDOUT_ID_KEY: updated_not_in_holdout_ids,
+                            },
+                            storage_service
+                        )
+
+                        # Send impression for the new holdouts
+                        if SettingsManager.get_instance().is_gateway_service_provided:
+                            for payload in holdout_payloads:
+                                send_impression_for_variation_shown(
+                                    payload,
+                                    context
+                                )
+                        else:
+                            send_impression_for_variation_shown_batch(holdout_payloads, account_id=settings.get_account_id(), sdk_key=settings.get_sdk_key())
+                        # Return a disabled flag as user is in persistent holdout
+                        return GetFlag(is_enabled=False, variables=[], session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
         if stored_data and stored_data.get("experimentVariationId"):
             if "experimentKey" in stored_data:
                 variation = get_variation_from_campaign_key(
@@ -116,6 +192,9 @@ class GetFlagApi:
                             experimentKey=stored_data["experimentKey"],
                         )
                     )
+                    decision["isUserPartOfCampaign"] = True
+                    # send network calls for holdouts that are newly added in settings and are not present in storage
+                    send_network_calls_for_not_in_holdouts(settings, feature, context, decision, stored_data, storage_service)
                     return GetFlag(is_enabled=True, variables=variation.get_variables(), session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
         elif (
             stored_data
@@ -134,6 +213,14 @@ class GetFlagApi:
                         experimentKey=stored_data["rolloutKey"],
                     )
                 )
+
+                decision["isUserPartOfCampaign"] = True
+                # network calls for holdouts that are newly added in settings and are not present in storage
+                # and return the updated not in holdout ids
+                updated_not_in_holdout_ids = send_network_calls_for_not_in_holdouts(settings, feature, context, decision, stored_data, storage_service)
+                # push the updated not in holdout ids to the notInHoldoutIds array
+                notInHoldoutIds.extend(updated_not_in_holdout_ids)
+
                 is_enabled = True
                 variables = variation.get_variables()
 
@@ -157,6 +244,76 @@ class GetFlagApi:
         SegmentationManager.get_instance().set_contextual_data(
             settings, feature, context
         )
+
+        if not is_enabled:
+            result = get_matched_holdouts(settings, feature, context, stored_data) or {}
+            matched_holdouts = result.get(MATCHED_HOLDOUTS_KEY, [])
+            not_matched_holdouts = result.get(NOT_MATCHED_HOLDOUTS_KEY, [])
+            holdout_payloads = result.get(HOLDOUT_PAYLOADS_KEY, [])
+
+            decision["isPartOfHoldout"] = matched_holdouts is not None and len(matched_holdouts) > 0
+
+            if (
+                (matched_holdouts is not None and len(matched_holdouts) > 0)
+                or (not_matched_holdouts is not None and len(not_matched_holdouts) > 0)
+            ):
+                decision["isHoldoutPresent"] = True
+
+            if matched_holdouts is not None and len(matched_holdouts) > 0:
+                qualified_holdout_names = ",".join([holdout.get_name() for holdout in matched_holdouts])
+                decision["holdoutIDs"] = [holdout.get_id() for holdout in matched_holdouts]
+
+                LogManager.get_instance().info(
+                    info_messages.get("USER_IN_HOLDOUT_GROUP").format(
+                        userId=context.get_id(),
+                        holdoutGroupName=qualified_holdout_names,
+                        featureKey=feature_key,
+                    )
+                )
+
+                StorageDecorator().set_data_in_storage(
+                    {
+                        "featureKey": feature_key,
+                        "context": context,
+                        IS_IN_HOLDOUT_ID_KEY: [holdout.get_id() for holdout in matched_holdouts],
+                        NOT_IN_HOLDOUT_ID_KEY: [holdout.get_id() for holdout in not_matched_holdouts],
+                    },
+                    storage_service,
+                )
+
+                decision["isEnabled"] = False
+
+                hook_manager.set(decision)
+                hook_manager.execute(hook_manager.get())
+
+                if SettingsManager.get_instance().is_gateway_service_provided:
+                    for payload in holdout_payloads:
+                        send_impression_for_variation_shown(payload, context)
+                else:
+                    send_impression_for_variation_shown_batch(
+                        holdout_payloads, settings.get_account_id(), settings.get_sdk_key()
+                    )
+
+                return GetFlag(
+                    is_enabled=False,
+                    variables=[],
+                    session_id=context.get_session_id(),
+                    uuid=context.get_vwo_uuid(),
+                )
+            else:
+                LogManager.get_instance().info(
+                    info_messages.get("USER_NOT_EXCLUDED_DUE_TO_HOLDOUT").format(
+                        featureKey=feature_key,
+                        userId=context.get_id(),
+                    )
+                )
+                notInHoldoutIds.extend([holdout.get_id() for holdout in not_matched_holdouts])
+
+                if SettingsManager.get_instance().is_gateway_service_provided:
+                    for payload in holdout_payloads:
+                        send_impression_for_variation_shown(payload, context)
+                else:
+                    batchPayload.extend(holdout_payloads)
 
         roll_out_rules = get_specific_rules_based_on_type(
             feature, CampaignTypeEnum.ROLLOUT.value
@@ -214,6 +371,7 @@ class GetFlagApi:
 
                 if isinstance(variation, VariationModel) and not None:
                     is_enabled = True
+                    decision["isUserPartOfCampaign"] = True
                     variables = variation.get_variables()
                     self._should_check_for_experiment_rules = True
                     self._update_integrations_decision_object(
@@ -283,6 +441,7 @@ class GetFlagApi:
                                 batchPayload.append(payload)
                         
                         is_enabled = True
+                        decision["isUserPartOfCampaign"] = True
                         variables = whitelisted_object["variation"].get_variables()
                         self._passed_rules_information.update(
                             {
@@ -303,6 +462,7 @@ class GetFlagApi:
 
                 if isinstance(variation, VariationModel) and not None:
                     is_enabled = True
+                    decision["isUserPartOfCampaign"] = True
                     variables = variation.get_variables()
 
                     self._update_integrations_decision_object(
@@ -332,6 +492,16 @@ class GetFlagApi:
                     "featureKey": feature_key,
                     "context": context,
                     **self._passed_rules_information,
+                    NOT_IN_HOLDOUT_ID_KEY: notInHoldoutIds,
+                },
+                storage_service,
+            )
+        else:
+            StorageDecorator().set_data_in_storage(
+                {
+                    "featureKey": feature_key,
+                    "context": context,
+                    NOT_IN_HOLDOUT_ID_KEY: notInHoldoutIds,
                 },
                 storage_service,
             )

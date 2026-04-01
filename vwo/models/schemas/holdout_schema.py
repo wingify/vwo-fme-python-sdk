@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .campaign_metric_schema import CAMPAIGN_METRIC_SCHEMA
 
-from enum import Enum, auto
-
-
-class SegmentOperandRegexEnum(Enum):
-    LOWER = r"^lower"
-    LOWER_MATCH = r"^lower\((.*)\)"
-    WILDCARD = r"^wildcard"
-    WILDCARD_MATCH = r"^wildcard\((.*)\)"
-    REGEX = r"^regex"
-    REGEX_MATCH = r"^regex\((.*)\)"
-    STARTING_STAR = r"^\*"
-    ENDING_STAR = r"\*$"
-    GREATER_THAN_MATCH = r"^gt\(([\d.]+)\)$"
-    GREATER_THAN_EQUAL_TO_MATCH = r"^gte\(([\d.]+)\)$"
-    LESS_THAN_MATCH = r"^lt\(([\d.]+)\)$"
-    LESS_THAN_EQUAL_TO_MATCH = r"^lte\(([\d.]+)\)$"
+HOLDOUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "metrics": {"type": "array", "items": CAMPAIGN_METRIC_SCHEMA},
+        "segments": {"type": "object"},
+        "featureIds": {"type": "array", "items": {"type": "number"}},
+        "isGlobal": {"type": "boolean"},
+        "name": {"type": "string"},
+        "id": {"type": ["number", "string"]},
+        "percentTraffic": {"type": "number"},
+    },
+    "required": ["metrics", "segments", "featureIds", "isGlobal", "name", "id", "percentTraffic"],
+}
