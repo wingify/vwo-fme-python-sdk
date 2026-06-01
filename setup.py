@@ -30,6 +30,28 @@ with open(os.path.join(current_directory, "requirements.txt")) as f:
 with open("README.md", "r") as f:
     long_description = f.read()
 
+# SDK_BRAND env var selects PyPI metadata when building brand-specific wheels.
+SDK_BRAND = os.environ.get("SDK_BRAND", "vwo")
+
+_BRAND_METADATA = {
+    "vwo": {
+        "name": "vwo-fme-python-sdk",
+        "description": "VWO Feature Management and Experimentation SDK for Python",
+        "author": "VWO",
+    },
+    "wingify": {
+        "name": "wingify-fme-python-sdk",
+        "description": "Wingify Feature Management and Experimentation SDK for Python",
+        "author": "Wingify",
+    },
+}
+
+_brand = _BRAND_METADATA.get(SDK_BRAND, _BRAND_METADATA["vwo"])
+
+_all_packages = find_packages(exclude=["tests"])
+# Both wheels ship wingify (core) + vwo (legacy facade). Customers import one or the other.
+_packages = _all_packages
+
 
 class DocCheckCommand(Command):
     description = "Doc Check"
@@ -57,7 +79,7 @@ class LicenseCheckCommand(Command):
 
     def run(self):
         subprocess.call(
-            'python3 ./scripts/apache_license_check.py vwo/ tests/ setup.py --Copyright 2024-2026 Wingify Software Pvt. Ltd."',
+            'python3 ./scripts/apache_license_check.py vwo/ wingify/ tests/ setup.py --Copyright 2024-2026 Wingify Software Pvt. Ltd."',
             shell=True,
         )
 
@@ -120,12 +142,12 @@ class PostDevelopCommand(develop):
 
 
 setup(
-    name="vwo-fme-python-sdk",
-    version="1.21.1",
-    description="VWO Feature Management and Experimentation SDK for Python",
+    name=_brand["name"],
+    version="1.50.0",
+    description=_brand["description"],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="VWO",
+    author=_brand["author"],
     author_email="dev@wingify.com",
     url="https://github.com/wingify/vwo-fme-python-sdk",
     license="Apache License 2.0",
@@ -151,7 +173,7 @@ setup(
         "license_check": LicenseCheckCommand,
         "doc_check": DocCheckCommand,
     },
-    packages=find_packages(exclude=["tests"]),
+    packages=_packages,
     include_package_data=True,
     install_requires=REQUIREMENTS,
 )

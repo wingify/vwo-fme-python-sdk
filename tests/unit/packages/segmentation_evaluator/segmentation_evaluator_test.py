@@ -22,7 +22,7 @@ from ....data.dummy_test_data_reader import segmentor_dummy_dsl as TESTS_DATA
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 # Now you can import the module
-from vwo.packages.segmentation_evaluator.evaluators.segment_evaluator import (
+from wingify.packages.segmentation_evaluator.evaluators.segment_evaluator import (
     SegmentEvaluator,
 )
 

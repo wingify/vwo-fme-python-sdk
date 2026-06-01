@@ -60,7 +60,7 @@ class VWOTest(unittest.TestCase):
                 "vwo.vwo_builder.VWOBuilder.update_poll_interval_and_check_and_poll",
                 return_value=None,  # Mocking the method to return nothing
             ), patch(
-                "vwo.packages.network_layer.manager.network_manager.NetworkManager.post",
+                "wingify.packages.network_layer.manager.network_manager.NetworkManager.post",
                 return_value=None,  # Mocking the post method to return nothing
             ):
                 storage = user_storage()
@@ -146,7 +146,7 @@ class VWOTest(unittest.TestCase):
                 "vwo.vwo_builder.VWOBuilder.update_poll_interval_and_check_and_poll",
                 return_value=None,  # Mocking the method to return nothing
             ), patch(
-                "vwo.packages.network_layer.manager.network_manager.NetworkManager.post",
+                "wingify.packages.network_layer.manager.network_manager.NetworkManager.post",
                 return_value=None,  # Mocking the post method to return nothing
             ):
                 # Debug print for the settings file being used

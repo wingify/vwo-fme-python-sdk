@@ -21,7 +21,7 @@ from unittest.mock import patch, MagicMock
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 # Now you can import the module
-from vwo.packages.decision_maker.decision_maker import DecisionMaker
+from wingify.packages.decision_maker.decision_maker import DecisionMaker
 
 
 class DecisionMakerTest(unittest.TestCase):

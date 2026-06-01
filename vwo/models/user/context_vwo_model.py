@@ -12,23 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Legacy VWO facade — alias over wingify.models.user.context_vwo_model."""
 
-from typing import Dict
+from wingify.models.user.context_vwo_model import ContextVWOModel
 
+VWOContext = ContextVWOModel
 
-class ContextVWOModel:
-    def __init__(self, context: Dict = None):
-        # Initialize attributes with default empty dictionaries
-        self.location = {}
-        self.user_agent = {}
-
-        # If context is provided, populate attributes
-        if context:
-            self.location = context.get("location", {})
-            self.user_agent = context.get("userAgent", {})
-
-    def get_location(self) -> Dict:
-        return self.location
-
-    def get_ua_info(self) -> Dict:
-        return self.user_agent
+__all__ = ["ContextVWOModel", "VWOContext"]

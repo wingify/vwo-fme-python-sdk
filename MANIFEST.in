@@ -4,3 +4,4 @@ include requirements-dev.txt
 include LICENSE
 recursive-exclude tests *
 recursive-include vwo/resources *.json
+recursive-include wingify/resources *.json

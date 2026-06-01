@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.50.0] - 2026-05-28
+
+This release introduces **Wingify** as the primary SDK branding and package namespace, while keeping existing **VWO** integrations fully supported.
+
+### Added
+
+- **Wingify public API** — use `init`, `WingifyClient`, `WingifyBuilder`, and `WingifyOptionsModel` from the `wingify` package as the recommended entry point for new integrations.
+
+  ```python
+  from wingify import init
+
+  client = init(
+      {
+          "account_id": "123456",
+          "sdk_key": "32-alpha-numeric-sdk-key",
+      }
+  )
+
+  context = {"id": "user-123"}
+
+  flag = client.get_flag("feature-key", context)
+  print(flag.is_enabled())
+  print(flag.get_variables())
+  ```
+
+- Dual-brand support: single codebase builds two PyPI packages — `vwo-fme-python-sdk` (legacy) and `wingify-fme-python-sdk` (new).
+- Build script `scripts/build_wheels.sh` to produce both PyPI wheels via `SDK_BRAND` env var; runtime branding via `is_via_vwo` at init.
+- Wingify brand uses split hosts: settings on `edge.wingify.net`, events on `collect.wingify.net`.
+- Dual support for `_wingify_meta` / `_vwo_meta` and `wingifyBuilder` / `vwoBuilder` option keys.
+
+### Changed
+
+- The SDK implementation now lives under the `wingify` package.
+- Log messages and documentation have been updated to reflect Wingify branding.
+- **No breaking changes for existing integrations** — server event names, payload keys, and runtime behavior remain compatible with the VWO platform.
+
+### Deprecated
+
+The following **VWO** types in `vwo` are deprecated but **continue to work without modification**:
+
+| Deprecated (still supported) | Use instead |
+|---|---|
+| `vwo.init` | `wingify.init` |
+| `vwo.VWOClient` | `wingify.WingifyClient` |
+| `vwo.VWOBuilder` | `wingify.WingifyBuilder` |
+| `vwo.VWOOptionsModel` | `wingify.WingifyOptionsModel` |
+| `vwo.StorageConnector` | `wingify.StorageConnector` |
+| `vwo.LogLevelEnum` | `wingify.LogLevelEnum` |
+
+Existing code does not need to change immediately. We recommend adopting the Wingify API for new projects and migrating when convenient:
+
+```python
+# Still supported — no action required today
+from vwo import init
+
+client = init(
+    {
+        "account_id": "123456",
+        "sdk_key": "32-alpha-numeric-sdk-key",
+    }
+)
+
+context = {"id": "user-123"}
+
+flag = client.get_flag("feature-key", context)
+```
+
+**Migration tip:** Replace imports from `vwo` with `wingify`, and rename types (`VWOClient` → `WingifyClient`, `VWOBuilder` → `WingifyBuilder`, `VWOOptionsModel` → `WingifyOptionsModel`). Method signatures and SDK behavior are unchanged. See [MIGRATE.md](MIGRATE.md) for details.
+
 ## [1.21.1] - 2026-05-20
 
 ### Fixed

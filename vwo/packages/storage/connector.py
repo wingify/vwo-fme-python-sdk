@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Legacy VWO facade — alias over wingify.packages.storage.connector."""
 
-from typing import Any, Dict, Optional
+from wingify.packages.storage.connector import StorageConnector
 
-
-class StorageConnector:
-
-    def get(self, key: str, user_id: str) -> Optional[Dict[str, Any]]:
-        pass
-
-    def set(self, value: Dict[str, Any]) -> None:
-        pass
+__all__ = ["StorageConnector"]

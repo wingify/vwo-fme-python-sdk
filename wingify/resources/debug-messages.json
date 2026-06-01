@@ -1,0 +1,20 @@
+{
+    "API_CALLED": "API - {apiName} called",
+    "SERVICE_INITIALIZED": "{brand} {service} initialized while creating an instance of SDK",
+    "USING_POLL_INTERVAL_FROM_SETTINGS": "key: poll_interval not found or invalid. Using poll_interval from {source} ({pollInterval})",
+  
+    "EXPERIMENTS_EVALUATION_WHEN_ROLLOUT_PASSED": "Rollout rule got passed for user {userId}. Hence, evaluating experiments",
+    "EXPERIMENTS_EVALUATION_WHEN_NO_ROLLOUT_PRESENT": "No Rollout rules present for the feature. Hence, checking experiment rules",
+  
+    "USER_BUCKET_TO_VARIATION": "User ID:{userId} for experiment:{campaignKey} having percent traffic:{percentTraffic} got bucket-value:{bucketValue} and hash-value:{hashValue}",
+  
+    "IMPRESSION_FOR_TRACK_USER": "Impression built for vwo_variationShown({brand} standard event for tracking user) event haivng Account ID:{accountId}, User ID:{userId}, and experiment ID:{campaignId}",
+    "IMPRESSION_FOR_TRACK_GOAL": "Impression built for event:{eventName} event having Account ID:{accountId}, and user ID:{userId}",
+    "IMPRESSION_FOR_SYNC_VISITOR_PROP": "Impression built for {eventName}({brand} internal event) event for Account ID:{accountId}, and user ID:{userId}",
+    "BATCHING_INITIALIZED": "BATCHING_INITIALIZED",
+    "WEB_UUID_FOUND": "{brand} Web Testing identified UUID {uuid} as the Context ID for API {apiName}",
+    "HOLDOUT_SEGMENTATION_FAIL": "User ID: {userId} does not qualify segmentation for Holdout: {holdoutGroupName}",
+    "HOLDOUT_SHOULD_NOT_EXCLUDE_USER": "User ID: {userId} is not part of Holdout: {holdoutGroupName} for feature: {featureKey}",
+    "PART_OF_HOLDOUT_IN_MEG": "MEG: User ID:{userId} is part of holdout: {holdoutId} for feature: {featureKey}",
+    "HOLDOUT_SKIP_EVALUATION": "Skip holdout reevaluation for holdout ID: {holdoutId} because {reason}"
+  }

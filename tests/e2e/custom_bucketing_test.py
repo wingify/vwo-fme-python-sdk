@@ -466,7 +466,7 @@ class TestGetFlagWithAliasingEnabledAndBucketingSeed(unittest.TestCase):
             vwo_client = init(options)
             bucketing_seed = "shared-seed-abc"
 
-            with patch("vwo.vwo_client.get_alias_user_id", side_effect=["RandomUserVWO", "WingifyVWO"]) as mock_alias:
+            with patch("wingify.wingify_client.get_alias_user_id", side_effect=["RandomUserVWO", "WingifyVWO"]) as mock_alias:
                 flag1 = vwo_client.get_flag("featureOne", {
                     "id": "aliasUserA",
                     "bucketingSeed": bucketing_seed
@@ -502,7 +502,7 @@ class TestGetFlagWithAliasingEnabledAndBucketingSeed(unittest.TestCase):
             }
             vwo_client = init(options)
 
-            with patch("vwo.vwo_client.get_alias_user_id", side_effect=["RandomUserVWO", "WingifyVWO"]) as mock_alias:
+            with patch("wingify.wingify_client.get_alias_user_id", side_effect=["RandomUserVWO", "WingifyVWO"]) as mock_alias:
                 flag1 = vwo_client.get_flag("featureOne", {"id": "aliasUserA"})
                 flag2 = vwo_client.get_flag("featureOne", {"id": "aliasUserB"})
 

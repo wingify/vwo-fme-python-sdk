@@ -12,6 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .vwo import init, getUUID
-from .packages.storage.connector import StorageConnector
-from .packages.logger.enums.log_level_enum import LogLevelEnum
+"""
+Legacy VWO FME SDK — public package entry point.
+
+Install via: pip install vwo-fme-python-sdk
+All behavior delegates to the Wingify core; types are legacy aliases.
+"""
+
+from vwo.vwo import init, getUUID, VWOClient, VWOBuilder
+from vwo.models.vwo_options_model import VWOOptionsModel
+from vwo.packages.storage.connector import StorageConnector
+from vwo.packages.logger.enums.log_level_enum import LogLevelEnum
+
+__all__ = [
+    "init",
+    "getUUID",
+    "VWOClient",
+    "VWOBuilder",
+    "VWOOptionsModel",
+    "StorageConnector",
+    "LogLevelEnum",
+]

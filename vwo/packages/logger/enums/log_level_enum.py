@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Legacy VWO facade — alias over wingify.packages.logger.enums.log_level_enum."""
 
-from enum import Enum
+from wingify.packages.logger.enums.log_level_enum import LogLevelEnum
 
-
-class LogLevelEnum(str, Enum):
-    TRACE = "trace"
-    DEBUG = "debug"
-    INFO = "info"
-    WARN = "warn"
-    ERROR = "error"
+__all__ = ["LogLevelEnum"]

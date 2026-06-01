@@ -16,7 +16,7 @@ import sys
 import os
 import unittest
 from unittest.mock import patch, MagicMock
-from vwo.services.settings_manager import SettingsManager
+from wingify.services.settings_manager import SettingsManager
 from tests.data.dummy_test_data_reader import settings_files
 
 # Add the parent directory to the sys.path
@@ -32,7 +32,7 @@ class SettingsSchemaValidationTest(unittest.TestCase):
         self.log_manager_mock = MagicMock()
         self.log_manager_instance_mock = MagicMock()
         self.log_manager_mock.get_instance.return_value = self.log_manager_instance_mock
-        with patch('vwo.services.settings_manager.LogManager', self.log_manager_mock):
+        with patch('wingify.services.settings_manager.LogManager', self.log_manager_mock):
             self.settings_manager = SettingsManager({
                 "account_id": 123,
                 "sdk_key": "123"
