@@ -23,3 +23,4 @@ class EventEnum(Enum):
     SDK_INIT_EVENT = "vwo_fmeSdkInit"
     USAGE_STATS = "vwo_sdkUsageStats"
     DEBUGGER_EVENT = "vwo_sdkDebug"
+    TRACK_USAGE = "vwo_feTrackUsage"

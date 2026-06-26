@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.55.0] - 2026-06-16
+
+### Added
+
+- Added support for FE Usage Tracking. The SDK now accurately tracks usage for features by firing a new usage tracking event (`vwo_feTrackUsage`) for storage hits, feature-not-found cases, and cached holdouts etc.
+
 ## [1.50.0] - 2026-05-28
 
 This release introduces **Wingify** as the primary SDK branding and package namespace, while keeping existing **VWO** integrations fully supported.

@@ -36,6 +36,7 @@ class SettingsModel:
         self._poll_interval = data.get("pollInterval", Constants.POLLING_INTERVAL)
         self._is_web_connectivity_enabled = data.get("isWebConnectivityEnabled", True)
         self._holdouts = [HoldoutModel(h) for h in data.get("holdouts", [])]
+        self._is_tracking_usage_enabled = data.get("isMAU", False)
 
     # Getter methods for accessing private attributes
     def get_features(self) -> List[FeatureModel]:
@@ -101,3 +102,9 @@ class SettingsModel:
 
     def get_holdouts(self) -> List[HoldoutModel]:
         return self._holdouts if isinstance(self._holdouts, list) else []
+
+    def get_is_tracking_usage_enabled(self) -> bool:
+        return self._is_tracking_usage_enabled
+
+    def set_is_tracking_usage_enabled(self, value: bool):
+        self._is_tracking_usage_enabled = value

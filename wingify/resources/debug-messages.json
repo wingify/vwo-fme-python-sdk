@@ -16,5 +16,6 @@
     "HOLDOUT_SEGMENTATION_FAIL": "User ID: {userId} does not qualify segmentation for Holdout: {holdoutGroupName}",
     "HOLDOUT_SHOULD_NOT_EXCLUDE_USER": "User ID: {userId} is not part of Holdout: {holdoutGroupName} for feature: {featureKey}",
     "PART_OF_HOLDOUT_IN_MEG": "MEG: User ID:{userId} is part of holdout: {holdoutId} for feature: {featureKey}",
-    "HOLDOUT_SKIP_EVALUATION": "Skip holdout reevaluation for holdout ID: {holdoutId} because {reason}"
+    "HOLDOUT_SKIP_EVALUATION": "Skip holdout reevaluation for holdout ID: {holdoutId} because {reason}",
+    "IMPRESSION_FOR_TRACK_USAGE": "Impression built for vwo_feTrackUsage({brand} standard event for tracking usage) event having Account ID:{accountId}, User ID:{userId}, and feature key:{featureKey}"
   }

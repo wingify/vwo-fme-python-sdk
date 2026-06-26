@@ -36,6 +36,7 @@ from ..utils.decision_util import evaluate_traffic_and_get_variation
 from ..utils.impression_util import (
     send_impression_for_variation_shown_batch,
     send_impression_for_variation_shown,
+    create_and_send_impression_for_usage_tracking,
 )
 from ..models.user.get_flag import GetFlag
 from ..services.storage_service import StorageService
@@ -75,6 +76,9 @@ class GetFlagApi:
         :param context: The context of the user.
         :param hook_manager: The hook manager to execute hooks.
         """
+
+        # Flag for usage tracking - false if no variation shown call is sent
+        is_variation_shown_fired = False
 
         feature = get_feature_from_key(settings, feature_key)
         is_enabled = False
@@ -173,6 +177,15 @@ class GetFlagApi:
                                 )
                         else:
                             send_impression_for_variation_shown_batch(holdout_payloads, account_id=settings.get_account_id(), sdk_key=settings.get_sdk_key())
+                        
+                        # if impression is fired for any of the holdouts, set is_variation_shown_fired to True
+                        if holdout_payloads and len(holdout_payloads) > 0:
+                            is_variation_shown_fired = True
+
+                        # Case: User is already part of a holdout (stored decision).
+                        if settings.get_is_tracking_usage_enabled() and not is_variation_shown_fired:
+                            create_and_send_impression_for_usage_tracking(settings, feature_key, context)
+
                         # Return a disabled flag as user is in persistent holdout
                         return GetFlag(is_enabled=False, variables=[], session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
         if stored_data and stored_data.get("experimentVariationId"):
@@ -194,7 +207,19 @@ class GetFlagApi:
                     )
                     decision["isUserPartOfCampaign"] = True
                     # send network calls for holdouts that are newly added in settings and are not present in storage
-                    send_network_calls_for_not_in_holdouts(settings, feature, context, decision, stored_data, storage_service)
+                    # Calculate the initial size of not_in_holdout_id
+                    initial_size = len(stored_data.get("notInHoldoutId") or []) if stored_data else 0
+                    # send network calls for not_in_holdout_id
+                    updated_not_in_holdouts = send_network_calls_for_not_in_holdouts(settings, feature, context, decision, stored_data, storage_service)
+                    # if variationShown event is fired, set is_variation_shown_fired to True - Optimization for newly added holdouts
+                    if updated_not_in_holdouts and len(updated_not_in_holdouts) > initial_size:
+                        is_variation_shown_fired = True
+
+                    # Case: Feature found in storage
+                    # Send usage tracking for cached experiment decision if usage tracking is enabled
+                    if settings.get_is_tracking_usage_enabled() and not is_variation_shown_fired:
+                        create_and_send_impression_for_usage_tracking(settings, feature_key, context)
+
                     return GetFlag(is_enabled=True, variables=variation.get_variables(), session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
         elif (
             stored_data
@@ -217,7 +242,10 @@ class GetFlagApi:
                 decision["isUserPartOfCampaign"] = True
                 # network calls for holdouts that are newly added in settings and are not present in storage
                 # and return the updated not in holdout ids
+                initial_size = len(stored_data.get("notInHoldoutId") or []) if stored_data else 0
                 updated_not_in_holdout_ids = send_network_calls_for_not_in_holdouts(settings, feature, context, decision, stored_data, storage_service)
+                if updated_not_in_holdout_ids and len(updated_not_in_holdout_ids) > initial_size:
+                    is_variation_shown_fired = True
                 # push the updated not in holdout ids to the notInHoldoutIds array
                 notInHoldoutIds.extend(updated_not_in_holdout_ids)
 
@@ -236,6 +264,12 @@ class GetFlagApi:
         if feature is None:
             LogManager.get_instance().error_log("FEATURE_NOT_FOUND", data={"featureKey": feature_key}, debug_data = debug_event_props)
             is_enabled = False
+
+            # Case: Feature not found
+            # If usage tracking is enabled, send usage tracking impression
+            if settings.get_is_tracking_usage_enabled() and not is_variation_shown_fired:
+                create_and_send_impression_for_usage_tracking(settings, feature_key, context)
+
             return GetFlag(is_enabled=is_enabled, variables=variables, session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
         
         if context.get_session_id() is None:
@@ -315,6 +349,9 @@ class GetFlagApi:
                 else:
                     batchPayload.extend(holdout_payloads)
 
+                if holdout_payloads and len(holdout_payloads) > 0:
+                    is_variation_shown_fired = True
+
         roll_out_rules = get_specific_rules_based_on_type(
             feature, CampaignTypeEnum.ROLLOUT.value
         )
@@ -390,9 +427,13 @@ class GetFlagApi:
                         and payload is not None
                         and len(payload) > 0
                     ):
+                        # set is_variation_shown_fired to true as the rollout impression is sent
+                        is_variation_shown_fired = True
                         send_impression_for_variation_shown(payload, context)
                     else:
                         if payload is not None and len(payload) > 0:
+                            # set is_variation_shown_fired to true as the rollout impression is sent
+                            is_variation_shown_fired = True
                             batchPayload.append(payload)
 
         if not roll_out_rules:
@@ -435,9 +476,15 @@ class GetFlagApi:
                             and payload is not None
                             and len(payload) > 0
                         ):
+                            # set is_variation_shown_fired to true as the experiment impression is sent (for whitelisted user)
+                            # this prevents sending usage tracking impression for the experiment campaign when checked at the bottom
+                            is_variation_shown_fired = True
                             send_impression_for_variation_shown(payload, context)
                         else:
                             if payload is not None and len(payload) > 0:
+                                # set is_variation_shown_fired to true as the experiment impression is sent (for whitelisted user)
+                                # this prevents sending usage tracking impression for the experiment campaign when checked at the bottom
+                                is_variation_shown_fired = True
                                 batchPayload.append(payload)
                         
                         is_enabled = True
@@ -481,9 +528,13 @@ class GetFlagApi:
                         and payload is not None
                         and len(payload) > 0
                     ):
+                        # set is_variation_shown_fired to true as the experiment impression is sent.
+                        is_variation_shown_fired = True
                         send_impression_for_variation_shown(payload, context)
                     else:
                         if payload is not None and len(payload) > 0:
+                            # set is_variation_shown_fired to true as the experiment impression is sent.
+                            is_variation_shown_fired = True
                             batchPayload.append(payload)
 
         if is_enabled:
@@ -545,15 +596,24 @@ class GetFlagApi:
                 and payload is not None
                 and len(payload) > 0
             ):
+                # set is_variation_shown_fired to true as the impact analysis impression is sent.
+                is_variation_shown_fired = True
                 send_impression_for_variation_shown(payload, context)
             else:
                 if payload is not None and len(payload) > 0:
+                    # set is_variation_shown_fired to true as the impact analysis impression is sent.
+                    is_variation_shown_fired = True
                     batchPayload.append(payload)
 
         if not SettingsManager.get_instance().is_gateway_service_provided:
             send_impression_for_variation_shown_batch(
                 batchPayload, settings.get_account_id(), settings.get_sdk_key()
             )
+
+        # Send usage tracking call when no primary variationShown event was dispatched.
+        # If a primary event was fired, the server already has the usage tracking signal.
+        if settings.get_is_tracking_usage_enabled() and not is_variation_shown_fired:
+            create_and_send_impression_for_usage_tracking(settings, feature_key, context)
 
         return GetFlag(is_enabled=is_enabled, variables=variables, session_id=context.get_session_id(), uuid=context.get_vwo_uuid())
 
