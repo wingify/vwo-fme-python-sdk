@@ -49,5 +49,12 @@
 
     "ERROR_SENDING_DEBUG_EVENT": "Error occurred while sending debugger event. Error:{err}",
     "ERROR_SETTING_ALIAS": "Error while setting alias on gateway service. Error: {err}",
-    "ERROR_GETTING_ALIAS": "Error while getting alias from gateway service. Error: {err}"
+    "ERROR_GETTING_ALIAS": "Error while getting alias from gateway service. Error: {err}",
+
+    "INVALID_WEB_TESTING_CAMPAIGNS_JSON": "webTestingCampaigns must be a JSON object (not an array)",
+    "INVALID_WEB_TESTING_CAMPAIGNS_DUPLICATE_KEY": "webTestingCampaigns JSON string contains duplicate object key: {duplicateKey}, only last occurrence is considered",
+    "INVALID_WEB_TESTING_CAMPAIGNS_TYPE": "webTestingCampaigns has invalid type: {kind}",
+    "INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_TYPE": "campaignVariation operand must be a string or finite number, got type: {type}",
+    "INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_EMPTY": "campaignVariation operand is empty",
+    "INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_FORMAT": "Invalid campaignVariation operand encoding: {operandEncoding}"
   }

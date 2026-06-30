@@ -14,7 +14,8 @@
 
 
 from .context_vwo_model import ContextVWOModel
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
+from ...utils.data_type_util import is_object
 from ...utils.uuid_util import get_uuid
 from ...services.settings_manager import SettingsManager
 from ...utils.function_util import get_current_unix_timestamp
@@ -33,6 +34,11 @@ class ContextModel:
         self._vwo = ContextVWOModel(vwo_context_data) if vwo_context_data else None
         self.post_segmentation_variables = context.get("post_segmentation_variables", [])
         self.bucketingSeed = context.get("bucketingSeed")
+        self.platform_variables: Optional[Dict[str, Any]] = (
+            dict(context.get("platform_variables"))
+            if is_object(context.get("platform_variables"))
+            else None
+        )
         self.session_id = context.get("session_id", None)
         if self.session_id is None:
             self.session_id = get_current_unix_timestamp()
@@ -97,3 +103,11 @@ class ContextModel:
     
     def get_bucketing_seed(self) -> str:
         return self.bucketingSeed
+    
+    def get_platform_variables(self) -> Optional[Dict[str, Any]]:
+        return self.platform_variables
+
+    def set_platform_variables(self, platform_variables: Optional[Dict[str, Any]]) -> None:
+        self.platform_variables = (
+            dict(platform_variables) if is_object(platform_variables) else None
+        )

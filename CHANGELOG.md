@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.60.0] - 2026-06-29
+
+### Added
+
+- Added support for `campaignVariation` segmentation operator to evaluate web testing campaign assignments. Context can now pass `platformVariables.webTestingCampaigns` (as a JSON object or JSON string) to target users based on their web testing campaign and variation assignments.
+
 ## [1.55.0] - 2026-06-16
 
 ### Added

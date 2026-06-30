@@ -16,6 +16,11 @@
 import re
 from typing import Dict, Any
 from ..utils.segment_util import get_key_value, match_with_regex
+from ..utils.web_testing_segment_util import (
+    coerce_campaign_variation_operand_to_str,
+    parse_web_testing_campaigns_from_context,
+    evaluate_web_testing_campaign_variation,
+)
 from ..enums.segment_operand_regex_enum import SegmentOperandRegexEnum
 from ..enums.segment_operand_value_enum import SegmentOperandValueEnum
 from ..enums.segment_operator_value_enum import SegmentOperatorValueEnum
@@ -83,6 +88,25 @@ class SegmentOperandEvaluator:
             return self.extract_result(
                 operand_type, processed_values["operand_value"], tag_value
             )
+
+    def evaluate_campaign_variation_dsl(
+        self, dsl_operand_value: Any, context: ContextModel
+    ) -> bool:
+        """
+        Evaluates a campaignVariation DSL operand against the user's web testing campaign assignments.
+
+        :param dsl_operand_value: The raw operand value from the DSL (e.g. "123_1", "!123", 100).
+        :param context: The context object containing platform_variables.web_testing_campaigns.
+        :return: True if the segment condition is satisfied, otherwise False.
+        """
+        operand_str = coerce_campaign_variation_operand_to_str(dsl_operand_value)
+        if operand_str is None:
+            return False
+
+        operand_str = operand_str.strip()
+        campaigns_map = parse_web_testing_campaigns_from_context(context)
+        result, _invalid = evaluate_web_testing_campaign_variation(operand_str, campaigns_map)
+        return result
 
     def evaluate_user_dsl(self, dsl_operand_value, properties):
         """

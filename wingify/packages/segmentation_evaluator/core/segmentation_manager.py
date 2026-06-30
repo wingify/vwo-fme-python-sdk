@@ -24,6 +24,10 @@ from ....models.user.context_model import ContextModel
 from ....utils.gateway_service_util import get_query_params, get_from_gateway_service
 from ....constants.Constants import Constants
 from ....enums.api_enum import ApiEnum
+from ..utils.web_testing_segment_util import (
+    dsl_contains_campaign_variation_node,
+    is_web_testing_campaigns_absent_or_null,
+)
 
 
 class SegmentationManager:
@@ -115,4 +119,11 @@ class SegmentationManager:
         :param properties: The properties to validate against.
         :return: True if segmentation is valid, otherwise False.
         """
+        # if the dsl contains a campaign variation node, then we need to check if the campaign variation is valid
+        if dsl_contains_campaign_variation_node(dsl):
+            evaluation_context = getattr(self.evaluator, "context", None)
+            if evaluation_context is None or is_web_testing_campaigns_absent_or_null(
+                evaluation_context
+            ):
+                return False
         return self.evaluator.is_segmentation_valid(dsl, properties)

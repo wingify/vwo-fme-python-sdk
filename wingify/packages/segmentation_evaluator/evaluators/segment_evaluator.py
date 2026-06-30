@@ -68,6 +68,10 @@ class SegmentEvaluator:
             return SegmentOperandEvaluator().evaluate_string_operand_dsl(
                 sub_dsl, self.context, SegmentOperatorValueEnum.OS_VERSION.value
             )
+        elif operator == SegmentOperatorValueEnum.WEB_CAMPAIGN_VARIATION.value:
+            return SegmentOperandEvaluator().evaluate_campaign_variation_dsl(
+                sub_dsl, self.context
+            )
         else:
             return False
 

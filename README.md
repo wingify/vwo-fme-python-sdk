@@ -141,8 +141,29 @@ context = {
     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     'ip_address': '1.1.1.1',
     'session_id': 1697123456  # Optional: Custom session ID for web client integration
+    'platformVariables': {
+        # Reference example only:.
+        # In production, fetch campaign assignments using script run in frontend and pass that object to backend as webTestingCampaigns.
+        'webTestingCampaigns': '{"122":"1","130":"2"}'
+    },
+    'session_id': 1697123456  # Optional: Custom session ID for web client integration
 }
 ```
+
+## Web testing pre-segmentation
+
+Server-side flag decisions can align with **Web Testing** (browser) experiments. **Campaign assignments are typically read on the frontend** (for example, VWO cookies) and sent to your server; pass them in `platformVariables.webTestingCampaigns` as a map of **campaign ID -> variation ID** (strings), or as a **JSON string** of that object.
+
+Pre-segment rules in the VWO dashboard can use the **`campaignVariation`** operator:
+
+| Operand pattern | Meaning |
+| --------------- | ------- |
+| `C` | User is in campaign `C` (any variation). |
+| `!C` | User is **not** in campaign `C`. |
+| `C_V` | User is in campaign `C` with variation `V`. |
+| `C_!V` | User is in campaign `C` and assigned variation is **not** `V`. |
+
+Rollout rules evaluate pre-segments from the **first variation** only; AB/testing rules use **campaign-level** segments.
 
 ## Session Management
 

@@ -34,3 +34,4 @@ class SegmentOperatorValueEnum(Enum):
     IP = "ip_address"
     BROWSER_VERSION = "browser_version"
     OS_VERSION = "os_version"
+    WEB_CAMPAIGN_VARIATION = "campaignVariation"
