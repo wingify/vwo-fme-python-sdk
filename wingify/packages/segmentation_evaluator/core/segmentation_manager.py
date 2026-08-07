@@ -85,14 +85,25 @@ class SegmentationManager:
 
         # Check if any holdout requires gateway service
         holdouts = settings.get_holdouts() or []
-        is_gateway_service_required_for_holdouts = len(list(filter(lambda holdout: holdout.get_is_gateway_service_required(), holdouts))) > 0
-        # Call gateway service if required for segmentation OR if gateway service is provided and user agent is available
+        is_gateway_service_required_for_holdouts = len(
+            list(
+                filter(
+                    lambda holdout: holdout.get_is_gateway_service_required(), holdouts
+                )
+            )
+        ) > 0
+        is_segmentation_gateway_required = (
+            feature.get_is_gateway_service_required()
+            or is_gateway_service_required_for_holdouts
+        )
+        # Call get-user-details only when gateway_service is configured and
+        # segmentation (feature or holdout) requires gateway data.
+        # proxy_url alone must never trigger a gateway call.
         should_call_gateway_service = (
-            (feature.get_is_gateway_service_required() and not SettingsManager.get_instance().is_on_platform_host()) or
-            (not SettingsManager.get_instance().is_on_platform_host() and
-             (context.get_user_agent() or context.get_ip_address()))
-        ) or is_gateway_service_required_for_holdouts
-        
+            SettingsManager.get_instance().is_gateway_service_provided
+            and is_segmentation_gateway_required
+        )
+
         if should_call_gateway_service and context.get_vwo() is None:
             query_params = {}
             if not context.get_user_agent() and not context.get_ip_address():

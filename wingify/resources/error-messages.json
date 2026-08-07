@@ -12,13 +12,15 @@
     "UPDATING_CLIENT_INSTANCE_FAILED_WHEN_WEBHOOK_TRIGGERED": "Failed to fetch settings. {brand} client instance couldn't be updated. API:{apiName} called having isViaWebhook:{isViaWebhook}. Error: {err}",
   
     "EXECUTION_FAILED": "API - {apiName} failed to execute. Error:{err}",
+    "INTEGRATIONS_CALLBACK_FAILED": "Error while executing integrations_callback: Error: {err}",
     "INVALID_PARAM": "Key:{key} passed to API:{apiName} is not of valid type. Got type:{type}, should be:{correctType}",
     "INVALID_CONTEXT_PASSED": "Context should be of type:object and must contain a mandatory key: id, which is User ID",
+    "INVALID_CONTEXT_USER_ID": "user_id under context must be a string value",
     "INVALID_BUCKETING_SEED": "Invalid bucketingSeed passed, since it can only be a valid string. Removing it from context so that userId is used for decisioning.",
   
     "FEATURE_NOT_FOUND": "Feature not found for the key:{featureKey}",
     "FEATURE_NOT_FOUND_WITH_ID": "Feature not found for the id:{featureId}",
-    "EVENT_NOT_FOUND": "Event:{eventName} not found in any of the features' metrics",
+    "EVENT_NOT_FOUND": "Event:{eventName} not found in any of the features' metrics, please ensure event API name is being used correctly",
   
     "ERROR_READING_STORED_DATA_IN_STORAGE": "Error reading data from storage. Error:{err}",
     "ERROR_STORING_DATA_IN_STORAGE": "Key:{featureKey} is not valid. Unable to store data into storage",

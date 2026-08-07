@@ -27,6 +27,69 @@ import math
 from ..models.user.context_model import ContextModel
 
 
+def _resolve_feature_rule_key(
+    campaign: CampaignModel, feature_key: Optional[str] = None
+) -> Optional[str]:
+    """
+    Resolves ``{featureKey}_{ruleKey}`` when rules share a parent campaign key.
+
+    Args:
+        campaign (CampaignModel): The campaign containing the rule key.
+        feature_key (Optional[str]): Feature key; inferred from campaign key if omitted.
+
+    Returns:
+        Optional[str]: Resolved rule key, or ``None`` if rule key is missing.
+    """
+    if not campaign.get_rule_key():
+        return None
+    resolved_feature_key = feature_key
+    if not resolved_feature_key and campaign.get_key():
+        resolved_feature_key = campaign.get_key().rsplit("_", 1)[0]
+    if resolved_feature_key:
+        return f"{resolved_feature_key}_{campaign.get_rule_key()}"
+    return None
+
+
+def get_experiment_key(
+    campaign: CampaignModel, feature_key: Optional[str] = None
+) -> str:
+    """
+    Returns the experiment key for integrations callbacks and storage.
+
+    Args:
+        campaign (CampaignModel): The campaign to resolve the key for.
+        feature_key (Optional[str]): Feature key for personalize rules.
+
+    Returns:
+        str: ``{featureKey}_{ruleKey}`` for personalize rules; otherwise campaign key.
+    """
+    if campaign.get_type() == CampaignTypeEnum.PERSONALIZE.value:
+        rule_key = _resolve_feature_rule_key(campaign, feature_key)
+        if rule_key:
+            return rule_key
+    return campaign.get_key()
+
+
+def get_rollout_key(
+    campaign: CampaignModel, feature_key: Optional[str] = None
+) -> str:
+    """
+    Returns the rollout key for integrations callbacks and storage.
+
+    Args:
+        campaign (CampaignModel): The campaign to resolve the key for.
+        feature_key (Optional[str]): Feature key for rollout rules.
+
+    Returns:
+        str: ``{featureKey}_{ruleKey}`` for rollout rules; otherwise campaign key.
+    """
+    if campaign.get_type() == CampaignTypeEnum.ROLLOUT.value:
+        rule_key = _resolve_feature_rule_key(campaign, feature_key)
+        if rule_key:
+            return rule_key
+    return campaign.get_key()
+
+
 def set_variation_allocation(campaign: CampaignModel) -> None:
     """
     Allocates traffic ranges to variations within a campaign.
@@ -175,6 +238,24 @@ def get_variation_from_campaign_key(
         )
         if variation:
             return variation
+
+    for feature in settings.get_features() or []:
+        feature_key = feature.get_key()
+        for linked_campaign in feature.get_rules_linked_campaign() or []:
+            if (
+                get_experiment_key(linked_campaign, feature_key) == campaign_key
+                or get_rollout_key(linked_campaign, feature_key) == campaign_key
+            ):
+                variation = next(
+                    (
+                        v
+                        for v in linked_campaign.get_variations()
+                        if v.get_id() == variation_id
+                    ),
+                    None,
+                )
+                if variation:
+                    return variation
 
     return None
 

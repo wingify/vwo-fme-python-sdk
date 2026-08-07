@@ -41,7 +41,11 @@ from ..utils.impression_util import (
 from ..models.user.get_flag import GetFlag
 from ..services.storage_service import StorageService
 from ..decorators.storage_decorator import StorageDecorator
-from ..utils.campaign_util import get_variation_from_campaign_key
+from ..utils.campaign_util import (
+    get_experiment_key,
+    get_rollout_key,
+    get_variation_from_campaign_key,
+)
 from ..enums.debug_category_enum import DebugCategoryEnum
 from ..packages.logger.enums.log_level_enum import LogLevelEnum
 from ..constants.Constants import Constants
@@ -392,7 +396,7 @@ class GetFlagApi:
 
                     self._evaluated_feature_map[feature_key] = {
                         "rolloutId": rule.get_id(),
-                        "rolloutKey": rule.get_key(),
+                        "rolloutKey": get_rollout_key(rule, feature_key),
                         "rolloutVariationId": (
                             rule.get_variations()[0].get_id()
                             if rule.get_variations()
@@ -493,7 +497,9 @@ class GetFlagApi:
                         self._passed_rules_information.update(
                             {
                                 "experimentId": rule.get_id(),
-                                "experimentKey": rule.get_key(),
+                                "experimentKey": get_experiment_key(
+                                    rule, feature.get_key()
+                                ),
                                 "experimentVariationId": whitelisted_object[
                                     "variationId"
                                 ],
@@ -627,7 +633,9 @@ class GetFlagApi:
             self._passed_rules_information.update(
                 {
                     "rolloutId": campaign.get_id(),
-                    "rolloutKey": campaign.get_key(),
+                    "rolloutKey": get_rollout_key(
+                        campaign, decision.get("featureKey")
+                    ),
                     "rolloutVariationId": variation.get_id(),
                 }
             )
@@ -635,7 +643,9 @@ class GetFlagApi:
             self._passed_rules_information.update(
                 {
                     "experimentId": campaign.get_id(),
-                    "experimentKey": campaign.get_key(),
+                    "experimentKey": get_experiment_key(
+                        campaign, decision.get("featureKey")
+                    ),
                     "experimentVariationId": variation.get_id(),
                 }
             )

@@ -19,6 +19,7 @@ from ..models.campaign.feature_model import FeatureModel
 from ..models.user.context_model import ContextModel
 from ..utils.data_type_util import is_object
 from ..utils.decision_util import check_whitelisting_and_pre_seg
+from ..utils.campaign_util import get_experiment_key
 from ..services.storage_service import StorageService
 from ..utils.network_util import get_track_user_payload_data
 from typing import Dict
@@ -74,7 +75,7 @@ def evaluate_rule(
         decision.update(
             {
                 "experimentId": campaign.get_id(),
-                "experimentKey": campaign.get_key(),
+                "experimentKey": get_experiment_key(campaign, feature.get_key()),
                 "experimentVariationId": whitelisted_object["variationId"],
             }
         )

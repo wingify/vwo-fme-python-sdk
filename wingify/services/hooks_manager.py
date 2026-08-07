@@ -14,6 +14,7 @@
 
 
 from typing import Callable, Dict, Any, Optional
+from ..packages.logger.core.log_manager import LogManager
 
 
 class HooksManager:
@@ -36,7 +37,15 @@ class HooksManager:
         :param properties: A dictionary of properties to pass to the callback.
         """
         if self.is_callback_function and self.callback:
-            self.callback(properties)
+            try:
+                self.callback(properties)
+            except Exception as err:
+                LogManager.get_instance().error_log(
+                    "INTEGRATIONS_CALLBACK_FAILED",
+                    data={"err": str(err)},
+                    debug_data={"an": properties.get("api")},
+                    should_send_log_to_vwo=False,
+                )
 
     def set(self, properties: Dict[str, Any]) -> None:
         """

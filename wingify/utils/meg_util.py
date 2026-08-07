@@ -29,6 +29,8 @@ from ..utils.campaign_util import (
     get_bucketing_seed,
     get_campaign_ids_from_feature_key,
     get_campaigns_by_group_id,
+    get_experiment_key,
+    get_rollout_key,
     get_feature_keys_from_campaign_ids,
     set_campaign_allocation,
     get_variation_from_campaign_key,
@@ -207,7 +209,7 @@ def _is_rollout_rule_for_feature_passed(
                 if isinstance(variation, VariationModel) and not None:
                     evaluated_feature_map[feature.get_key()] = {
                         "rolloutId": rule.get_id(),
-                        "rolloutKey": rule.get_key(),
+                        "rolloutKey": get_rollout_key(rule, feature.get_key()),
                         "rolloutVariationId": rule.get_variations()[0].get_id(),
                     }
                     return True
@@ -241,7 +243,8 @@ def _get_eligible_campaigns(
             )
 
             if stored_data and stored_data.get("experimentVariationId"):
-                if stored_data.get("experimentKey") == campaign.get_key():
+                campaign_experiment_key = get_experiment_key(campaign, feature_key)
+                if stored_data.get("experimentKey") == campaign_experiment_key:
                     variation = get_variation_from_campaign_key(
                         settings,
                         stored_data["experimentKey"],
@@ -261,7 +264,8 @@ def _get_eligible_campaigns(
                             )
                         )
                         if not any(
-                            item.get_key() == campaign.get_key()
+                            get_experiment_key(item, feature_key)
+                            == campaign_experiment_key
                             for item in eligible_campaigns_with_storage
                         ):
                             eligible_campaigns_with_storage.append(
@@ -428,7 +432,7 @@ def _normalize_weights_and_find_winning_campaign(
                 "featureKey": Constants.VWO_META_MEG_KEY + str(group_id),
                 "context": context,
                 "experimentId": winner_campaign.get_id(),
-                "experimentKey": winner_campaign.get_key(),
+                "experimentKey": get_experiment_key(winner_campaign),
                 "experimentVariationId": (
                     winner_campaign.get_variations()[0].get_id()
                     if winner_campaign.get_type() == CampaignTypeEnum.PERSONALIZE.value
@@ -538,7 +542,7 @@ def _get_campaign_using_advanced_algo(
                 "featureKey": Constants.VWO_META_MEG_KEY + str(group_id),
                 "context": context,
                 "experimentId": winner_campaign.get_id(),
-                "experimentKey": winner_campaign.get_key(),
+                "experimentKey": get_experiment_key(winner_campaign),
                 "experimentVariationId": (
                     winner_campaign.get_variations()[0].get_id()
                     if winner_campaign.get_type() == CampaignTypeEnum.PERSONALIZE.value

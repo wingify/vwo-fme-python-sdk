@@ -143,7 +143,7 @@ class PostDevelopCommand(develop):
 
 setup(
     name=_brand["name"],
-    version="1.60.0",
+    version="1.61.0",
     description=_brand["description"],
     long_description=long_description,
     long_description_content_type="text/markdown",

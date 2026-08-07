@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.61.0] - 2026-08-06
+
+### Fixed
+
+- Resolved various bugs including gateway URL issues with `proxy_url`, incorrect experiment/rollout keys in integrations callbacks, and improved error messaging for context validation and event tracking.
+
 ## [1.60.0] - 2026-06-29
 
 ### Added

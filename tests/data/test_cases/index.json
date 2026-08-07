@@ -543,7 +543,7 @@
             "campaign": "testing2_variation"
           },
           "storageData": {
-            "rolloutKey": "feature1_rolloutRule1",
+            "rolloutKey": "feature1_rolloutRule2",
             "rolloutVariationId": 2,
             "experimentKey": "feature1_testingRule2",
             "experimentVariationId": 2

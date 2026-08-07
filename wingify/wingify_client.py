@@ -87,6 +87,7 @@ class WingifyClient:
             LogManager.get_instance().debug(
                 debug_messages.get("API_CALLED").format(apiName=api_name)
             )
+            self._validate_context(context, api_name)
             # get uuid from context
             uuid = self._get_uuid_from_context(context, api_name)
         except Exception as err:
@@ -117,13 +118,6 @@ class WingifyClient:
                     error_messages.get("INVALID_SETTINGS_SCHEMA")
                 )
                 raise ValueError("Invalid Settings")
-
-            # Validate user ID is present in context
-            if not context or "id" not in context:
-                LogManager.get_instance().error(
-                    error_messages.get("INVALID_CONTEXT_PASSED")
-                )
-                raise ValueError("Invalid context")
 
             context_copy = context.copy()
             context_copy["uuid"] = uuid
@@ -207,13 +201,8 @@ class WingifyClient:
                 )
                 raise ValueError("Invalid Settings")
 
-            # Validate user ID is present in context
-            if not context or "id" not in context:
-                LogManager.get_instance().error(
-                    error_messages.get("INVALID_CONTEXT_PASSED")
-                )
-                raise ValueError("Invalid context")
-            
+            self._validate_context(context, api_name)
+
             context_copy = context.copy()
             context_copy["uuid"] = self._get_uuid_from_context(context, api_name)
             context_model = ContextModel(context_copy)
@@ -343,12 +332,8 @@ class WingifyClient:
                 )
                 raise ValueError("Invalid Settings")
 
-            if not user_context or "id" not in user_context:
-                LogManager.get_instance().error(
-                    error_messages.get("INVALID_CONTEXT_PASSED")
-                )
-                raise ValueError("Invalid context")
-            
+            self._validate_context(user_context, api_name)
+
             context_copy = user_context.copy()
             context_copy["uuid"] = self._get_uuid_from_context(user_context, api_name)
             context_model = ContextModel(context_copy)
@@ -491,6 +476,25 @@ class WingifyClient:
             LogManager.get_instance().error_log("EXECUTION_FAILED", data={"apiName": api_name, "err": str(err)}, debug_data={"an": ApiEnum.SET_ALIAS.value})
             return False
     
+    def _validate_context(self, context: Dict, api_name: str) -> None:
+        """
+        Validates that context contains a string user ID.
+
+        :param context: The context object passed to an API.
+        :param api_name: The name of the API calling this method.
+        """
+        if not context or not is_object(context) or "id" not in context:
+            LogManager.get_instance().error(
+                error_messages.get("INVALID_CONTEXT_PASSED")
+            )
+            raise ValueError("Invalid context")
+
+        if not isinstance(context.get("id"), str):
+            LogManager.get_instance().error(
+                error_messages.get("INVALID_CONTEXT_USER_ID")
+            )
+            raise ValueError("user_id under context must be a string value")
+
     def _get_uuid_from_context(self, context: Dict, api_name: str) -> str:
         """
         Gets the UUID from the context.
