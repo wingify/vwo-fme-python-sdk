@@ -25,6 +25,7 @@ from wingify.utils.brand_context import set_is_via_vwo
 from wingify.utils.brand_util import get_brand
 from wingify.utils.log_message_util import refresh_log_messages
 from wingify.packages.logger.core.log_manager import LogManager
+from wingify.services.internal_events_sampling_service import InternalEventsSamplingService
 
 
 class Wingify:
@@ -103,22 +104,22 @@ def init(options: Dict[str, Any]) -> Optional["WingifyClient"]:
         sdk_init_time = int((time.time() * 1000) - start_time_for_init)
 
         was_initialized = False
-        if instance.original_settings is not None:
-            was_initialized = instance.original_settings.get("sdkMetaInfo", {}).get(
-                "wasInitializedEarlier"
-            )
+        if getattr(instance, '_settings', None) is not None:
+            sdk_meta_info = instance._settings.get_sdk_meta_info()
+            if sdk_meta_info:
+                was_initialized = sdk_meta_info.get("wasInitializedEarlier", False)
 
         if instance.is_settings_valid_on_init and not was_initialized:
             send_sdk_init_event(instance.settings_fetch_time, sdk_init_time)
 
         usage_stats_account_id = None
-        if instance.original_settings is not None:
-            usage_stats_account_id = instance.original_settings.get(
-                "usageStatsAccountId"
-            )
+        if getattr(instance, '_settings', None) is not None:
+            usage_stats_account_id = instance._settings.get_usage_stats_account_id()
 
         if usage_stats_account_id:
-            send_sdk_usage_stats_event(usage_stats_account_id)
+            sampling_service = InternalEventsSamplingService()
+            if sampling_service.should_send_usage_stats_event(instance._settings):
+                send_sdk_usage_stats_event(usage_stats_account_id)
 
         return instance
     except Exception as e:

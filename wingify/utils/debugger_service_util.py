@@ -30,6 +30,22 @@ def send_debug_event_to_vwo(debug_event_props: Dict[str, Any]):
             get_debugger_event_payload,
             send_event,
         )
+        from ..utils.internal_events_sampling_util import is_sampled_debug_error_template_key
+        from ..services.internal_events_sampling_service import InternalEventsSamplingService
+        from ..wingify import Wingify
+
+        # Sampled keys: apply sampling only when alwaysApplySampling.server is true; others are ALWAYS_SEND
+        msg_t = debug_event_props.get("msg_t")
+        is_sampled_debug_event = isinstance(msg_t, str) and is_sampled_debug_error_template_key(msg_t)
+
+        instance = Wingify.getInstance()
+        settings = getattr(instance, '_settings', None) if instance else None
+        # if the event is present in the sampled debug events keys list, then apply sampling
+        if is_sampled_debug_event:
+            sampling_service = InternalEventsSamplingService()
+            if not sampling_service.should_send_sampled_debug_event(settings):
+                return
+
         # Create the query parameters
         properties = get_events_base_properties(EventEnum.DEBUGGER_EVENT.value)
         # Create the payload with required fields

@@ -13,13 +13,14 @@
 # limitations under the License.
 
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from ..campaign.campaign_model import CampaignModel
 from ..campaign.feature_model import FeatureModel
 from ...utils.model_utils import _parse_campaign, _parse_feature
 import json
 from ...constants.Constants import Constants
 from ..campaign.holdout_model import HoldoutModel
+from .internal_event_sampling_settings_model import AlwaysApplySampling, EventCategorySamplingRates
 
 
 class SettingsModel:
@@ -37,6 +38,10 @@ class SettingsModel:
         self._is_web_connectivity_enabled = data.get("isWebConnectivityEnabled", True)
         self._holdouts = [HoldoutModel(h) for h in data.get("holdouts", [])]
         self._is_tracking_usage_enabled = data.get("isMAU", False)
+        self._sdk_meta_info = data.get("sdkMetaInfo", {})
+        self._usage_stats_account_id = data.get("usageStatsAccountId", None)
+        self._always_apply_sampling = AlwaysApplySampling(data.get("alwaysApplySampling", {})) if data.get("alwaysApplySampling") is not None else None
+        self._sampling = EventCategorySamplingRates(data.get("sampling", {})) if data.get("sampling") is not None else None
 
     # Getter methods for accessing private attributes
     def get_features(self) -> List[FeatureModel]:
@@ -108,3 +113,15 @@ class SettingsModel:
 
     def set_is_tracking_usage_enabled(self, value: bool):
         self._is_tracking_usage_enabled = value
+
+    def get_sdk_meta_info(self) -> Dict[str, Any]:
+        return self._sdk_meta_info
+
+    def get_usage_stats_account_id(self) -> Optional[int]:
+        return self._usage_stats_account_id
+
+    def get_always_apply_sampling(self) -> Optional[AlwaysApplySampling]:
+        return self._always_apply_sampling
+
+    def get_sampling(self) -> Optional[EventCategorySamplingRates]:
+        return self._sampling

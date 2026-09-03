@@ -17,7 +17,7 @@ class Constants:
     # TODO: read from setup.py
     sdk_meta = {
         "name": "vwo-fme-python-sdk",
-        "version": "1.61.0",
+        "version": "1.62.0",
     }
 
     SDK_VERSION = sdk_meta["version"]
@@ -87,3 +87,6 @@ class Constants:
 
     VARIATION_IS_PART_OF_HOLDOUT = 1
     VARIATION_NOT_PART_OF_HOLDOUT = 2
+
+    INTERNAL_EVENTS_DEFAULT_SAMPLING_PERCENT_SERVER = 10.0
+    INTERNAL_EVENTS_DEFAULT_ALWAYS_APPLY_SAMPLING = False
