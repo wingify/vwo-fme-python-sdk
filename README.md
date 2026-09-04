@@ -17,13 +17,35 @@ The **VWO Feature Management and Experimentation SDK** (VWO FME Python SDK) enab
 
 It's recommended you use [virtualenv](https://virtualenv.pypa.io/en/latest/) to create isolated Python environments.
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```bash
 pip install vwo-fme-python-sdk
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```bash
+pip install wingify-fme-python-sdk
+```
+
+</details>
+
 ## Basic Usage Example
 
 The following example demonstrates initializing the SDK with a VWO account ID and SDK key, setting a user context, checking if a feature flag is enabled, and tracking a custom event.
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
  ```python
 from vwo import init
 
@@ -50,6 +72,39 @@ vwo_client.track_event('event_name', user_context, event_properties)
 vwo_client.set_attribute('attribute_key', 'attribute_value', user_context)
  ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+ ```python
+from wingify import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456' # Wingify Account ID
+}
+
+wingify_client = init(options)
+
+# set user context
+user_context = {'id': 'unique_user_id'}
+# returns a flag object
+get_flag = wingify_client.get_flag('feature_key', user_context)
+# check if flag is enabled
+is_enabled = get_flag.is_enabled()
+# get varible
+int_var = get_flag.get_variable('int_variable_key', 'default_value')
+
+# track event
+wingify_client.track_event('event_name', user_context, event_properties)
+
+# set attribute
+wingify_client.set_attribute('attribute_key', 'attribute_value', user_context)
+ ```
+
+</details>
+
 ## Utility Functions
 
 ### getUUID
@@ -58,9 +113,25 @@ The `getUUID` function generates a deterministic UUID for a given user and accou
 
 #### Function Signature
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 vwo.getUUID(user_id: str, account_id: str) -> Optional[str]
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+wingify.getUUID(user_id: str, account_id: str) -> Optional[str]
+```
+
+</details>
 
 #### Parameters
 
@@ -76,6 +147,11 @@ vwo.getUUID(user_id: str, account_id: str) -> Optional[str]
 
 #### Example
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 import vwo
 
@@ -89,6 +165,26 @@ print('Generated UUID:', uuid)
 # Output: Generated UUID: CC25A368ADA0542699EAD62489811105
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+import wingify
+
+# Generate UUID for a user
+userId = 'user-123'
+accountId = '123456'
+
+uuid = wingify.getUUID(userId, accountId)
+
+print('Generated UUID:', uuid)
+# Output: Generated UUID: CC25A368ADA0542699EAD62489811105
+```
+
+</details>
+
 #### Use Cases
 
 - Generate consistent UUIDs for users across different services
@@ -97,7 +193,7 @@ print('Generated UUID:', uuid)
 
 ## Advanced Configuration Options
 
-To customize the SDK further, additional parameters can be passed to the `init()` API. Here’s a table describing each option:
+To customize the SDK further, additional parameters can be passed to the `init()` API. Here's a table describing each option:
 
 | **Parameter**                | **Description**                                                                                                                                             | **Required** | **Type** | **Example**                     |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------------------------------- |
@@ -140,13 +236,12 @@ context = {
     },
     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     'ip_address': '1.1.1.1',
-    'session_id': 1697123456  # Optional: Custom session ID for web client integration
+    'session_id': 1697123456,  # Optional: Custom session ID for web client integration
     'platformVariables': {
         # Reference example only:.
         # In production, fetch campaign assignments using script run in frontend and pass that object to backend as webTestingCampaigns.
         'webTestingCampaigns': '{"122":"1","130":"2"}'
-    },
-    'session_id': 1697123456  # Optional: Custom session ID for web client integration
+    }
 }
 ```
 
@@ -182,6 +277,11 @@ You can access and manage session IDs through the following methods:
 
 ### Example Usage
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 from vwo import init
 
@@ -201,7 +301,38 @@ session_id = flag.get_session_id()
 print(f"Session ID for web client: {session_id}")
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key',
+    'account_id': '123456'
+}
+
+wingify_client = init(options)
+
+# Session ID is automatically generated if not provided
+context = {'id': 'user-123'}
+flag = wingify_client.get_flag('feature-key', context)
+
+# Access the session ID to pass to web client for session recording
+session_id = flag.get_session_id()
+print(f"Session ID for web client: {session_id}")
+```
+
+</details>
+
 You can also explicitly set a session ID to match a web client session:
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 from vwo import init
@@ -215,6 +346,26 @@ context_with_session = {
 
 flag = vwo_client.get_flag('feature-key', context_with_session)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import init
+
+wingify_client = init(options)
+
+context_with_session = {
+    'id': 'user-123',
+    'session_id': 1697123456  # Custom session ID matching web client
+}
+
+flag = wingify_client.get_flag('feature-key', context_with_session)
+```
+
+</details>
 
 This enhancement enables seamless integration between server-side feature flag decisions and client-side session recording, allowing for comprehensive user behavior analysis across both server and client environments.
 
@@ -231,6 +382,11 @@ The `get_flag()` method provides a simple way to check if a feature is enabled f
 
 Example usage:
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 feature_flag = vwo_client.get_flag("feature_key", context)
 is_enabled = feature_flag.is_enabled()
@@ -245,6 +401,27 @@ else:
   print("Feature is not enabled!")
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+feature_flag = wingify_client.get_flag("feature_key", context)
+is_enabled = feature_flag.is_enabled()
+
+if is_enabled:
+  print("Feature is enabled!")
+
+  # Get and use feature variable with type safety
+  variable_value = feature_flag.get_variable('feature_variable', 'default_value')
+  print("Variable value: " + variable_value)
+else:
+  print("Feature is not enabled!")
+```
+
+</details>
+
 ### Custom Event Tracking
 
 Feature flags can be enhanced with connected metrics to track key performance indicators (KPIs) for your features. These metrics help measure the effectiveness of your testing rules by comparing control versus variation performance, and evaluate the impact of personalization and rollout campaigns. Use the `track_event()` method to track custom events like conversions, user interactions, and other important metrics:
@@ -257,9 +434,25 @@ Feature flags can be enhanced with connected metrics to track key performance in
 
 Example usage:
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 vwo_client.track_event('event_name', context, event_properties)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+wingify_client.track_event('event_name', context, event_properties)
+```
+
+</details>
 
 ### Pushing Attributes
 
@@ -273,9 +466,25 @@ User attributes provide rich contextual information about users, enabling powerf
 
 Example usage:
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 vwo_client.set_attribute('attribute_key', 'attribute_value', context)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+wingify_client.set_attribute('attribute_key', 'attribute_value', context)
+```
+
+</details>
 
 ### Polling Interval Adjustment
 
@@ -287,6 +496,11 @@ The `poll_interval` is an optional parameter that allows the SDK to automaticall
 
 Setting this parameter ensures your application always uses the latest configuration by periodically checking for and applying any updates.
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 options = {
     'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
@@ -296,6 +510,23 @@ options = {
 
 vwo_client = init(options)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'poll_interval': 60000 # Set the poll interval to 60 seconds
+}
+
+wingify_client = init(options)
+```
+
+</details>
 
 ### Gateway
 
@@ -313,6 +544,11 @@ The Gateway Service is required in the following scenarios:
 
 The gateway can be customized by passing the `gateway_service` parameter in the `init` configuration.
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 options = {
     'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
@@ -323,6 +559,24 @@ options = {
 }
 vwo_client = init(options)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'gateway_service': {
+        'url': 'http://custom.gateway.com'
+    }
+}
+wingify_client = init(options)
+```
+
+</details>
 
 ### User Aliasing
 
@@ -338,6 +592,11 @@ User aliasing requires:
 #### Configuration
 
 To enable user aliasing, configure both the gateway service and the aliasing flag:
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 from vwo import init
@@ -356,9 +615,38 @@ options = {
 vwo_client = init(options)
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    # set gateway service
+    'gateway_service': {
+        'url': 'http://custom.gateway.com'
+    },
+    # enable aliasing
+    'is_aliasing_enabled': True,
+}
+
+wingify_client = init(options)
+```
+
+</details>
+
 #### Setting User Alias
 
 Use the `set_alias()` method to create an alias relationship between a user ID and an alias ID:
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 # Method 1: Using user ID and alias ID directly
@@ -369,6 +657,22 @@ context = {'id': 'user-123'}
 is_alias_set = vwo_client.set_alias(context, 'alias-456')
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+# Method 1: Using user ID and alias ID directly
+is_alias_set = wingify_client.set_alias('user-123', 'alias-456')
+
+# Method 2: Using context dict and alias ID
+context = {'id': 'user-123'}
+is_alias_set = wingify_client.set_alias(context, 'alias-456')
+```
+
+</details>
+
 ### Proxy URL
 
 The `proxy_url` parameter allows you to redirect all SDK network calls through a custom proxy server. This feature enables you to route all SDK network requests (settings, tracking, etc.) through your own proxy server, providing better control over network traffic and security.
@@ -376,6 +680,11 @@ The `proxy_url` parameter allows you to redirect all SDK network calls through a
 #### How to Use Proxy URL
 
 The proxy URL can be configured by passing the `proxy_url` parameter in the `init` configuration.
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 options = {
@@ -386,6 +695,24 @@ options = {
 
 vwo_client = init(options)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'proxy_url': 'http://custom.proxy.com'
+}
+
+wingify_client = init(options)
+```
+
+</details>
+
 **Note:** If both `gateway_service` and `proxy_url` are provided, the SDK will give preference to the `gateway_service` for all network requests.
 
 ### Storage
@@ -401,6 +728,11 @@ Key benefits of implementing storage:
 - Reduced load on your application
 
 The storage mechanism ensures that once a decision is made for a user, it remains consistent even if campaign settings are modified in the VWO Application. This is particularly useful for maintaining a stable user experience during A/B tests and feature rollouts.
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 from vwo import StorageConnector
@@ -429,8 +761,47 @@ options = {
 vwo_client = init(options)
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import StorageConnector
+class UserStorage(StorageConnector):
+    def get(self, key: str, user_id: str):
+        return client_db.get(f"{key}_{user_id}")
+
+    def set(self, value: dict):
+        key = f"{value.get('featureKey')}_{value.get('userId')}"
+        client_db[key] = {
+            'rolloutKey': value.get('rolloutKey'),
+            'rolloutVariationId': value.get('rolloutVariationId'),
+            'rolloutId': value.get('rolloutId'),
+            'experimentKey': value.get('experimentKey'),
+            'experimentVariationId': value.get('experimentVariationId'),
+            'experimentId': value.get('experimentId'),
+        }
+        return True
+        
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'storage': UserStorage()
+}
+
+wingify_client = init(options)
+```
+
+</details>
+
 ### Integrations
 VWO FME SDKs provide seamless integration with third-party tools like analytics platforms, monitoring services, customer data platforms (CDPs), and messaging systems. This is achieved through a simple yet powerful callback mechanism that receives VWO-specific properties and can forward them to any third-party tool of your choice.
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 def callback(properties):
@@ -447,6 +818,28 @@ options = {
 vwo_client = init(options)
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+def callback(properties):
+    # properties will contain all the required Wingify specific information
+    print(properties)
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '12345', # Wingify Account ID
+    'integrations': {
+        'callback': callback
+    }
+}
+wingify_client = init(options)
+```
+
+</details>
+
 ### Logger
 
 VWO by default logs all `ERROR` level messages to your server console.
@@ -460,6 +853,11 @@ To gain more control over VWO's logging behaviour, you can use the `logger` para
 
 #### Example 1: Set log level to control verbosity of logs
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 options = {
     'account_id': '123456', # VWO Account ID
@@ -471,7 +869,30 @@ options = {
 vwo_client = init(options)
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+options = {
+    'account_id': '123456', # Wingify Account ID
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'logger': {
+        'level': 'DEBUG'
+    }
+}
+wingify_client = init(options)
+```
+
+</details>
+
 #### Example 2: Add custom prefix to log messages for easier identification
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 options = {
@@ -484,6 +905,25 @@ options = {
 }
 vwo_client = init(options)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+options = {
+    'account_id': '123456', # Wingify Account ID
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'logger': {
+        'level': 'DEBUG',
+        'prefix': 'CUSTOM LOG PREFIX'
+    }
+}
+wingify_client = init(options)
+```
+
+</details>
 
 #### Example 3: Implement custom transport to handle logs your way
 
@@ -500,6 +940,12 @@ For example, you could:
 The transport object should implement handlers for the log levels you want to customize. Each handler receives the log message as a parameter.
 
 For single transport you can use the `transport` parameter. For example:
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 from vwo import init
 
@@ -514,7 +960,7 @@ class CustomTransport:
 options = {
     'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
     'account_id': '123456', # VWO Account ID
-    'logger' {
+    'logger': {
         'transport': CustomTransport({'level': 'INFO'})
     }
 }
@@ -522,7 +968,42 @@ options = {
 vwo_client = init(options)
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import init
+
+class CustomTransport:
+    def __init__(self, config):
+        self.level = config.get('level', "ERROR")
+        self.config = config
+
+    def log(self, level, message):
+        # your custom implementation here
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'logger': {
+        'transport': CustomTransport({'level': 'INFO'})
+    }
+}
+
+wingify_client = init(options)
+```
+
+</details>
+
 For multiple transports you can use the `transports` parameter. For example:
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 from vwo import init
 
@@ -545,7 +1026,7 @@ class CustomTransportForError:
 options = {
     'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
     'account_id': '123456', # VWO Account ID
-    'logger' {
+    'logger': {
         'transports': [
             CustomTransportForInfo({'level': 'INFO'}),
             CustomTransportForError({'level': 'ERROR'})
@@ -555,6 +1036,46 @@ options = {
 
 vwo_client = init(options)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import init
+
+class CustomTransportForInfo:
+    def __init__(self, config):
+        self.level = config.get('level', "INFO")
+        self.config = config
+
+    def log(self, level, message):
+        # your custom implementation here
+
+class CustomTransportForError:
+    def __init__(self, config):
+        self.level = config.get('level', "ERROR")
+        self.config = config
+
+    def log(self, level, message):
+        # your custom implementation here
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'logger': {
+        'transports': [
+            CustomTransportForInfo({'level': 'INFO'}),
+            CustomTransportForError({'level': 'ERROR'})
+        ]
+    }
+}
+
+wingify_client = init(options)
+```
+
+</details>
 
 ### Threading
 
@@ -571,6 +1092,11 @@ When threading is disabled, all tracking calls will block the main execution thr
 
 Example showing blocking behavior:
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 # By disabling threading, the SDK will wait for the response from the server for each tracking call.
 from vwo import init
@@ -581,10 +1107,32 @@ options = {
     'threading': {
         'enabled': False
     }
-  }
+}
 
-  vwo_client = init(options)
+vwo_client = init(options)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+# By disabling threading, the SDK will wait for the response from the server for each tracking call.
+from wingify import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'threading': {
+        'enabled': False
+    }
+}
+
+wingify_client = init(options)
+```
+
+</details>
 
 #### Enable Threading (Default)
 
@@ -600,6 +1148,11 @@ Example of how threading improves performance:
 
 The SDK uses a thread pool to manage these concurrent operations efficiently. The default pool size of 5 threads is suitable for most applications, but you can adjust it based on your needs:
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 # By default, threading is enabled and the max_workers is set to 5.
 # you can customize the max_workers by passing the max_workers parameter in the threading configuration.
@@ -612,10 +1165,34 @@ options = {
         'enabled': True,
         'max_workers': 10
     }
-  }
+}
 
-  vwo_client = init(options)
+vwo_client = init(options)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+# By default, threading is enabled and the max_workers is set to 5.
+# you can customize the max_workers by passing the max_workers parameter in the threading configuration.
+from wingify import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'threading': {
+        'enabled': True,
+        'max_workers': 10
+    }
+}
+
+wingify_client = init(options)
+```
+
+</details>
 
 ### Batch Events
 
@@ -629,6 +1206,11 @@ The `batch_event_data` configuration allows you to optimize network requests by 
 
 Example usage:
 
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
+
 ```python
 from vwo import init
 
@@ -639,8 +1221,8 @@ options = {
     'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
     'account_id': '123456', # VWO Account ID
     'batch_event_data': {
-        'events_per_request': 60,  # Send up to 100 events per request
-        'request_time_interval': 100, # Flush events every 60 seconds
+        'events_per_request': 100,  # Send up to 100 events per request
+        'request_time_interval': 60, # Flush events every 60 seconds
         'flush_callback': event_flush_callback
     }
 }
@@ -648,11 +1230,53 @@ options = {
 vwo_client = init(options)
 ```
 
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import init
+
+def event_flush_callback(error, payload):
+    # your implementation here
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+    'batch_event_data': {
+        'events_per_request': 100,  # Send up to 100 events per request
+        'request_time_interval': 60, # Flush events every 60 seconds
+        'flush_callback': event_flush_callback
+    }
+}
+
+wingify_client = init(options)
+```
+
+</details>
+
 You can also manually flush events using the `flush_events()` method:
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 vwo_client.flush_events()
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+wingify_client.flush_events()
+```
+
+</details>
 
 
 ### Custom Bucketing Seed
@@ -660,6 +1284,11 @@ vwo_client.flush_events()
 This option allows you to override the default bucketing behavior (which uses `userId`) and specify a custom seed for bucketing users into variations. This is useful when you want to ensure consistent variation assignments across different user IDs (e.g., maintaining the same experience for a group of users).
 
 To use this feature, provide the `bucketingSeed` in the user context.
+
+If SDK version less than 1.50.0, use the VWO snippet. If SDK version 1.50.0 or later, we recommend switching to the Wingify snippet
+
+<details>
+<summary>VWO (SDK version &lt; 1.50.0)</summary>
 
 ```python
 from vwo import init
@@ -680,6 +1309,33 @@ user_context = {
 # The user will be bucketed based on 'group_id_123' instead of 'unique_user_id'
 get_flag = vwo_client.get_flag('feature_key', user_context)
 ```
+
+</details>
+
+<details>
+<summary>Wingify (SDK version &gt;= 1.50.0) — recommended</summary>
+
+```python
+from wingify import init
+
+options = {
+    'sdk_key': '32-alpha-numeric-sdk-key', # SDK Key
+    'account_id': '123456', # Wingify Account ID
+}
+
+wingify_client = init(options)
+
+# Pass bucketingSeed in context
+user_context = {
+    'id': 'unique_user_id',
+    'bucketingSeed': 'group_id_123' # This value will be used for bucketing
+}
+
+# The user will be bucketed based on 'group_id_123' instead of 'unique_user_id'
+get_flag = wingify_client.get_flag('feature_key', user_context)
+```
+
+</details>
 
 ## Local development
 
