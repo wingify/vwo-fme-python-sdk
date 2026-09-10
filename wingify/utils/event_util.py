@@ -12,26 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
+from typing import Any, Dict, Optional
 from .network_util import get_events_base_properties, get_sdk_init_event_payload, get_sdk_usage_stats_event_payload, send_event
 from ..enums.event_enum import EventEnum
 from ..wingify_client import WingifyClient as VWOClient
 from ..packages.logger.core.log_manager import LogManager
 from ..enums.api_enum import ApiEnum
 
-def send_sdk_init_event(settings_fetch_time: Optional[int] = None, sdk_init_time: Optional[int] = None) -> None:
+def send_sdk_init_event() -> None:
     """
     Sends an init called event to VWO.
     This event is triggered when the init function is called.
-    
-    :param settings_fetch_time: Time taken to fetch settings in milliseconds
-    :param sdk_init_time: Time taken to initialize the SDK in milliseconds
     """
     # Create the query parameters
     properties = get_events_base_properties(EventEnum.SDK_INIT_EVENT.value)
     
     # Create the payload with required fields
-    payload = get_sdk_init_event_payload(EventEnum.SDK_INIT_EVENT.value, settings_fetch_time, sdk_init_time)
+    payload = get_sdk_init_event_payload(EventEnum.SDK_INIT_EVENT.value)
     
     # Send the constructed payload via POST request
     try:
@@ -49,18 +46,32 @@ def send_sdk_init_event(settings_fetch_time: Optional[int] = None, sdk_init_time
         pass
 
 
-def send_sdk_usage_stats_event(usage_stats_account_id: int) -> None:
+def send_sdk_usage_stats_event(
+    usage_stats_account_id: int,
+    settings_fetch_time: Optional[int] = None,
+    sdk_init_time: Optional[int] = None,
+    init_config: Optional[Dict[str, Any]] = None,
+) -> None:
     """
     Sends a usage stats event to VWO.
     This event is triggered when the SDK is initialized.
     
     :param usage_stats_account_id: Account ID for usage stats event
+    :param settings_fetch_time: Time taken to fetch settings in milliseconds
+    :param sdk_init_time: Time taken to initialize the SDK in milliseconds
+    :param init_config: SDK initialization options
     """
     # Create the query parameters
     properties = get_events_base_properties(EventEnum.USAGE_STATS.value, "", "", True, usage_stats_account_id)
 
     # Create the payload with required fields
-    payload = get_sdk_usage_stats_event_payload(EventEnum.USAGE_STATS.value, usage_stats_account_id)
+    payload = get_sdk_usage_stats_event_payload(
+        EventEnum.USAGE_STATS.value,
+        usage_stats_account_id,
+        settings_fetch_time,
+        sdk_init_time,
+        init_config,
+    )
 
     vwo_instance = VWOClient.get_instance()
 

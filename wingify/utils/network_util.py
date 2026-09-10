@@ -104,12 +104,10 @@ def get_events_base_properties(
         "sv": Constants.SDK_VERSION
     }
 
-    if not is_usage_stats_event:
-        # set env key for standard sdk events
-        properties["env"] = sdk_key
-    else:
-        # set account id for internal usage stats event
+    properties["env"] = sdk_key
+    if is_usage_stats_event:
         properties["a"] = str(usage_stats_account_id)
+
     return properties
 
 
@@ -510,18 +508,12 @@ def get_messaging_event_payload(
     return properties
 
 
-def get_sdk_init_event_payload(
-    event_name: str,
-    settings_fetch_time: Optional[int] = None,
-    sdk_init_time: Optional[int] = None,
-) -> Dict[str, Any]:
+def get_sdk_init_event_payload(event_name: str) -> Dict[str, Any]:
     """
     Constructs the payload for sdk init called event.
 
     Args:
         event_name: The name of the event.
-        settings_fetch_time: Time taken to fetch settings in milliseconds.
-        sdk_init_time: Time taken to initialize the SDK in milliseconds.
 
     Returns:
         The constructed payload with required fields.
@@ -539,8 +531,6 @@ def get_sdk_init_event_payload(
 
     data = {
         "isSDKInitialized": True,
-        "settingsFetchTime": settings_fetch_time,
-        "sdkInitTime": sdk_init_time,
     }
     properties["d"]["event"]["props"]["data"] = data
 
@@ -548,7 +538,11 @@ def get_sdk_init_event_payload(
 
 
 def get_sdk_usage_stats_event_payload(
-    event_name: str, usage_stats_account_id: int
+    event_name: str,
+    usage_stats_account_id: int,
+    settings_fetch_time: Optional[int] = None,
+    sdk_init_time: Optional[int] = None,
+    init_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Constructs the payload for sdk usage stats event.
@@ -556,6 +550,9 @@ def get_sdk_usage_stats_event_payload(
     Args:
         event_name: The name of the event.
         usage_stats_account_id: Account ID for usage stats event.
+        settings_fetch_time: Time taken to fetch settings in milliseconds.
+        sdk_init_time: Time taken to initialize the SDK in milliseconds.
+        init_config: SDK initialization options.
 
     Returns:
         The constructed payload with required fields.
@@ -570,6 +567,15 @@ def get_sdk_usage_stats_event_payload(
     # Set the required fields as specified
     properties["d"]["event"]["props"]["product"] = Constants.PRODUCT_NAME
     properties["d"]["event"]["props"]["vwoMeta"] = UsageStatsUtil().get_usage_stats()
+
+    data = {
+        "settingsFetchTime": settings_fetch_time,
+        "sdkInitTime": sdk_init_time,
+        "initConfig": json.loads(
+            json.dumps(init_config or {}, default=lambda o: type(o).__name__)
+        ),
+    }
+    properties["d"]["event"]["props"]["data"] = data
 
     return properties
 

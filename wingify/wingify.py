@@ -110,7 +110,7 @@ def init(options: Dict[str, Any]) -> Optional["WingifyClient"]:
                 was_initialized = sdk_meta_info.get("wasInitializedEarlier", False)
 
         if instance.is_settings_valid_on_init and not was_initialized:
-            send_sdk_init_event(instance.settings_fetch_time, sdk_init_time)
+            send_sdk_init_event()
 
         usage_stats_account_id = None
         if getattr(instance, '_settings', None) is not None:
@@ -119,7 +119,13 @@ def init(options: Dict[str, Any]) -> Optional["WingifyClient"]:
         if usage_stats_account_id:
             sampling_service = InternalEventsSamplingService()
             if sampling_service.should_send_usage_stats_event(instance._settings):
-                send_sdk_usage_stats_event(usage_stats_account_id)
+                settings_fetch_time = instance.settings_fetch_time
+                send_sdk_usage_stats_event(
+                    usage_stats_account_id,
+                    settings_fetch_time,
+                    sdk_init_time,
+                    options,
+                )
 
         return instance
     except Exception as e:
